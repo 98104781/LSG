@@ -4,7 +4,7 @@ import sys
 import time
 import Classes
 import GenerateLipids as GL
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QProgressBar
 from itertools import combinations_with_replacement as cwr
 
 from PySide6.QtCore import Property, Qt, Signal
@@ -180,6 +180,9 @@ class Page3(QWizardPage):
         self.output_console = QPlainTextEdit()
         self.output_console.setReadOnly(True)
         self.vLayout.addWidget(self.output_console)
+
+        self.progress_bar = QProgressBar()
+        self.vLayout.addWidget(self.progress_bar)
     
     def initializePage(self) -> None:
 
@@ -206,6 +209,8 @@ class Page3(QWizardPage):
         self.output_console.appendPlainText(caString)
         self.tails_to_generate = [int(self.field('cmin')), int(self.field('cmax')),
                                   int(self.field('dmin')), int(self.field('dmax'))]
+        
+        self.progress_bar.reset()
 
         return super().initializePage()
 
@@ -227,6 +232,7 @@ class Page3(QWizardPage):
                 save_file.writelines(f"{peak[0]} {peak[1]}\n" for peak in lipid.spectra[spectrum])
                 save_file.write("\n")
                 count += 1
+                self.progress_bar.setValue(count)
 
         return count
 
@@ -246,6 +252,7 @@ class Page3(QWizardPage):
                     unique_mass.append(MA) # Removes all the duplicates
                     writer.writerow([MA,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
                     count += 1
+                    self.progress_bar.setValue(count)
 
         return count
 
@@ -262,6 +269,8 @@ class Page3(QWizardPage):
                     cls(sn2, sn1)
             return GL.Glycerolipid.instances
         lipid_list = Generate_Lipids()
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(len(lipid_list))
         
         # Create save location
         file_name, _ = QFileDialog.getSaveFileName(filter="MSP (*.msp);;CSV (*.csv)")
