@@ -35,9 +35,6 @@ Masses = {
    "PO4":
    97.976895}
 
-#  [Cmin, Cmax, Dmin, Dmax]
-Tails_to_Generate = [8, 26, 0, 6]
-
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -45,35 +42,32 @@ Tails_to_Generate = [8, 26, 0, 6]
 class Adduct_Spectra:
 
   def __init__(self, lipid, adduct, mz_list):
-
     self.spectrum = []
-
     for mz in mz_list:
-      fragment = mz(lipid, Masses[adduct])
-      intensity = mz_list[mz]  
-
-      # Try to call function 'mz' to generate fragment:
-      try: self.spectrum.append([round(fragment, 6), intensity])
-
-      except: # If it fails (probably not a callable function)
-        try:  # It could be a list of fragments and iterate through:
-          for a in fragment:
-            ion = [round(a, 6), intensity]
-            if ion not in self.spectrum:
-              self.spectrum.append([round(a, 6), intensity])
-
-        except: # If that fails, it could just be a float!
-          try: self.spectrum.append([float(mz), intensity])
-
-          # If that fails, I don't know anymore...
+      intensity = mz_list[mz]
+      
+      try: #  Simplify variable name...
+        fragment = mz(lipid, Masses[adduct])
+        try: #  Try to call function 'mz' to generate fragment:
+          self.spectrum.append([round(fragment, 6), intensity])
+        except: #  If it fails (probably not a callable function)
+          try:  #  It could be a list of fragments and iterate through:
+            for a in fragment:
+              ion = [round(a, 6), intensity]
+              if ion not in self.spectrum:
+                self.spectrum.append([round(a, 6), intensity])
+                #  If that fails, I don't know anymore...
           except: print(f"Error assigning fragment: {mz}")
 
+      except: #  If that fails, it could just be a float!
+        try: self.spectrum.append([float(mz), intensity])
+          #  If that fails, I don't know anymore...
+        except: print(f"Error assigning fragment: {mz}")
 
 class Glycerolipid:
 
   instances = []  # All created GPLs stored here
   default_tail = ['0:0', Masses["H2O"]] # Keeps tail as OH
-
 
   def __init__(self, adducts, sn3=default_tail, sn2=default_tail, sn1=default_tail):
 
@@ -86,13 +80,11 @@ class Glycerolipid:
 
     Glycerolipid.instances.append(self) # Finish by appending to list of all GPLs!
 
-
   def generate_spectra(self):
 
     for adduct in self.adducts:
       self.spectra.update(
         {adduct: Adduct_Spectra(self, adduct, self.adducts[adduct]).spectrum})
-
 
 def generate_tails(n):
 
@@ -104,8 +96,6 @@ def generate_tails(n):
        if d <= (c-1)/2]
 
     return tail_list
-
-tails = generate_tails(Tails_to_Generate)
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 

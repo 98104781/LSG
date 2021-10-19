@@ -1,4 +1,3 @@
-from itertools import combinations_with_replacement as cwr
 import GenerateLipids as GL
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -15,7 +14,6 @@ class LipidClass(GL.Glycerolipid):
 
     sn3 = ['Head', Headgroup mass]
 '''
-
 
 class lyPI(GL.Glycerolipid):
 
@@ -156,14 +154,5 @@ class PI2P(GL.Glycerolipid):
   def __init__(self, sn2, sn1):
     sn3 = ['Head', 419.962378]
     super().__init__(PI2P.adducts, sn3, sn2, sn1)
-
-# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
-
-def Generate_Lipids():
-  classes = GL.Glycerolipid.__subclasses__()
-  for cls in classes:
-    for sn1, sn2 in cwr(GL.tails, 2):
-      cls(sn2, sn1)
-  return GL.Glycerolipid.instances
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
