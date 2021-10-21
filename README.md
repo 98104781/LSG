@@ -11,7 +11,6 @@ Though there are some repositories available online which enable analysis of som
 * Others (eg, lipidmaps) may provide only structure files and requiring the user to generate, limiting their applicability
 
 Fragmentation patterns used to generate the spectra are based on peer-reviewed studies.
-Currently only supports Lyso PI, PI, PIP, PI2P under negative ESI mode.
 
 User-interface is nearing completion.
 
