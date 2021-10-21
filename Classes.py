@@ -148,9 +148,9 @@ class PA(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good
-    GL.MA          :25,
-    GL.MH_s_FA     :50,
-    GL.MH_s_FAk    :25,
+    GL.MA          :15,
+    GL.MH_s_FA     :30,
+    GL.MH_s_FAk    :15,
     GL.FAH        :100,
     171.006398      :5, 
     152.995833     :30,
@@ -242,7 +242,7 @@ class lyPE(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Needs Validation
-    GL.MA       :25,
+    GL.MA       :15,
     GL.MH_s_FA  :15,
     GL.MH_s_FAk  :5,
     GL.FAH     :100, 
@@ -275,12 +275,12 @@ class PE(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good
-    GL.MA          :25,
-    GL.MH_s_FA      :5,
-    GL.MH_s_FAk    :15,
+    GL.MA          :15,
+    GL.MH_s_FA      :2,
+    GL.MH_s_FAk     :5,
     GL.FAH        :100, 
     196.038032      :5,
-    152.995833      :5,
+    152.995833     :20,
     140.011817      :3,
     96.969618       :5,
     78.959053       :5},
@@ -335,9 +335,9 @@ class PG(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good
-    GL.MA          :25,
-    GL.MH_s_FA      :5,
-    GL.MH_s_FAk    :15,
+    GL.MA          :15,
+    GL.MH_s_FA      :2,
+    GL.MH_s_FAk     :5,
     GL.FAH        :100,
     227.032612      :2,
     171.006398      :2,
@@ -542,7 +542,7 @@ class PS(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
   
   "[M-H]-":{ # Looks Good
-    GL.MA          :25,
+    GL.MA          :15,
     GL.HG_NL_B    :100,
     GL.HG_FA_NL_B  :50,
     GL.HG_FAk_NL_B :25,
