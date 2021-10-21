@@ -13,9 +13,6 @@ from PySide6.QtWidgets import QApplication, QPlainTextEdit, QPushButton, QTreeWi
 
 gplClassList = [cls for cls in GL.Glycerolipid.__subclasses__()]
 
-
-
-
 class CreateWindow(QWizard):
 
     def __init__(self):
@@ -265,8 +262,8 @@ class Page3(QWizardPage):
             GL.Glycerolipid.instances = []
             tails = GL.generate_tails(self.tails_to_generate)
             for cls in self.classes_to_generate:
-                for sn1, sn2 in cwr(tails, 2):
-                    cls(sn2, sn1)
+                for comb in cwr(tails, cls.No_Tails):
+                    cls(*comb)
             return GL.Glycerolipid.instances
         lipid_list = Generate_Lipids()
         self.progress_bar.setMinimum(0)

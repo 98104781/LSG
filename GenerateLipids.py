@@ -20,6 +20,8 @@ Masses = {
    [-17.003289,'Positive', 1],
   "[M+Na]+":    
    [22.989221, 'Positive', 1],
+  "[M+Li]+":    
+   [7.015455, 'Positive', 1],
   "[M+NH4]+":   
    [18.033826, 'Positive', 1],
    
@@ -33,7 +35,12 @@ Masses = {
    "PO3":
    79.96633,
    "PO4":
-   97.976895}
+   97.976895,
+   "TMA": # Trimethylamine, fragment for PC+Na/Li
+   59.073499,
+   "AZD": # Aziridine, fragment for PE+Na/Li
+   43.042199}
+
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -107,13 +114,24 @@ def MA(lipid, adduct):  # [M+-A]+-
   return (lipid.mass + adduct[0])/adduct[2]
 
 def MA_s_H2O(lipid, adduct):  # [M+-A-H2O]+-
-    return MA(lipid, adduct) - (Masses['H2O']/adduct[2])
+  return MA(lipid, adduct) - (Masses['H2O']/adduct[2])
 
 def MA_s_2H2O(lipid, adduct):  # [M+-A-2H2O]+-
-    return MA(lipid, adduct) - (2*Masses['H2O']/adduct[2])
+  return MA(lipid, adduct) - (2*Masses['H2O']/adduct[2])
 
 def MA_s_PO3(lipid, adduct):  # [M+-A-PO3]+-
-    return MA(lipid, adduct) - (Masses['PO3']/adduct[2])
+  return MA(lipid, adduct) - (Masses['PO3']/adduct[2])
+
+def MA_s_PO4(lipid, adduct):  # [M+-A-PO4]+-
+  return MA(lipid, adduct) - (Masses['PO4']/adduct[2])
+
+# Fragment for PC+Na/Li
+
+def MA_s_TMA(lipid, adduct):  # [M+-A-TMA]+-
+  return MA(lipid, adduct) - (Masses['TMA']/adduct[2])
+
+def MA_s_AZD(lipid, adduct):  # [M+-H-AZD]+-
+  return MA(lipid, adduct) - (Masses['AZD']/adduct[2])
 
 # ~ # ~ # ~ #
 
@@ -130,6 +148,17 @@ def MH_s_2H2O(lipid, adduct):  # [M+-H-2H2O]+-
 
 def MH_s_PO3(lipid, adduct):  # [M+-H-PO3]+-
   return MH(lipid, adduct) - Masses['PO3']
+
+def MH_s_PO4(lipid, adduct):  # [M+-H-PO4]+-
+  return MH(lipid, adduct) - Masses['PO4']
+
+# Fragment for PE / PC+Na/Li
+
+def MH_s_TMA(lipid, adduct):  # [M+-H-TMA]+-
+  return MH(lipid, adduct) - Masses['TMA']
+
+def MH_s_AZD(lipid, adduct):  # [M+-H-AZD]+-
+  return MH(lipid, adduct) - Masses['AZD']
 
 # ~ # ~ # ~ #
 
@@ -154,6 +183,54 @@ def M2H_sub_FAk(lipid, adduct):  # [M+-2H-FAk]+-
 
 # ~ # ~ # ~ #
 
+def MA_s_FA(lipid, adduct):  # [M+-H-FA]+-
+  for tail in lipid.tails:   # FA = fatty acid
+    if tail[0] not in ['Head', '0:0']:
+      yield MA(lipid, adduct) - tail[1]
+
+def MA_s_FA_H2O(lipid, adduct):  # [M+-H-FA-H2O]+-
+  for tail in lipid.tails:       # FA = fatty acid
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_H2O(lipid, adduct) - tail[1]
+
+def MA_s_FAk(lipid, adduct):  # [M+-H-FAk]+-
+  for tail in lipid.tails:    # FAk = fatty acid (ketone)
+    if tail[0] not in ['Head', '0:0']:
+      yield MA(lipid, adduct) + Masses['H2O'] - tail[1]
+
+def MA_s_FA_PO3(lipid, adduct):  # [M+-H-FA-PO3]+-
+  for tail in lipid.tails:       # FA = fatty acid
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_PO3(lipid, adduct) - tail[1]
+
+def MA_s_FAk_PO3(lipid, adduct):  # [M+-H-FAk-PO3]+-
+  for tail in lipid.tails:    # FAk = fatty acid (ketone)
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_PO3(lipid, adduct) + Masses['H2O'] - tail[1]
+
+# Fragment for PE / PC+Na/Li
+
+def MA_s_FA_TMA(lipid, adduct):  # [M+-H-FA-TMA]+-
+  for tail in lipid.tails:       # FA = fatty acid
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_TMA(lipid, adduct) - tail[1]
+
+def MA_s_FAk_TMA(lipid, adduct):  # [M+-H-FAk-TMA]+-
+  for tail in lipid.tails:    # FAk = fatty acid (ketone)
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_TMA(lipid, adduct) + Masses['H2O'] - tail[1]
+
+def MA_s_FA_AZD(lipid, adduct):  # [M+-H-FA-AZD]+-
+  for tail in lipid.tails:       # FA = fatty acid
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_AZD(lipid, adduct) - tail[1]
+
+def MA_s_FAk_AZD(lipid, adduct):  # [M+-H-FAk-AZD]+-
+  for tail in lipid.tails:    # FAk = fatty acid (ketone)
+    if tail[0] not in ['Head', '0:0']:
+      yield MA_s_AZD(lipid, adduct) + Masses['H2O'] - tail[1]
+
+# ~ # ~ # ~ #
 def MH_s_FA(lipid, adduct):  # [M+-H-FA]+-
   for tail in lipid.tails:   # FA = fatty acid
     if tail[0] not in ['Head', '0:0']:
@@ -186,7 +263,7 @@ def FAH(lipid, adduct):  # Free fatty acid
     if tail[0] not in ['Head', '0:0']:
       yield tail[1] - Masses['H']
 
-def FAkH(lipid, adduct):  # Free farty acid (ketone)
+def FAkH(lipid, adduct):  # Free fatty acid (ketone)
   for tail in lipid.tails:
     if tail[0] not in ['Head', '0:0']:
       if adduct[1] == 'Positive':
@@ -200,24 +277,88 @@ def FAkA(lipid, adduct):
 
 # ~ # ~ # ~ #
 
-def HG_NL(lipid, adduct):  # Headgroup neutral loss
+# Sometimes the headgroup takes the phosphate with it
+
+def HG_NL_A(lipid, adduct):  # Headgroup neutral loss
   for tail in lipid.tails:
     if tail[0] == 'Head':
       HG = tail  # Fragments common to some GPLs.
-      if adduct[1] == 'Positive':
-        return MA(lipid, adduct) - HG[1]
-      if adduct[1] == 'Negative':
-        return MH(lipid, adduct) - (HG[1] - Masses['PO4'])
+      return MA(lipid, adduct) - HG[1] + Masses['H2O']
 
-def HG_NL_H2O(lipid, adduct):
-  return HG_NL(lipid, adduct) - Masses['H2O']
+def HG_NL_H2O_A(lipid, adduct):
+  return HG_NL_A(lipid, adduct) - Masses['H2O']
 
-def HG_FA_NL(lipid, adduct):
+def HG_FA_NL_A(lipid, adduct):
   for tail in lipid.tails:
     if tail[0] not in ['Head', '0:0']:
-      yield HG_NL(lipid, adduct) - tail[1]
-
-def HG_FA_NL_H2O(lipid, adduct):
+      yield HG_NL_A(lipid, adduct) - tail[1]
+    
+def HG_FAk_NL_A(lipid, adduct):
   for tail in lipid.tails:
     if tail[0] not in ['Head', '0:0']:
-      yield HG_NL_H2O(lipid, adduct) - tail[1]
+      yield HG_NL_A(lipid, adduct) + Masses['H2O'] - tail[1]
+
+def HG_FA_NL_H2O_A(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_H2O_A(lipid, adduct) - tail[1]
+
+# Sometimes the headgroup leaves the phosphate behind
+
+def HG_NL_B(lipid, adduct):  # Headgroup neutral loss
+  for tail in lipid.tails:
+    if tail[0] == 'Head':
+      HG = tail  # Fragments common to some GPLs.
+      return MH(lipid, adduct) - (HG[1] - Masses['PO4'])
+
+def HG_NL_H2O_B(lipid, adduct):
+  return HG_NL_B(lipid, adduct) - Masses['H2O']
+
+def HG_FA_NL_B(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_B(lipid, adduct) - tail[1]
+
+def HG_FAk_NL_B(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_B(lipid, adduct) + Masses['H2O'] - tail[1]
+
+def HG_FA_NL_H2O_B(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_H2O_B(lipid, adduct) - tail[1]
+
+# Sometimes the headgroup leaves with the adduct, leaving M+/-H
+
+def HG_NL_C(lipid, adduct):  # Headgroup neutral loss
+  for tail in lipid.tails:
+    if tail[0] == 'Head':
+      HG = tail  # Fragments common to some GPLs.
+      return MH(lipid, adduct) - HG[1] + Masses['H2O']
+
+def HG_NL_H2O_C(lipid, adduct):
+  return HG_NL_C(lipid, adduct) - Masses['H2O']
+
+def HG_FA_NL_C(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_C(lipid, adduct) - tail[1]
+
+def HG_FAk_NL_C(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_C(lipid, adduct) + Masses['H2O'] - tail[1]
+
+def HG_FA_NL_H2O_C(lipid, adduct):
+  for tail in lipid.tails:
+    if tail[0] not in ['Head', '0:0']:
+      yield HG_NL_H2O_A(lipid, adduct) - tail[1]
+
+# Sometimes the headgroup flies off the the adduct!
+
+def HGA(lipid, adduct):  # Headgroup + Adduct
+  for tail in lipid.tails:
+    if tail[0] == 'Head':
+      HG = tail  # Fragments common to some GPLs.
+      return (HG[1] + adduct[0])/adduct[2]
