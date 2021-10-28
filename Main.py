@@ -3,8 +3,10 @@ import csv
 import sys
 import time
 import Classes
+#import Classes_isomers
 import GenerateLipids as GL
 from PySide6.QtWidgets import QFileDialog, QProgressBar
+from itertools import product
 from itertools import combinations_with_replacement as cwr
 
 from PySide6.QtCore import Property, Qt, Signal
@@ -129,6 +131,8 @@ class Page2(QWizardPage):
                 
         self.vLayout.addWidget(self.treeView)
 
+
+
     def treeData(self):
         checkedBoxes = {}
         root = self.treeView.invisibleRootItem()
@@ -224,9 +228,12 @@ class Page3(QWizardPage):
                 save_file.write(f"NAME: {lipid.name} {spectrum}\n")
                 save_file.write(f"IONMODE: {GL.Masses[spectrum][1]}\n")
                 save_file.write(f"PRECURSORMZ: {round(GL.MA(lipid, GL.Masses[spectrum]), 6)}\n")
+                save_file.write(f"COMPOUNDCLASS: {lipid.lipid_class}\n")
+                save_file.write(f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())} \n")
+                save_file.write(f"RETENTIONTIME: 0.00\n")
                 save_file.write(f"PRECURSORTYPE: {spectrum}\n")
                 save_file.write(f"Num Peaks: {len(lipid.spectra[spectrum])}\n")
-                save_file.writelines(f"{peak[0]} {peak[1]}\n" for peak in lipid.spectra[spectrum])
+                save_file.writelines(f"{frag[0]} {frag[1]}\n" for frag in lipid.spectra[spectrum])
                 save_file.write("\n")
                 count += 1
                 self.progress_bar.setValue(count)
@@ -265,6 +272,15 @@ class Page3(QWizardPage):
                 for comb in cwr(tails, cls.No_Tails):
                     cls(*comb)
             return GL.Glycerolipid.instances
+
+        def Generate_Lipids_isomers():
+            GL.Glycerolipid.instances = []
+            tails = GL.generate_tails(self.tails_to_generate)
+            for cls in self.classes_to_generate:
+                for comb in product(tails, repeat = cls.No_Tails):
+                    cls(*comb)
+            return GL.Glycerolipid.instances
+
         lipid_list = Generate_Lipids()
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(len(lipid_list))

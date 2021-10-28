@@ -135,8 +135,8 @@ class lyPA(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    sn3 = ['Head', 97.976895]
-    super().__init__(lyPA.adducts, sn3, sn1)
+    sn3 = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1})
+    super().__init__(lyPA.adducts, sn3, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -165,7 +165,7 @@ class PA(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 97.976895]
+    sn3 = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1})
     super().__init__(PA.adducts, sn3, sn2, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -197,9 +197,9 @@ class lyPC(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    sn3 = ['Head', 183.066044]
+    sn3 = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1})
     # headgroup mass has -H to maintain neutral charge
-    super().__init__(lyPC.adducts, sn3, sn1)
+    super().__init__(lyPC.adducts, sn3, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -229,7 +229,7 @@ class PC(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 183.066044]
+    sn3 = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1})
     # headgroup mass has -H to maintain neutral charge
     super().__init__(PC.adducts, sn3, sn2, sn1)
 
@@ -262,8 +262,8 @@ class lyPE(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    sn3 = ['Head', 141.019094]
-    super().__init__(lyPE.adducts, sn3, sn1)
+    sn3 = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1})
+    super().__init__(lyPE.adducts, sn3, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -303,7 +303,7 @@ class PE(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 141.019094]
+    sn3 = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1})
     super().__init__(PE.adducts, sn3, sn2, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -323,8 +323,8 @@ class lyPG(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    sn3 = ['Head', 172.013674]
-    super().__init__(lyPG.adducts, sn3, sn1)
+    sn3 = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1})
+    super().__init__(lyPG.adducts, sn3, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -360,7 +360,7 @@ class PG(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 172.013674]
+    sn3 = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1})
     super().__init__(PG.adducts, sn3, sn2, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -391,8 +391,8 @@ class lyPI(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    sn3 = ['Head', 260.029718]
-    super().__init__(lyPI.adducts, sn3, sn1)
+    sn3 = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1})
+    super().__init__(lyPI.adducts, sn3, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -429,7 +429,7 @@ class PI(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 260.029718]
+    sn3 = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13, 'O':9, 'P':1})
     super().__init__(PI.adducts, sn3, sn2, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -457,8 +457,10 @@ class PIP(GL.Glycerolipid):
   #  152.995833    :10},
 
   "[M-H]-":{ # Looks Good
-    GL.MH          :2,
+    GL.MH          :1,
+    GL.MH_s_H2O    :2,
     GL.MH_s_PO3    :2,
+    GL.HG_NL_2B    :2,
     GL.MH_s_FA     :4,
     GL.MH_s_FA_H2O :1,
     GL.MH_s_FAk_PO3:4,
@@ -466,24 +468,24 @@ class PIP(GL.Glycerolipid):
     GL.HG_FA_NL_B  :5,
     GL.FAH       :100,
     320.978207    :10, 
-    302.967642    :10,
+    302.967642    :15,
     259.022442     :5, 
-    241.011877    :60,
-    223.001312    :30, 
-    152.995833    :30},
+    241.011877    :90,
+    223.001312    :90, 
+    152.995833    :40}}#,
 
-  "[M-2H]2-":{ # Looks Good
-    GL.MA          :5,
-    GL.FAH       :100,
-    320.978207     :2, 
-    302.967642     :1,
-    241.011877    :40,
-    223.001312     :1, 
-    152.995833    :10}}
+  #"[M-2H]2-":{ # Looks Good
+  #  GL.MA          :5,
+  #  GL.FAH       :100,
+  #  320.978207     :2, 
+  #  302.967642     :1,
+  #  241.011877    :40,
+  #  223.001312     :1, 
+  #  152.995833    :10}}
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 339.996048]
+    sn3 = GL.sn(mass=339.996048, type='Headgroup', chnops={'C':6, 'H':14, 'O':12, 'P':2})
     super().__init__(PIP.adducts, sn3, sn2, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -509,6 +511,7 @@ class PI2P(GL.Glycerolipid):
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
     sn3 = ['Head', 419.962378]
+    sn3 = GL.sn(mass=419.962378, type='Headgroup', chnops={'C':6, 'H':15, 'O':15, 'P':3})
     super().__init__(PI2P.adducts, sn3, sn2, sn1)
 '''
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -529,8 +532,8 @@ class lyPS(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    sn3 = ['Head', 185.008923]
-    super().__init__(lyPS.adducts, sn3, sn1)
+    sn3 = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1})
+    super().__init__(lyPS.adducts, sn3, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -566,7 +569,7 @@ class PS(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
-    sn3 = ['Head', 185.008923]
+    sn3 = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1})
     super().__init__(PS.adducts, sn3, sn2, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
