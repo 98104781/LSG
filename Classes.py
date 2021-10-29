@@ -50,7 +50,7 @@ class MAG(GL.Glycerolipid):
   }
 
   def __init__(self, sn1):
-    super().__init__(MAG.adducts, sn1)
+    super().__init__(MAG.adducts, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -88,7 +88,7 @@ class DAG(GL.Glycerolipid):
   }
 
   def __init__(self, sn2, sn1):
-    super().__init__(DAG.adducts, sn2, sn1)
+    super().__init__(DAG.adducts, sn2=sn2, sn1=sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 

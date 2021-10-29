@@ -5,12 +5,13 @@ import time
 import Classes
 #import Classes_isomers
 import GenerateLipids as GL
-from PySide6.QtWidgets import QFileDialog, QProgressBar
+
 from itertools import product
 from itertools import combinations_with_replacement as cwr
 
 from PySide6.QtCore import Property, Qt, Signal
 from PySide6.QtGui import QIntValidator, QPixmap
+from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QProgressBar, QTableWidget, QTableWidgetItem, QWidget
 from PySide6.QtWidgets import QApplication, QPlainTextEdit, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QLabel, QLineEdit, QWizard, QWizardPage
 
 gplClassList = [cls for cls in GL.Glycerolipid.__subclasses__()]
@@ -25,16 +26,16 @@ class CreateWindow(QWizard):
         self.setFixedSize(600, 510)
 
         # Add Wizard Pages
-        self.addPage(Page1(self))
-        self.addPage(Page2(self))
-        self.addPage(Page3(self))
+        self.addPage(FASetupPage(self))
+        self.addPage(SpectraSetupPage(self))
+        self.addPage(GenerateSpectraPage(self))
 
 
 
 
-class Page1(QWizardPage):
+class FASetupPage(QWizardPage):
     def __init__(self, parent=None):
-        super(Page1, self).__init__(parent)
+        super(FASetupPage, self).__init__(parent)
 
         self.setTitle("Fatty acid range")
         self.setSubTitle("Lipids will be generated according to the fatty acid range:\n"
@@ -90,12 +91,60 @@ class Page1(QWizardPage):
 
 
 
+class SpectraEditWindow(QDialog):
+    def __init__(self, treeData):
+        super().__init__()
 
-class Page2(QWizardPage):
+        self.setWindowTitle('LSG3 - INCOMPLETE')
+        self.setFixedSize(600, 510)
+        self.vLayout = QVBoxLayout(self)
+
+        # Example spectra will be GPL 16:0_18:1
+        self.tails = [GL.sn(c=16, d=0, type='Acyl'),
+                      GL.sn(c=18, d=1, type='Acyl')]
+
+        self.spectradata = QTableWidget()
+        self.spectradata.setColumnCount(2)
+        self.spectradata.setHorizontalHeaderLabels(['Mass (Da)', 'Intensity (%)'])
+
+        self.adductlist = QComboBox()
+        self.adductlist.currentTextChanged.connect(self.updateFragments)
+        for item, item2 in treeData.items():
+            for adduct in item2:
+                self.adductlist.addItem(item.text(0)+' '+adduct.text(0), [item, adduct])
+
+        
+        self.vLayout.addWidget(self.adductlist)
+        self.vLayout.addWidget(self.spectradata)
+        #self.show()
+    
+    def updateFragments(self):
+
+        data = self.adductlist.currentData()
+        GL.Glycerolipid.instances = []
+        cls = data[0].lipidClass # Example lipid
+        _, comb, *_ = cwr(self.tails, cls.No_Tails)
+        example = cls(*comb) # comb will be (16:0_) 16:0_18:1
+        example.adducts = {data[1].text(0):data[1].fragmentList}
+        example.resolve_spectra(example.adducts)
+
+        frag_int = example.spectra[data[1].text(0)]
+        numrows = len(frag_int)
+        self.spectradata.setRowCount(numrows)
+        for row in range(numrows):
+            for column in range(2):
+                self.item = QTableWidgetItem(str(frag_int[row][column]))
+                self.spectradata.setItem(row, column, self.item)
+                if column == 0:
+                    self.item.setFlags(self.item.flags() ^ Qt.ItemIsEditable)
+
+        
+
+class SpectraSetupPage(QWizardPage):
     treeDataChanged = Signal()
 
     def __init__(self, parent=None):
-        super(Page2, self).__init__(parent)
+        super(SpectraSetupPage, self).__init__(parent)
 
         self.setTitle("Select lipid classes")
         self.setSubTitle("Select from the list of available glycerophospholipid classes below.\n"
@@ -128,11 +177,19 @@ class Page2(QWizardPage):
                 child.setText(0, adduct)
                 child.setCheckState(0, Qt.Unchecked)
                 child.setFlags(child.flags() | Qt.ItemIsUserCheckable)
-                
+
+        self.modifybutton = QPushButton("Modify selected adduct spectra")
+        self.modifybutton.clicked.connect(self.open_editspectrawindow)
+
         self.vLayout.addWidget(self.treeView)
+        self.vLayout.addWidget(self.modifybutton)
 
+    def open_editspectrawindow(self):
+        editspectrawindow = SpectraEditWindow(self.field('tree'))
+        editspectrawindow.exec()
 
-
+        
+                
     def treeData(self):
         checkedBoxes = {}
         root = self.treeView.invisibleRootItem()
@@ -163,9 +220,11 @@ class Page2(QWizardPage):
 
 
 
-class Page3(QWizardPage):
+
+
+class GenerateSpectraPage(QWizardPage):
     def __init__(self, parent=None):
-        super(Page3, self).__init__(parent)
+        super(GenerateSpectraPage, self).__init__(parent)
 
         self.setTitle("Select filetype to generate")
         self.setSubTitle("Press 'Generate' to create file \n"
@@ -221,7 +280,7 @@ class Page3(QWizardPage):
 
         count = 0
         for lipid in lipid_data:
-            lipid.generate_spectra()
+            lipid.resolve_spectra(lipid.adducts)
         
             for spectrum in lipid.spectra:
 
@@ -230,14 +289,14 @@ class Page3(QWizardPage):
                 save_file.write(f"PRECURSORMZ: {round(GL.MA(lipid, GL.Masses[spectrum]), 6)}\n")
                 save_file.write(f"COMPOUNDCLASS: {lipid.lipid_class}\n")
                 save_file.write(f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())} \n")
-                save_file.write(f"RETENTIONTIME: 0.00\n")
+                save_file.write(f"RETENTIONTIME: 0.00\n") # Pointless
                 save_file.write(f"PRECURSORTYPE: {spectrum}\n")
                 save_file.write(f"Num Peaks: {len(lipid.spectra[spectrum])}\n")
                 save_file.writelines(f"{frag[0]} {frag[1]}\n" for frag in lipid.spectra[spectrum])
                 save_file.write("\n")
                 count += 1
-                self.progress_bar.setValue(count)
 
+        self.progress_bar.setValue(self.progress_bar.value()+1)
         return count
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -249,45 +308,42 @@ class Page3(QWizardPage):
 
         writer.writerow(['Mass [m/z]','Formula [M]','Formula type','Species','CS [z]','Polarity','Start [min]','End [min]','(N)CE','(N)CE type','MSX ID','Comment'])
         unique_mass = []
+
         for lipid in lipid_data:
             for adduct in lipid.adducts:
-                MA = round(GL.Adduct_Spectra(lipid, adduct,{GL.MA:1}).spectrum[0][0], 6)
-                if MA not in unique_mass: # This takes a lot of time!
-                    unique_mass.append(MA) # Removes all the duplicates
-                    writer.writerow([MA,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
-                    count += 1
-                    self.progress_bar.setValue(count)
+                ma = lipid.resolve_frag(adduct, {GL.MA:1})[0][0]
+                if ma not in unique_mass: # This takes a lot of time!
+                    unique_mass.append(ma) # Removes all the duplicates
+                    writer.writerow([ma,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
+                    count +=1
 
+        self.progress_bar.setValue(self.progress_bar.value()+1)
         return count
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
     def save_as(self):
 
-        # Generate lipids
         def Generate_Lipids():
+
             GL.Glycerolipid.instances = []
+
+            self.progress_bar.setMinimum(0)
+            self.progress_bar.setMaximum(len(self.classes_to_generate)+2)
+
             tails = GL.generate_tails(self.tails_to_generate)
+            self.progress_bar.setValue(self.progress_bar.value()+1)
+
             for cls in self.classes_to_generate:
                 for comb in cwr(tails, cls.No_Tails):
                     cls(*comb)
+                self.progress_bar.setValue(self.progress_bar.value()+1)
+
             return GL.Glycerolipid.instances
 
-        def Generate_Lipids_isomers():
-            GL.Glycerolipid.instances = []
-            tails = GL.generate_tails(self.tails_to_generate)
-            for cls in self.classes_to_generate:
-                for comb in product(tails, repeat = cls.No_Tails):
-                    cls(*comb)
-            return GL.Glycerolipid.instances
 
-        lipid_list = Generate_Lipids()
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(len(lipid_list))
-        
         # Create save location
         file_name, _ = QFileDialog.getSaveFileName(filter="MSP (*.msp);;CSV (*.csv)")
-
         if file_name:
 
             t0 = time.time()
@@ -299,18 +355,17 @@ class Page3(QWizardPage):
             else: self.output_console.appendPlainText('Creating {}'.format(file_name))
 
             save_file = open(file_name, 'x')
-
             # Based on file extension, export differently
             if '.msp' in file_name:
-                count = self.as_msp(save_file, lipid_list)
+                count = self.as_msp(save_file, Generate_Lipids())
             elif '.csv' in file_name:
-                count = self.as_csv(save_file, lipid_list)
+                count = self.as_csv(save_file, Generate_Lipids())
             else: self.output_console.appendPlainText('Unsupported file type')
-
-            t1 = time.time()        
-            self.output_console.appendPlainText(f"Generated {count} spectra in {t1-t0:.4f} seconds!")
-
             save_file.close()
+
+            t1 = time.time()
+            self.progress_bar.setValue(self.progress_bar.value()+1)        
+            self.output_console.appendPlainText(f"Generated {count} spectra in {t1-t0:.4f} seconds!")
 
         else: pass
 

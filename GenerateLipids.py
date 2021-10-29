@@ -47,30 +47,38 @@ Masses = {
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-class sn: # Placeholder
-
-  def __init__(self, c=0, d=0, mass=None, chnops={}, type=None):
+class sn:
+  def __init__(self, c=0, d=0, m=0, mass=None, chnops={}, type=None):
 
     self.type = type
+    
     if self.type == 'Acyl':
       self.name = f"{c}:{d}"
       #           O2 mass     + c*CH2 mass    - d*H2 mass
       self.mass = 31.98982926 + c*14.01565007 - d*2.01565007
       self.formula = {'C':c, 'H':(2*c-2*d),'O':2}
+
     elif self.type == 'Ether':
       self.name = f"{c}:{d};O"
       #           O mass    + c*CH2 mass    - d*H2 mass
       self.mass = 18.010565 + c*14.01565007 - d*2.01565007
       self.formula = {'C':c, 'H':(2*c-2*d),'O':1}
+
+    elif self.type == 'Methyl': # Methyl branched Acyl kind
+      self.name = f"{c}:{d};{m}M" # Perhaps exclude? Mass identical to acyl c+m
+      #           O2 mass     + c*CH2 mass    - d*H2 mass
+      self.mass = 31.98982926 + (c+m)*14.01565007 - d*2.01565007
+      self.formula = {'C':c+m, 'H':(2*(c+m)-2*d),'O':2}
+
     elif self.type == 'Headgroup':
       self.name = 'Headgroup'
       self.mass = mass
       self.formula = chnops
+
     else:
       self.name = '0:0'
       self.mass = Masses["H2O"]
       self.formula = {'H':2,'O':1}
-
 
 def generate_tails(n):
 
@@ -83,44 +91,14 @@ def generate_tails(n):
     
     return tail_list
 
-class Adduct_Spectra:
-
-  def __init__(self, lipid, adduct, mz_list):
-
-    self.spectrum = []
-
-    for mz in mz_list: #  For every {Fragment:Intensity} pair
-      intensity = mz_list[mz]
-
-      try:   #  The ion could just be a float with intensity
-        self.spectrum.append([float(mz), intensity])
-
-      except:#  If not: (not a float)
-        try: #  Try to call function 'mz' to generate fragment
-          frag = mz(lipid, Masses[adduct])
-          fragment = round(frag, 6)
-          ion = [fragment, intensity]
-          if ion not in self.spectrum:
-            self.spectrum.append(ion)
-
-        except: #  If not: (not a callable function)
-          try:  #  It could be a list of fragments and iterate through
-            for fragment in mz(lipid, Masses[adduct]):
-              ion = [round(fragment, 6), intensity]
-              if ion not in self.spectrum:
-                self.spectrum.append(ion)
-
-          except: print(f"Error assigning fragment: {mz}")
-
 class Glycerolipid:
 
   instances = []  # All created GPLs stored here
-
   default_tail = sn() # Keeps tail as OH
 
-  def __init__(self, adducts, sn3=default_tail, sn2=default_tail, sn1=default_tail):
+  def __init__(self, adduct_spectra_dict, sn3=default_tail, sn2=default_tail, sn1=default_tail):
 
-    self.adducts = adducts  # contains adduct and info to generate spectra
+    self.adduct_spectra_dict = adduct_spectra_dict  # contains adduct and info to generate spectra
     self.tails = [sn1, sn2, sn3]
     self.lipid_class = type(self).__name__  # Takes name from class which generated it
     self.mass = round(Masses["Glycerol"] + sum([snx.mass - Masses["H2O"] for snx in self.tails]), 6) 
@@ -130,16 +108,58 @@ class Glycerolipid:
     # Works out CHNOPS for Glycerolipid
     formula = Counter({'C':3, 'H':8, 'O':3}) # Glycerol
     for snx in self.tails:
-      formula.subtract({'H':2,'O':1}) # -H2O for bond
+      formula.subtract({'H':2,'O':1}) # -H2O for bonds
       formula += snx.formula
     self.formula = dict(formula)
 
     Glycerolipid.instances.append(self) # Finish by appending to list of all GPLs!
 
-  def generate_spectra(self):
-    for adduct in self.adducts:
-      fragment = {adduct: Adduct_Spectra(self, adduct, self.adducts[adduct]).spectrum}
-      self.spectra.update(fragment)
+  def resolve_frag(self, adduct, input={}):
+
+    try: self.spectra[adduct]
+    except KeyError: self.spectra[adduct] = []
+
+    for mz in input:
+
+      if input[mz] == 0:
+        continue
+      else: pass
+
+      try: # Test if float, int pair
+        frag = [float(mz), input[mz]]
+        return [frag] # [] for below
+
+      except: # If not float:
+        try:  # Test if function, int pair
+          x = mz(self, Masses[adduct])
+          frag = [round(x,6), input[mz]]
+          if frag not in self.spectra[adduct]:
+            return [frag] # [] for below
+          else: continue
+
+        except: # If not function:
+          try:  # May be list of functions
+            frag = [] # [] for this
+            for fragment in x:
+                y = [round(fragment,6), input[mz]]
+                if y not in frag:
+                  frag.append(y)
+                else: continue  
+            return frag # [[],[]]
+
+          except: 
+            print(f"Error, fragment: {mz}")
+            continue
+
+  def resolve_spectra(self, adduct_spectra):
+
+    for adduct in adduct_spectra:
+      try: self.spectra[adduct]
+      except KeyError: self.spectra[adduct] = []
+
+      for frag in adduct_spectra[adduct]:
+        self.spectra[adduct].extend(self.resolve_frag(adduct,{frag:adduct_spectra[adduct][frag]}))
+
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
