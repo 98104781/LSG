@@ -7,11 +7,11 @@ import Classes
 #import Classes_isomers
 import GenerateLipids as GL
 
-from PySide6.QtCharts import QBarSeries, QBarSet, QChart, QChartView, QScatterSeries, QValueAxis
 from PySide6 import QtWidgets
-from PySide6.QtGui import QColor, QImage, QIntValidator, QPainter, QPainterPath, QPen, QPixmap
 from itertools import combinations_with_replacement as cwr
-from PySide6.QtCore import Property, QAbstractTableModel, QMargins, QModelIndex, QRect, Qt, Signal
+from PySide6.QtCharts import QChart, QChartView, QScatterSeries, QValueAxis
+from PySide6.QtCore import Property, QAbstractTableModel, QMargins, QModelIndex, Qt, Signal
+from PySide6.QtGui import QColor, QImage, QIntValidator, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QHeaderView, QProgressBar, QStyledItemDelegate, QTableView
 from PySide6.QtWidgets import QApplication, QPlainTextEdit, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QWizard, QWizardPage
 
@@ -210,8 +210,11 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         self.tableView = QTableView()
         self.tableView.setFixedWidth(137)
         self.comboBox = QComboBox()
-        self.spectra = SpectraHistogram()
+        self.spectra = SpectraScatter()
         self.spectra.setFixedHeight(200)
+        self.label = QLabel('Generated spectra are "isomer ambiguous", meaning that all isomer dependent\n'
+                            'fragments will be equal in intensity.\n\nIf the observed fragment intensities'
+                            ' differ from the default provided, they may\nbe manually updated on the left.')
         self.comboBox.currentTextChanged.connect(self.buildList)
         for item, item2 in treeData.items():
             for adduct in item2:
@@ -226,6 +229,7 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         self.hLayout.addWidget(self.tableView)
 
         self.vLayout2.addWidget(self.spectra)
+        self.vLayout2.addWidget(self.label)
         self.vLayout2.addStretch()
         self.vLayout2.addWidget(self.applyBTN)
         self.hLayout.addLayout(self.vLayout2)
@@ -233,6 +237,10 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         self.vLayout.addLayout(self.hLayout)
 
     def buildLipid(self, data):
+        '''
+        Returns an example lipid for use.
+        Lipid will be GPL (16:0_) 16:0_18:1.
+        '''
         GL.Glycerolipid.instances = []
         cls = data[0].lipidClass # Example lipid
         _, comb, *_ = cwr(self.tails, cls.No_Tails)
@@ -242,24 +250,32 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         return example
     
     def buildList(self):
-
+        '''
+        Updates selected data,
+        Refreshes fragment list and spectra.
+        '''
         data = self.comboBox.currentData()
+        if data is not None:
+            example = self.buildLipid(data)
+            adduct = data[1].text(0)
+            fragments = example.spectra[adduct]
+            mz = GL.MA(example, GL.Masses[adduct])
 
-        example = self.buildLipid(data)
-        adduct = data[1].text(0)
-        fragments = example.spectra[adduct]
-        mz = GL.MA(example, GL.Masses[adduct])
-
-        self.spectra.setSpectra(example.name+' '+adduct, mz, fragments)
-        self.tableData = SpectraTableModel(fragments)
-        self.tableView.setModel(self.tableData)
-        self.tableView.setItemDelegateForColumn(1, SpinBoxDelegate(self.tableView))
-        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        self.tableView.resizeColumnsToContents()
-        self.tableView.verticalHeader().hide()
-        self.tableData.dataChanged.connect(self.updateData)
+            self.spectra.setSpectra(example.name+' '+adduct, mz, fragments)
+            self.tableData = SpectraTableModel(fragments)
+            self.tableView.setModel(self.tableData)
+            self.tableView.setItemDelegateForColumn(1, SpinBoxDelegate(self.tableView))
+            self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            self.tableView.resizeColumnsToContents()
+            self.tableView.verticalHeader().hide()
+            self.tableData.dataChanged.connect(self.updateData)
+        else: pass
 
     def updateData(self, index: QModelIndex, *other):
+        '''
+        Updates adduct spectra in list
+        with new intensity.
+        '''
         fragment = int(index.row())
         fragmentList = self.comboBox.currentData()[1].fragmentList
         data = self.tableData.table_data[fragment]
@@ -268,6 +284,10 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         self.buildList()
 
     def applyChanges(self):
+        '''
+        Overwrites adduct spectra in memory
+        with new adduct spectra.
+        '''
         for x in range(self.comboBox.count()):
             data = self.comboBox.itemData(x)
             lipidClass = data[0].lipidClass
@@ -282,7 +302,11 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
     def resetChanges(self):
         pass
 
-class SpectraHistogram(QChartView):
+class SpectraScatter(QChartView):
+    '''
+    Scatterplot with custom marker,
+    made to appear as mass spectra.
+    '''
     def __init__(self, parent=None):
         super().__init__(QChart(), parent=parent)
 
@@ -307,7 +331,10 @@ class SpectraHistogram(QChartView):
         self.chart().legend().hide()
 
     def setSpectra(self, precursorName, precursorMass, spectra):
-
+        '''
+        Updates displayed spectra with new spectra.
+        Spectra must be of form [[mz, intensity, ...], ...]
+        '''
         self.chart().setTitle(precursorName)
         binMax = int(precursorMass+100)
 
@@ -335,9 +362,6 @@ class SpectraHistogram(QChartView):
 
         self.yaxis.setRange(0, 100)
         self.xaxis.setRange(100, binMax)
-
-
-
 
 class SpectraTableModel(QAbstractTableModel):
     '''
