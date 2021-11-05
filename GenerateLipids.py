@@ -121,18 +121,14 @@ class Glycerolipid:
 
     for mz in input:
 
-      if input[mz] == 0:
-        continue
-      else: pass
-
       try: # Test if float, int pair
-        frag = [float(mz), input[mz]]
+        frag = [float(mz), input[mz], mz]
         return [frag] # [] for below
 
       except: # If not float:
         try:  # Test if function, int pair
           x = mz(self, Masses[adduct])
-          frag = [round(x,6), input[mz]]
+          frag = [round(x,6), input[mz], mz]
           if frag not in self.spectra[adduct]:
             return [frag] # [] for below
           else: continue
@@ -141,7 +137,7 @@ class Glycerolipid:
           try:  # May be list of functions
             frag = [] # [] for this
             for fragment in x:
-                y = [round(fragment,6), input[mz]]
+                y = [round(fragment,6), input[mz], mz]
                 if y not in frag:
                   frag.append(y)
                 else: continue  
