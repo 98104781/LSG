@@ -2,20 +2,22 @@ import os
 import csv
 import sys
 import time
+import inspect
 
 import Classes
-#import Classes_isomers
+import Classes_isomers
 import GenerateLipids as GL
 
 from PySide6 import QtWidgets
-from itertools import combinations_with_replacement as cwr
+from itertools import combinations_with_replacement as cwr, product
 from PySide6.QtCharts import QChart, QChartView, QScatterSeries, QValueAxis
 from PySide6.QtCore import Property, QAbstractTableModel, QMargins, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor, QImage, QIntValidator, QPainter, QPainterPath, QPen, QPixmap
-from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QHeaderView, QProgressBar, QStyledItemDelegate, QTableView
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDialog, QFileDialog, QHeaderView, QProgressBar, QStyledItemDelegate, QTableView
 from PySide6.QtWidgets import QApplication, QPlainTextEdit, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QWizard, QWizardPage
 
-gplClassList = [cls for cls in GL.Glycerolipid.__subclasses__()]
+gplClassList = [cls for _, cls in inspect.getmembers(Classes) if inspect.isclass(cls)]
+gplClassList_Isomers = [cls for _, cls in inspect.getmembers(Classes_isomers) if inspect.isclass(cls)]
 
 class CreateWindow(QWizard):
     '''
@@ -32,7 +34,7 @@ class CreateWindow(QWizard):
         self.addPage(FASetupPage(self))
         self.addPage(SpectraSetupPage(self))
         self.addPage(GenerateSpectraPage(self))
-
+    
 class FASetupPage(QWizardPage):
     '''
     First page. Cmin, cmax, dmin and dmax used to
@@ -69,6 +71,9 @@ class FASetupPage(QWizardPage):
         self.dmax.setValidator(QIntValidator(0, 100))
         self.registerField('dmax*', self.dmax)
 
+        self.isomerism = QCheckBox('Respect sn isomerism', self)
+        self.registerField('isomerism', self.isomerism)
+
         # Alternate text and inputs vertically
         self.vLayout.addWidget(self.cminLabel) # Place label
         self.vLayout.addWidget(self.cmin) # Place input box
@@ -81,6 +86,8 @@ class FASetupPage(QWizardPage):
 
         self.vLayout.addWidget(self.dmaxLabel)
         self.vLayout.addWidget(self.dmax)
+
+        self.vLayout.addWidget(self.isomerism)
 
     def isComplete(self):
         '''
@@ -122,31 +129,42 @@ class SpectraSetupPage(QWizardPage):
         self.treeView = QTreeWidget()
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
-        
-        for cls in gplClassList:
-            self.classQbox[cls] = QTreeWidgetItem(self.treeView)
-            root = self.classQbox[cls]
-            # Custom variable to store lipid class
-            root.lipidClass = cls
-            root.setText(0, cls.__name__)
-            root.setCheckState(0, Qt.Unchecked)
-            root.setFlags(root.flags() | Qt.ItemIsAutoTristate | Qt.ItemIsUserCheckable)
-            self.classAdductQbox[cls] = {} # Open for adducts to add to
 
-            for adduct in cls.adducts:
-                self.classAdductQbox[cls][adduct] = QTreeWidgetItem(self.classQbox[cls])
-                child = self.classAdductQbox[cls][adduct]
-                # Custom variable to store fragment list
-                child.fragmentList = cls.adducts[adduct]
-                child.setText(0, adduct)
-                child.setCheckState(0, Qt.Unchecked)
-                child.setFlags(child.flags() | Qt.ItemIsUserCheckable)
 
-        self.modifybutton = QPushButton("Modify selected adduct spectra")
+        self.modifybutton = QPushButton("Modify fragmentation spectra for selected adduct(s)")
         self.modifybutton.clicked.connect(self.open_editspectrawindow)
 
         self.vLayout.addWidget(self.treeView)
         self.vLayout.addWidget(self.modifybutton)
+     
+
+    def initializePage(self) -> None:
+
+        self.treeView.clear()
+
+        if self.field('isomerism') == False:
+            classes_to_generate = gplClassList
+        else:
+            classes_to_generate = gplClassList_Isomers
+
+        for cls in classes_to_generate: #  Make boxes for Treeview
+            self.classQbox[cls]  =  QTreeWidgetItem(self.treeView)
+            root = self.classQbox[cls] # Creates tickbox for class
+            root.lipidClass = cls # Custom variable to store class
+            root.setText(0, cls.__name__) # Gives name for tickbox
+            root.setCheckState(0, Qt.Unchecked) #   Untick tickbox
+            root.setFlags(root.flags() | Qt.ItemIsAutoTristate | Qt.ItemIsUserCheckable)
+            self.classAdductQbox[cls] = {} # Open dict for adducts
+
+            for adduct in cls.adducts: # Make sub-box for treeview
+                self.classAdductQbox[cls][adduct] = QTreeWidgetItem(self.classQbox[cls])
+                child = self.classAdductQbox[cls][adduct] # Assign
+                child.fragmentList = cls.adducts[adduct] # Adducts
+                child.setText(0, adduct) #  Gives name for tickbox
+                child.setCheckState(0, Qt.Unchecked) #  Untick box
+                child.setFlags(child.flags() | Qt.ItemIsUserCheckable) 
+
+        return super().initializePage()
 
     def open_editspectrawindow(self):
         '''
@@ -188,8 +206,6 @@ class SpectraSetupPage(QWizardPage):
 
     tree_property = Property("QVariant", treeData, setTreeData, treeDataChanged)
 
-
-
 class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
     '''
     Popup window to modify selected class/adduct spectra.
@@ -212,13 +228,13 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         self.comboBox = QComboBox()
         self.spectra = SpectraScatter()
         self.spectra.setFixedHeight(200)
-        self.label = QLabel('Generated spectra are "isomer ambiguous", meaning that all isomer dependent\n'
-                            'fragments will be equal in intensity.\n\nIf the observed fragment intensities'
-                            ' differ from the default provided, they may\nbe manually updated on the left.')
-        self.comboBox.currentTextChanged.connect(self.buildList)
-        for item, item2 in treeData.items():
-            for adduct in item2:
-                self.comboBox.addItem(item.text(0)+' '+adduct.text(0), [item, adduct])
+        self.label = QLabel("If generated spectra don't respect sn isomerism, all isomer dependent\n"
+                            "fragments will be equal in intensity.\n\nIf the observed fragment intensities"
+                            " differ from the default provided, they may\nbe manually updated on the left.")
+        self.comboBox.currentTextChanged.connect(self.buildList) # Lipid data will be stored in comboboxs
+        for lipidClass, adductList in treeData.items():  # Unpack lipid/adduct data from Treeview for use
+            for adduct in adductList: # Unpack all adducts from adduct list for use in separate comboboxs
+                self.comboBox.addItem(lipidClass.text(0)+' '+adduct.text(0), [lipidClass, adduct]) # here
 
         self.applyBTN = QPushButton('Apply Changes')
         self.applyBTN.clicked.connect(self.applyChanges)
@@ -245,9 +261,8 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         cls = data[0].lipidClass # Example lipid
         _, comb, *_ = cwr(self.tails, cls.No_Tails)
         example = cls(*comb) # comb will be (16:0_) 16:0_18:1
-        example.adducts = {data[1].text(0):data[1].fragmentList}
-        example.resolve_spectra(example.adducts)
-        return example
+        example.resolve_spectra(data[1].text(0), data[1].fragmentList)
+        return example 
     
     def buildList(self):
         '''
@@ -259,7 +274,7 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
             example = self.buildLipid(data)
             adduct = data[1].text(0)
             fragments = example.spectra[adduct]
-            mz = GL.MA(example, GL.Masses[adduct])
+            mz = GL.MA(example, adduct, 0).MZ()
 
             self.spectra.setSpectra(example.name+' '+adduct, mz, fragments)
             self.tableData = SpectraTableModel(fragments)
@@ -276,10 +291,10 @@ class SpectraEditWindow(QDialog): # Opened from SpectraSetupPage
         Updates adduct spectra in list
         with new intensity.
         '''
-        fragment = int(index.row())
+        row = int(index.row())
         fragmentList = self.comboBox.currentData()[1].fragmentList
-        data = self.tableData.table_data[fragment]
-        fragmentList[data[2]] = data[1]
+        data = self.tableData.table_data[row]
+        fragmentList[data.fragmentType] = data.intensity
         self.comboBox.currentData()[1].fragmentList = fragmentList
         self.buildList()
 
@@ -356,8 +371,8 @@ class SpectraScatter(QChartView):
         self.spectra.setPen(QColor(Qt.transparent))
 
         for peak in spectra:
-            x = peak[0]
-            y = peak[1]
+            x = peak.MZ()
+            y = peak.intensity
             self.spectra.append(x, y)
 
         self.yaxis.setRange(0, 100)
@@ -400,13 +415,16 @@ class SpectraTableModel(QAbstractTableModel):
         row = index.row()
         column = index.column()
         if role == Qt.DisplayRole:
-            return str(self.table_data[row][column])
+            if column == 0:
+                return str(round(self.table_data[row].MZ(),6))
+            elif column == 1:
+                return str(self.table_data[row].intensity)
 
     def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
-            self.table_data[row][column] = value
+            self.table_data[row].intensity = value
             self.dataChanged.emit(index, index)
             return True
         return QAbstractTableModel.setData(self, index, value, role)
@@ -508,19 +526,26 @@ class GenerateSpectraPage(QWizardPage):
         '''
         count = 0
         for lipid in lipid_data:
-            lipid.resolve_spectra(lipid.adducts)
+
+            for adduct in lipid.adduct_dictionary:
+                lipid.resolve_spectra(adduct, lipid.adduct_dictionary[adduct])
         
-            for adduct in lipid.spectra:
+                written_masses = []
+                for frag in lipid.spectra[adduct]:
+                    mz = round(frag.MZ(), 6)
+                    intensity = frag.intensity
+                    if mz not in written_masses and intensity > 0:
+                        written_masses.append([mz, intensity])
 
                 save_file.write(f"NAME: {lipid.name} {adduct}\n")
                 save_file.write(f"IONMODE: {GL.Masses[adduct][1]}\n")
-                save_file.write(f"PRECURSORMZ: {round(GL.MA(lipid, GL.Masses[adduct]), 6)}\n")
+                save_file.write(f"PRECURSORMZ: {round(GL.MA(lipid, adduct, 0).MZ(), 6)}\n")
                 save_file.write(f"COMPOUNDCLASS: {lipid.lipid_class}\n")
                 save_file.write(f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())} \n")
                 save_file.write(f"RETENTIONTIME: 0.00\n") # Pointless
                 save_file.write(f"PRECURSORTYPE: {adduct}\n")
-                save_file.write(f"Num Peaks: {len(lipid.spectra[adduct])}\n")
-                save_file.writelines(f"{frag[0]} {frag[1]}\n" for frag in lipid.spectra[adduct] if frag[1] > 0)
+                save_file.write(f"Num Peaks: {len(written_masses)}\n")
+                save_file.writelines(f"{x[0]} {x[1]}\n" for x in written_masses)
                 save_file.write("\n")
                 count += 1
 
@@ -529,7 +554,7 @@ class GenerateSpectraPage(QWizardPage):
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-    def as_csv(self, save_file, lipid_data):
+    def as_orb(self, save_file, lipid_data):
         '''
         Defines how to export data when saved as .CSV.
         Specifically for use in QE 'Orbitrap' inclusion list.
@@ -542,12 +567,46 @@ class GenerateSpectraPage(QWizardPage):
 
         for lipid in lipid_data:
             for adduct in lipid.adducts:
-                ma = round(GL.MA(lipid, GL.Masses[adduct]), 6) # lipid.resolve_frag(adduct, {GL.MA:1})[0][0]
+                ma = round(GL.MA(lipid, adduct, 0).MZ(), 6) # lipid.resolve_frag(adduct, {GL.MA:1})[0][0]
                 if ma not in unique_mass: # This takes a lot of time!
                     unique_mass.append(ma) # Removes all the duplicates
                     writer.writerow([ma,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
                     count +=1
                 else: continue
+
+        self.progress_bar.setValue(self.progress_bar.value()+1)
+        return count
+
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
+    def as_sky(self, save_file, lipid_data):
+        '''
+        Defines how to export data when saved as .CSV.
+        Specifically for use in Skyline Transition list.
+        '''
+        count = 0
+        writer = csv.writer(save_file)
+
+        writer.writerow(['Molecule List Name', 'Precursor Name', 'Precursor Formula', 'Precursor Adduct', 'Precursor m/z', 'Precursor Charge', 'Product Formula', 'Product m/z', 'Product Charge', 'Explicit Retention Time', 'Explicit Collision Energy'])
+
+        for lipid in lipid_data:
+
+            for adduct in lipid.adduct_dictionary:
+                lipid.resolve_spectra(adduct, lipid.adduct_dictionary[adduct])
+
+                prec_mz = round(GL.MA(lipid, adduct, 0).MZ(), 6)
+                prec_formula = ''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())        
+         
+                written_masses = []
+                for prod in lipid.spectra[adduct]:
+
+                    prod_mz = round(prod.MZ(), 6)
+                    prod_formula = ''.join(''.join((key, str(val))) for (key, val) in prod.Formula().items())
+
+                    if prod_mz not in written_masses and prod.intensity > 0 and prod_mz != prec_mz:
+                        writer.writerow([lipid.lipid_class, lipid.name, prec_formula, adduct, prec_mz, GL.Masses[adduct][2], prod_formula, prod_mz, prod.Charge(), '', ''])
+                        written_masses.append(prod_mz)
+                        count +=1
 
         self.progress_bar.setValue(self.progress_bar.value()+1)
         return count
@@ -568,16 +627,22 @@ class GenerateSpectraPage(QWizardPage):
             tails = GL.generate_tails(self.tails_to_generate)
             self.progress_bar.setValue(self.progress_bar.value()+1)
 
-            for cls in self.classes_to_generate:
-                for comb in cwr(tails, cls.No_Tails):
-                    cls(*comb)
-                self.progress_bar.setValue(self.progress_bar.value()+1)
+            if self.field('isomerism') == True:
 
-            return GL.Glycerolipid.instances
-
+                for cls in self.classes_to_generate:
+                    for comb in product(tails, repeat = cls.No_Tails):
+                        cls(*comb)
+                    self.progress_bar.setValue(self.progress_bar.value()+1)
+                return GL.Glycerolipid.instances
+            else:
+                for cls in self.classes_to_generate:
+                    for comb in cwr(tails, cls.No_Tails):
+                        cls(*comb)
+                    self.progress_bar.setValue(self.progress_bar.value()+1)
+                return GL.Glycerolipid.instances
 
         # Create save location
-        file_name, _ = QFileDialog.getSaveFileName(filter="MSP (*.msp);;CSV (*.csv)")
+        file_name, filter = QFileDialog.getSaveFileName(filter="MSP (*.msp);;Orbitrap Inclusion (*.csv);;Skyline Transition (*.csv)", selectedFilter='')
         if file_name:
 
             t0 = time.time()
@@ -593,10 +658,13 @@ class GenerateSpectraPage(QWizardPage):
 
             save_file = open(file_name, 'x', newline='')
             # Based on file extension, export differently
-            if '.msp' in file_name:
+            if filter == "MSP (*.msp)":
                 count = self.as_msp(save_file, Generate_Lipids())
-            elif '.csv' in file_name:
-                count = self.as_csv(save_file, Generate_Lipids())
+            elif filter == "Orbitrap Inclusion (*.csv)":
+                count = self.as_orb(save_file, Generate_Lipids())
+            elif filter =="Skyline Transition (*.csv)":
+                count = self.as_sky(save_file, Generate_Lipids())
+                pass
             else: self.output_console.appendPlainText('Unsupported file type')
             save_file.close()
 

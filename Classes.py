@@ -124,12 +124,12 @@ class lyPA(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Needs Validation
-    GL.MA       :10,
-    GL.MH_s_FAk  :5,
-    GL.FAH      :10, 
-    152.995833 :100,
-    96.969618    :5,
-    78.959053   :20}}
+    GL.MA      :10,
+    GL.MH_s_FAk :5,
+    GL.FAH     :10, 
+    GL.C3H6O5P:100,
+    GL.H2O4P    :5,
+    GL.O3P     :20}}
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
@@ -148,14 +148,14 @@ class PA(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good
-    GL.MA          :15,
-    GL.MH_s_FA     :30,
-    GL.MH_s_FAk    :15,
-    GL.FAH        :100,
-    171.006398      :5, 
-    152.995833     :30,
-    96.969618       :5,
-    78.959053       :5},
+    GL.MA      :15,
+    GL.MH_s_FA :30,
+    GL.MH_s_FAk:15,
+    GL.FAH    :100,
+    GL.C3H8O6P  :5, 
+    GL.C3H6O5P :30,
+    GL.H2O4P    :5,
+    GL.O3P      :5},
 
   "[M+H]+":{ # Needs Validation
     GL.MA          :90,
@@ -177,11 +177,11 @@ class lyPC(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M+H]+":{ # Needs Validation
-    GL.MA       :5,
-    GL.MH_s_FA  :5,
-    GL.MH_s_FAk:10,
-    GL.FAkH     :1,
-    184.07332 :100}}#,
+    GL.MA         :5,
+    GL.MH_s_FA    :5,
+    GL.MH_s_FAk  :10,
+    GL.FAkH       :1,
+    GL.C5H15NO4P:100}}#,
 
   #"[M+Na]+":{ # Assuming [M+Na] fragments like [M+Li]
   #  GL.MA          :10,
@@ -215,7 +215,7 @@ class PC(GL.Glycerolipid):
     GL.MA           :5,
     GL.MH_s_FA      :1,
     GL.MH_s_FAk     :5,
-    184.07332     :100}}#,
+    GL.C5H15NO4P  :100}}#,
 
   #"[M+Na]+":{ # Assuming [M+Na] fragments like [M+Li]
   #  GL.MA          :10,
@@ -242,15 +242,15 @@ class lyPE(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Needs Validation
-    GL.MA       :15,
-    GL.MH_s_FA  :15,
-    GL.MH_s_FAk  :5,
-    GL.FAH     :100, 
-    196.038032   :5,
-    152.995833  :10,
-    140.011817   :3,
-    96.969618    :5,
-    78.959053    :5},
+    GL.MA      :15,
+    GL.MH_s_FA :15,
+    GL.MH_s_FAk :5,
+    GL.FAH    :100, 
+    GL.C5H11NO5P:5,
+    GL.C3H6O5P :10,
+    GL.C2H7NO4P :3,
+    GL.H2O4P    :5,
+    GL.O3P      :5},
   
   "[M+H]+":{ # Needs Validation
     GL.MA          :10,
@@ -275,15 +275,15 @@ class PE(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good
-    GL.MA          :15,
-    GL.MH_s_FA      :2,
-    GL.MH_s_FAk     :5,
-    GL.FAH        :100, 
-    196.038032      :5,
-    152.995833     :20,
-    140.011817      :3,
-    96.969618       :5,
-    78.959053       :5},
+    GL.MA       :15,
+    GL.MH_s_FA   :2,
+    GL.MH_s_FAk  :5,
+    GL.FAH     :100, 
+    GL.C5H11NO5P :5,
+    GL.C3H6O5P  :20,
+    GL.C2H7NO4P  :3,
+    GL.H2O4P     :5,
+    GL.O3P       :5},
   
   "[M+H]+":{ # Looks Good
     GL.MA          :10,
@@ -335,15 +335,15 @@ class PG(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good
-    GL.MA          :15,
-    GL.MH_s_FA      :2,
-    GL.MH_s_FAk     :5,
-    GL.FAH        :100,
-    227.032612      :2,
-    171.006398      :2,
-    152.995833     :10,
-    96.969618       :5,
-    78.959053       :5},
+    GL.MA       :15,
+    GL.MH_s_FA   :2,
+    GL.MH_s_FAk  :5,
+    GL.FAH     :100,
+    GL.C6H12O7P  :2,
+    GL.C3H8O6P   :2,
+    GL.C3H6O5P  :10,
+    GL.H2O4P     :5,
+    GL.O3P       :5},
 
   "[M+H]+":{ # Looks Good
     GL.MA          :10,
@@ -372,20 +372,20 @@ class lyPI(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   #"[M+Na-2H]-":{
-  #  315.048656   :50, # Not confident what the mz 192.988  is,
-  #  241.011877   :10, # perhaps as a [Phosphoglycerol+Na-2H]-.
-  #  223.001312   :10, # Appears in "[M+Na-2H]-" spectra.
-  #  192.988      :80, # Additional mz 355.04  not included.
-  #  152.995833   :80},
+  #  GL.C9H16O10P:50, # Not confident what the mz 192.988  is,
+  #  GL.C6H10O8P :10, # perhaps as a [Phosphoglycerol+Na-2H]-.
+  #  GL.C6H8O7P  :10, # Appears in "[M+Na-2H]-" spectra.
+  #  Gl.C3H7NaO6P:80, # Additional mz 355.04  not included.
+  #  GL.C3H6O5P  :80},
 
   "[M-H]-":{ # Needs Validation
     GL.MA         :2,
     GL.HG_NL_H2O_B:1,
     GL.FAH      :100, 
-    315.048656   :10, 
-    241.011877   :45,  # mz 233.001 can be a major -
-    223.001312   :10,  # or minor fragment depending -
-    152.995833   :45}} # on if its a sn1 or sn2 lyso lipid.
+    GL.C9H16O10P :10, 
+    GL.C6H10O8P  :45,  # mz 233.001 can be a major -
+    GL.C6H8O7P   :10,  # or minor fragment depending -
+    GL.C3H6O5P   :45}} # on if its a sn1 or sn2 lyso lipid.
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
@@ -407,12 +407,12 @@ class PI(GL.Glycerolipid):
   #  GL.MH_s_FA   :4,
   #  GL.HG_FA_NL_B:1,
   #  GL.FAH     :100,
-  #  315.048656  :40,
-  #  297.038092  :10, # Not confident what the mz 192.988  is, 
-  #  241.011877  :10, # perhaps as a [Phosphoglycerol+Na-2H]-.
-  #  223.001312  :40, # Appears in "[M+Na-2H]-" spectra.
-  #  192.988     :50, # Additional mz 355.04  not included.
-  #  152.995833  :60}, 
+  #  GL.C9H16O10P:40,
+  #  GL.C9H14O9P :10, 
+  #  GL.C6H10O8P :10,
+  #  GL.C6H8O7P  :40,
+  #  Gl.C3H7NaO6P:50,
+  #  GL.C3H6O5P  :60}, 
 
   "[M-H]-":{ # Looks Good
     GL.MA        :2,
@@ -420,12 +420,12 @@ class PI(GL.Glycerolipid):
     GL.MH_s_FAk  :1,
     GL.HG_FA_NL_B:1,
     GL.FAH     :100, 
-    315.048656   :5, 
-    297.038092   :5,
-    259.022442   :5, 
-    241.011877  :40,
-    223.001312  :15, 
-    152.995833  :20}}
+    GL.C9H16O10P :5, 
+    GL.C9H14O9P  :5,
+    GL.C6H12O9P  :5, 
+    GL.C6H10O8P :40,
+    GL.C6H8O7P  :15, 
+    GL.C3H6O5P  :20}}
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
@@ -441,20 +441,20 @@ class PIP(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   #"[M+Na-2H]-":{
-  #  GL.MA          :2,
-  #  GL.MH_s_PO3    :2,
-  #  GL.MH_s_FA     :1,
-  #  GL.MH_s_FA_H2O :1,
-  #  GL.MH_s_FAk_PO3:1,
-  #  GL.MH_s_FA_PO3 :1,
-  #  GL.HG_FA_NL_B  :5,
-  #  GL.FAH        :50,
-  #  342.960152   :100, 
-  #  324.949587    :10,
-  #  259.022442     :5, 
-  #  241.011877    :50,
-  #  223.001312    :20, 
-  #  152.995833    :10},
+  #  GL.MA            :2,
+  #  GL.MH_s_PO3      :2,
+  #  GL.MH_s_FA       :1,
+  #  GL.MH_s_FA_H2O   :1,
+  #  GL.MH_s_FAk_PO3  :1,
+  #  GL.MH_s_FA_PO3   :1,
+  #  GL.HG_FA_NL_B    :5,
+  #  GL.FAH          :50,
+  #  GL.C6H10NaO11P2:100, 
+  #  GL.C6H8NaO10P2  :10,
+  #  GL.C6H12O9P      :5, 
+  #  GL.C6H10O8P     :50,
+  #  GL.C6H8O7P      :20, 
+  #  GL.C3H6O5P      :10},
 
   "[M-H]-":{ # Looks Good
     GL.MH          :1,
@@ -467,21 +467,21 @@ class PIP(GL.Glycerolipid):
     GL.MH_s_FA_PO3 :4,
     GL.HG_FA_NL_B  :5,
     GL.FAH       :100,
-    320.978207    :10, 
-    302.967642    :15,
-    259.022442     :5, 
-    241.011877    :90,
-    223.001312    :90, 
-    152.995833    :40}}#,
+    GL.C6H11O11P2 :10, 
+    GL.C6H9O10P2  :15,
+    GL.C6H12O9P    :5, 
+    GL.C6H10O8P   :90,
+    GL.C6H8O7P    :90, 
+    GL.C3H6O5P    :40}}#,
 
   #"[M-2H]2-":{ # Looks Good
   #  GL.MA          :5,
   #  GL.FAH       :100,
-  #  320.978207     :2, 
-  #  302.967642     :1,
-  #  241.011877    :40,
-  #  223.001312     :1, 
-  #  152.995833    :10}}
+  #  GL.C6H11O11P2  :2, 
+  #  GL.C6H9O10P2   :1,
+  #  GL.C6H10O8P   :40,
+  #  GL.C6H8O7P     :1, 
+  #  GL.C3H6O5P    :10}}
 
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
@@ -545,14 +545,14 @@ class PS(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
   
   "[M-H]-":{ # Looks Good
-    GL.MA          :15,
-    GL.HG_NL_B    :100,
-    GL.HG_FA_NL_B  :50,
-    GL.HG_FAk_NL_B :25,
-    GL.FAH         :50,
-    152.995833     :30,
-    96.969618       :5,
-    78.959053       :5},
+    GL.MA         :15,
+    GL.HG_NL_B   :100,
+    GL.HG_FA_NL_B :50,
+    GL.HG_FAk_NL_B:25,
+    GL.FAH        :50,
+    GL.C3H6O5P    :30,
+    GL.H2O4P       :5,
+    GL.O3P         :5},
 
   "[M+H]+":{ # Looks Good
     GL.MA          :10,
