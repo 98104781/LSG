@@ -1,8 +1,9 @@
 import csv
 import GenerateLipids as GL
+from memory_profiler import profile
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
-
+#@profile
 def as_msp(self, save_file, lipid_data):
     '''
     Defines how to export data when saved as .MSP.
@@ -11,29 +12,25 @@ def as_msp(self, save_file, lipid_data):
     count = 0
     for lipid in lipid_data:
 
-        for adduct in lipid.adduct_dictionary:
-            lipid.resolve_spectra(adduct, lipid.adduct_dictionary[adduct])
+        for adduct in lipid.adducts:
+            lipid.resolve_spectra(adduct, lipid.adducts[adduct])
     
-            written_masses = []
-            for frag in lipid.spectra[adduct]:
-                mz = round(frag.MZ(), 6)
-                intensity = frag.intensity
-                if [mz, intensity] not in written_masses and intensity > 0:
-                    written_masses.append([mz, intensity])
-
             save_file.write(f"NAME: {lipid.name} {adduct}\n")
             save_file.write(f"IONMODE: {GL.Masses[adduct][1]}\n")
-            save_file.write(f"PRECURSORMZ: {round(GL.MA(lipid, adduct, 0).MZ(), 6)}\n")
+            save_file.write(f"PRECURSORMZ: {GL.MA(lipid, adduct, 0).mass}\n")
             save_file.write(f"COMPOUNDCLASS: {lipid.lipid_class}\n")
             save_file.write(f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())} \n")
             save_file.write(f"RETENTIONTIME: 0.00\n") # Pointless
             save_file.write(f"PRECURSORTYPE: {adduct}\n")
 
-            save_file.write(f"Num Peaks: {len(written_masses)}\n")
-            save_file.writelines(f"{x[0]} {x[1]}\n" for x in written_masses)
-            
+            spectrum = lipid.spectra[adduct]
+            save_file.write(f"Num Peaks: {len(spectrum)}\n")
+            save_file.writelines(f"{peak.mass} {peak.intensity}\n" for peak in spectrum)
+
             save_file.write("\n")
             count += 1
+
+        del lipid
 
     self.progress_bar.setValue(self.progress_bar.value()+1)
     return count
@@ -53,12 +50,13 @@ def as_orb(self, save_file, lipid_data):
 
     for lipid in lipid_data:
         for adduct in lipid.adducts:
-            ma = round(GL.MA(lipid, adduct, 0).MZ(), 6) # lipid.resolve_frag(adduct, {GL.MA:1})[0][0]
-            if ma not in unique_mass: # This takes a lot of time!
-                unique_mass.append(ma) # Removes all the duplicates
-                writer.writerow([ma,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
+            prec = GL.MA(lipid, adduct, 0)
+            if prec.mass not in unique_mass: # This takes a lot of time!
+                unique_mass.append(prec.mass) # Removes all the duplicates
+                writer.writerow([prec.mass,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
                 count +=1
             else: continue
+        del lipid
 
     self.progress_bar.setValue(self.progress_bar.value()+1)
     return count
@@ -77,23 +75,21 @@ def as_sky(self, save_file, lipid_data):
 
     for lipid in lipid_data:
 
-        for adduct in lipid.adduct_dictionary:
-            lipid.resolve_spectra(adduct, lipid.adduct_dictionary[adduct])
+        for adduct in lipid.adducts:
+            lipid.resolve_spectra(adduct, lipid.adducts[adduct])
 
-            prec_mz = round(GL.MA(lipid, adduct, 0).MZ(), 6)
+            prec_mz = GL.MA(lipid, adduct, 0).mass
             prec_formula = ''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())        
         
             written_masses = []
             for prod in lipid.spectra[adduct]:
 
-                prod_mz = round(prod.MZ(), 6)
                 prod_formula = ''.join(''.join((key, str(val))) for (key, val) in prod.Formula().items())
-
-                if prod_mz not in written_masses and prod.intensity > 0 and prod_mz != prec_mz:
-                    writer.writerow([lipid.lipid_class, lipid.name, prec_formula, adduct, prec_mz, GL.Masses[adduct][2], prod_formula, prod_mz, prod.Charge(), '', ''])
-                    written_masses.append(prod_mz)
-                    count +=1
+                if prod.mass not in written_masses and prod.intensity > 0 and prod.mass != prec_mz:
+                    writer.writerow([lipid.lipid_class, lipid.name, prec_formula, adduct, prec_mz, GL.Masses[adduct][2], prod_formula, prod.mass, prod.Charge(), '', ''])
+                    written_masses.append(prod.mass)
+                    count +=1            
+        del lipid
 
     self.progress_bar.setValue(self.progress_bar.value()+1)
     return count
-

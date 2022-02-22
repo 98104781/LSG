@@ -1,11 +1,10 @@
 
 import GenerateLipids as GL
+import Spectra
 
 from itertools import combinations_with_replacement as cwr
-from PySide6.QtCharts import QChart, QChartView, QScatterSeries, QValueAxis
-from PySide6.QtCore import QAbstractTableModel, QMargins, QModelIndex, Qt
-from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QStyledItemDelegate, QTableView, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox
+from PySide6.QtCore import QModelIndex
+from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
 
 class NewWindow(QDialog): # Opened from SpectraSetupPage
     '''
@@ -26,8 +25,9 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
 
         self.tableView = QTableView()
         self.comboBox = QComboBox()
-        self.spectra = SpectraScatter()
+        self.spectra = Spectra.SpectraScatter()
         self.spectra.setFixedHeight(200)
+        self.spectra.setFixedWidth(400)
         self.label = QLabel("If generated spectra don't respect sn isomerism, all isomer dependent\n"
                             "fragments will be equal in intensity.\n\nIf the observed fragment intensities"
                             " differ from the default provided, they may\nbe manually updated on the left.")
@@ -77,12 +77,12 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
             mz = GL.MA(example, adduct, 0).mass
 
             self.spectra.setSpectra(example.name+' '+adduct, mz, fragments)
-            self.tableData = SpectraTableModel(fragments)
-            self.tableView.setModel(self.tableData)
-            self.tableView.setItemDelegateForColumn(1, SpinBoxDelegate(self.tableView))
+            self.table = Spectra.SpectraTableModel(fragments)
+            self.tableView.setModel(self.table)
+            self.tableView.setItemDelegateForColumn(1, Spectra.SpinBoxDelegate(self.tableView))
             self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             self.tableView.verticalHeader().hide()
-            self.tableData.dataChanged.connect(self.updateData)
+            self.table.dataChanged.connect(self.updateData)
         else: pass
 
     def updateData(self, index: QModelIndex, *other):
@@ -92,7 +92,7 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         '''
         row = int(index.row())
         fragmentList = self.comboBox.currentData()[1].fragmentList
-        data = self.tableData.table_data[row]
+        data = self.table.tdata[row]
         fragmentList[data.fragmentType] = data.intensity
         self.comboBox.currentData()[1].fragmentList = fragmentList
         self.buildList()
@@ -115,143 +115,3 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
 
     def resetChanges(self):
         pass
-
-class SpectraScatter(QChartView):
-    '''
-    Scatterplot with custom marker,
-    made to appear as mass spectra.
-    '''
-    def __init__(self, parent=None):
-        super().__init__(QChart(), parent=parent)
-
-        self.xaxis = QValueAxis()
-        self.xaxis.setGridLineVisible(False)
-        self.chart().addAxis(self.xaxis, Qt.AlignBottom)
-        self.xaxis.setTickCount(2)
-        self.xaxis.setLabelsVisible(False)
-
-        self.yaxis = QValueAxis()
-        self.yaxis.setGridLineVisible(False)
-        self.chart().addAxis(self.yaxis, Qt.AlignLeft)
-        self.yaxis.setLabelsVisible(False)    
-
-        self.spectra = QScatterSeries()
-        self.spectra.setMarkerSize(10000)
-        self.spectra.setMarkerShape(self.spectra.MarkerShapeRectangle)
-        self.chart().setMargins(QMargins(-20, 0, -10, -10))
-        self.chart().addSeries(self.spectra)
-        self.spectra.attachAxis(self.xaxis)
-        self.spectra.attachAxis(self.yaxis)
-        self.chart().legend().hide()
-
-    def setSpectra(self, precursorName, precursorMass, spectra):
-        '''
-        Updates displayed spectra with new spectra.
-        '''
-        self.chart().setTitle(precursorName)
-        binMax = int(precursorMass+100)
-
-        self.spectra.clear()
-
-        linePath = QPainterPath()
-        linePath.moveTo(5000, 5001)
-        linePath.lineTo(5001, 10000)
-        linePath.closeSubpath()
-        image = QImage(10000, 10000, QImage.Format_ARGB32)
-        painter = QPainter(image)
-        pen = QPen(QColor(0, 0, 0), 1, Qt.SolidLine)
-        painter.setPen(pen)
-        painter.setBrush(painter.pen().color())
-        painter.drawPath(linePath)
-        painter.end()
-
-        self.spectra.setBrush(image)
-        self.spectra.setPen(QColor(Qt.transparent))
-
-        for peak in spectra:
-            x = peak.mass
-            y = peak.intensity
-            self.spectra.append(x, y)
-
-        self.yaxis.setRange(0, 100)
-        self.xaxis.setRange(100, binMax)
-
-class SpectraTableModel(QAbstractTableModel):
-    '''
-    Custom table type to organise and display
-    lipid spectra data for inspection/modification
-    using SpectraEditWindow dialogue.
-    '''
-    def __init__(self, data=[], parent=None):
-        QAbstractTableModel.__init__(self, parent)
-        self.table_data = data
-        self.headers = ['m/z (Da)', 'Abn. (%)']
-    
-    def flags(self, index):
-        '''
-        Forbids editing of mz value displayed in column 0.
-        Allows editing of abundance value displayed in column 1.
-        '''
-        if index.column() > 0:
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
-        else:
-            return Qt.ItemIsSelectable
-
-    def rowCount(self, parent):
-        return len(self.table_data)
-
-    def columnCount(self, parent):
-        return len(self.headers)
-    
-    def headerData(self, column, orientation, role=Qt.DisplayRole):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.headers[column]
-    
-    def data(self, index, role=Qt.DisplayRole):
-        row = index.row()
-        column = index.column()
-        if role == Qt.DisplayRole:
-            if column == 0:
-                return str(self.table_data[row].mass)
-            elif column == 1:
-                return str(self.table_data[row].intensity)
-
-    def setData(self, index, value, role=Qt.EditRole):
-        if role == Qt.EditRole:
-            row = index.row()
-            column = index.column()
-            self.table_data[row].intensity = value
-            self.dataChanged.emit(index, index)
-            return True
-        return QAbstractTableModel.setData(self, index, value, role)
-
-    def resizeEvent(self, event):
-        pass
-
-    def insertRow(self):
-        pass
-
-    def removeRow(self, position):
-        pass
-
-class SpinBoxDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None):
-        QStyledItemDelegate.__init__(self, parent)
-
-    def createEditor(self, parent, option, index):
-        editor = QSpinBox(parent)
-        editor.setMinimum(0)
-        editor.setMaximum(100)
-        editor.setSingleStep(1)
-        return editor
-            
-    def setEditorData(self, spinBox, index):
-        value = int(index.model().data(index, Qt.DisplayRole))
-        spinBox.setValue(value)
-
-    def setModelData(self, spinBox, model, index):
-        value = spinBox.value()
-        model.setData(index, value)
-
-    def updateEditorGeometry(self, editor, option, index):
-        editor.setGeometry(option.rect)

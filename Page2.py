@@ -1,16 +1,14 @@
-import sys
 import inspect
 
 import Classes
 import Classes_isomers
-import SpectraEditWindow as SEW
+import Page2_EditWindow as P2EW
 
 from PySide6.QtCore import Property, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
 
-
-
+# This gives me the classes, but not in the order that I set them... Really irks me !
 gplClassList = [cls for _, cls in inspect.getmembers(Classes) if inspect.isclass(cls)]
 gplClassList_Isomers = [cls for _, cls in inspect.getmembers(Classes_isomers) if inspect.isclass(cls)]
 
@@ -36,7 +34,6 @@ class Page(QWizardPage):
         self.treeView = QTreeWidget()
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
-
 
         self.modifybutton = QPushButton("Modify fragmentation spectra for selected adduct(s)")
         self.modifybutton.clicked.connect(self.open_editspectrawindow)
@@ -79,7 +76,7 @@ class Page(QWizardPage):
         Should display an example lipid spectra of GPL
         16:0_18:1 with appropriate masses and intensity.
         '''
-        editspectrawindow = SEW.NewWindow(self.field('tree'))
+        editspectrawindow = P2EW.NewWindow(self.field('tree'))
         editspectrawindow.exec()
             
     def treeData(self):
@@ -112,3 +109,6 @@ class Page(QWizardPage):
         pass
 
     tree_property = Property("QVariant", treeData, setTreeData, treeDataChanged)
+
+    def nextId(self):
+        return 3 # Page 3

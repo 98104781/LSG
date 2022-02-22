@@ -1,5 +1,5 @@
 from collections import Counter
-from tkinter import X
+from typing import Iterable
 
 Masses = {
 
@@ -58,7 +58,7 @@ class sn:
   type = 'Acyl', 'Ether', 'Methyl', 'Headgroup', anything else will return water\n
   providing no parameters also returns a water (-OH), which does not modify backbone.
   '''
-  def __init__(self, c=0, d=0, m=0, mass=None, chnops={}, type=None):
+  def __init__(self, c=0, d=0, mass=None, chnops={}, type=None, me=0, oh=0, dt=0):
 
     self.type = type
     
@@ -66,41 +66,52 @@ class sn:
       self.name = f"{c}:{d}"
       #           O2 mass     + c*CH2 mass    - d*H2 mass
       self.mass = 31.98982926 + c*14.01565007 - d*2.01565007
-      self.formula = {'C':c, 'H':(2*c-2*d),'O':2}
-
+      self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':2})
     elif self.type == 'Ether':
       self.name = f"{c}:{d};O"
       #           O mass    + c*CH2 mass    - d*H2 mass
       self.mass = 18.010565 + c*14.01565007 - d*2.01565007
-      self.formula = {'C':c, 'H':(2*c-2*d),'O':1}
-
-    elif self.type == 'Methyl': # Methyl branched Acyl kind
-      self.name = f"{c}:{d};{m}M" # Perhaps exclude? Mass identical to acyl c+m
-      #           O2 mass     + c*CH2 mass    - d*H2 mass
-      self.mass = 31.98982926 + (c+m)*14.01565007 - d*2.01565007
-      self.formula = {'C':c+m, 'H':(2*(c+m)-2*d),'O':2}
-
+      self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':1})
     elif self.type == 'Headgroup':
       self.name = 'Headgroup'
       self.mass = mass
-      self.formula = chnops
-
-    else:
+      self.formula = Counter(chnops)
+    else: # If nothing, just give it values for water
       self.name = '0:0'
       self.mass = 18.010565
-      self.formula = {'H':2,'O':1}
+      self.formula = Counter({'H':2,'O':1})
 
-def generate_tails(n):
+    # Perhaps exclude?  Identical to fatty acid of c = c+m
+    if me > 0: # Methyl branching of fatty acid
+      self.name += f";{me}-M" 
+      self.mass += me*14.01565007
+      self.formula += {'C':me, 'H':2*me}
+    if oh > 0: # Hydroxy functionalisation of fatty acid
+      self.name += f";{oh}-OH"
+      self.mass += oh*15.996013
+      self.formula += {'O':oh}
+    if dt > 0: # deuterium labelled fatty acids
+      self.name += f"(D{dt})"
+      self.mass += dt*1.006277
+      self.formula += {'H':-dt, 'D':dt}
+
+
+
+def generate_acyl_tails(n):
     tail_list = []
-    [tail_list.append(sn(c, d, type='Acyl'))
+    [tail_list.append(sn(c, d, type='Acyl', oh=oh))
      for c in range(n[0], n[1] + 1)
       for d in range(n[2], n[3] + 1)
-       if d <= (c-1)/2]
+       if d <= (c-1)/2
+       for oh in range(0, n[4]+1)
+       if d+oh <= (c-1)/2]
     return tail_list
+
+
 
 class Glycerolipid:
   instances = []  # All created GPLs stored here
-  def __init__(self, adduct_dictionary, sn3=sn(), sn2=sn(), sn1=sn()):
+  def __init__(self, adducts, sn3=sn(), sn2=sn(), sn1=sn()):
 
     self.tails = [sn1, sn2, sn3]
     self.lipid_class = type(self).__name__  # Takes name from class which generated it
@@ -113,17 +124,18 @@ class Glycerolipid:
       formula.subtract({'H':2,'O':1}) # -H2O for bonding
     self.formula = dict(formula)
 
-    self.adduct_dictionary = adduct_dictionary  # list of all adducts
+    self.adducts = adducts  # list of all adducts
     self.spectra = {}   # generated spectra for an adduct stored here
 
-    Glycerolipid.instances.append(self) # Finish by appending to list of all GPLs
+    #Glycerolipid.instances.append(self) # Finish by appending to list of all GPLs
 
   def resolve_spectra(self, adduct, spectra={}):
     x = []
     for fragment, intensity in spectra.items():
-      try: x.extend(fragment(self, adduct, intensity))
-      except: # try extend first for generators
-        try: x.append(fragment(self, adduct, intensity))
+      fgmt = fragment(self, adduct, intensity)
+      try: x.extend(list(set(fgmt)))
+      except:
+        try: x.append(fgmt)
         except:
           print('Error assigning', fragment)
     self.spectra[adduct] = x
@@ -143,18 +155,24 @@ class Fragment:
     self.lipid = lipid
     self.adduct = adduct
     self.intensity = intensity
+    self.mass = round(self.MZ(), 6)
 
     if fragmentType is not None:
       self.fragmentType = fragmentType
     else: self.fragmentType = type(self)
 
   def MZ(self):
-    return self.mz
+    return None
   def Formula(self):
     return None
   def Charge(self):
     return (Masses[self.adduct][2]/
     abs(Masses[self.adduct][2]))
+
+  def __hash__(self):
+    return hash(('mass', self.mass))
+  def __eq__(self, other):
+    return self.mass == other.mass
 
 # ~ # ~ # ~ # [M +/- adduct]
 
@@ -242,7 +260,7 @@ def MA_s_FA(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FAx(lipid, adduct, intensity, MA_s_FA, tail)
 
 
@@ -250,8 +268,9 @@ class MA_s_FAx(MA):
   '''[ MA - RCOOH ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -287,15 +306,16 @@ def MA_s_FA_H2O(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FAx_H2O(lipid, adduct, intensity, MA_s_FA_H2O, tail)
 
 class MA_s_FAx_H2O(MA_s_H2O):
   '''[ MA - RCOOH - H2O ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -331,7 +351,7 @@ def MA_s_FAk(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FAkx(lipid, adduct, intensity, MA_s_FAk, tail)
 
 class MA_s_FAkx(MA):
@@ -339,8 +359,9 @@ class MA_s_FAkx(MA):
   Fatty acid Ketone\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     mz = super().MZ()
     mz += (Masses['H2O']/abs(Masses[self.adduct][2])) 
@@ -381,15 +402,16 @@ def MA_s_FA_PO3(lipid, adduct, intensity):
   Fragment for adducted molecular ion with loss of a free fatty acid AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FA_PO3x(lipid, adduct, intensity, MA_s_FA_PO3, tail)
 
 class MA_s_FA_PO3x(MA_s_PO3):
   '''[ MA - RCOOH - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -424,15 +446,16 @@ def MA_s_FAk_PO3(lipid, adduct, intensity):
   Fragment for adducted molecular ion with loss of a fatty acid ketone AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FAk_PO3x(lipid, adduct, intensity, MA_s_FAk_PO3, tail)
 
 class MA_s_FAk_PO3x(MA_s_PO3):
   '''[ MA - RC=O - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - ((self.tail.mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -471,15 +494,16 @@ def MA_s_FA_TMA(lipid, adduct, intensity):
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FA_TMAx(lipid, adduct, intensity, MA_s_FA_TMA, tail)
 
 class MA_s_FA_TMAx(MA_s_TMA):
   '''[ MA - RCOOH - C3H9N ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -517,15 +541,16 @@ def MA_s_FAk_TMA(lipid, adduct, intensity):
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FAk_TMAx(lipid, adduct, intensity, MA_s_FAk_TMA, tail)
 
 class MA_s_FAk_TMAx(MA_s_TMA):
   '''[ MA - RC=O - C3H9N ]\n
   Do not use this class, intended for use in loop''' 
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - ((self.tail.mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -566,15 +591,16 @@ def MA_s_FA_AZD(lipid, adduct, intensity):  # [M+-H-FA-AZD]+-
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
   for tail in lipid.tails:       # FA = fatty acid
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FA_AZDx(lipid, adduct, intensity, MA_s_FA_AZD, tail)
 
 class MA_s_FA_AZDx(MA_s_AZD):  # [M+-H-FA-AZD]+-
   '''[ MA - RCOOH - C2H5N ]\n
   Do not use this class, intended for use in loop''' 
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -612,15 +638,16 @@ def MA_s_FAk_AZD(lipid, adduct, intensity):  # [M+-H-FAk-AZD]+-
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MA_s_FAk_AZDx(lipid, adduct, intensity, MA_s_FAk_AZD, tail)
 
 class MA_s_FAk_AZDx(MA_s_AZD):  # [M+-H-FAk-AZD]+-
   '''[ MA - RC=O - C2H5N ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - ((self.tail.mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -748,15 +775,16 @@ def MH_s_FA(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MH_s_FAx(lipid, adduct, intensity, MH_s_FA, tail)
 
 class MH_s_FAx(MH):
   '''[ M(+/-)H - RCOOH ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -791,15 +819,16 @@ def MH_s_FA_H2O(lipid, adduct, intensity):
   Fragment for (de)protonated molecular ion with loss of a free fatty acid AND water\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MH_s_FA_H2Ox(lipid, adduct, intensity, MH_s_FA_H2O, tail)
 
 class MH_s_FA_H2Ox(MH_s_H2O):
   '''[ M(+/-)H - RCOOH - H2O ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -835,15 +864,16 @@ def MH_s_FAk(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MH_s_FAkx(lipid, adduct, intensity, MH_s_FAk, tail)
 
 class MH_s_FAkx(MH):
   '''[ M(+/-)H - RCOOH ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass-Masses['H2O'])
   def Formula(self):
@@ -880,15 +910,16 @@ def MH_s_FA_PO3(lipid, adduct, intensity):
   Fragment for (de)protonated molecular ion with loss of a free fatty acid AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MH_s_FA_PO3x(lipid, adduct, intensity, MH_s_FA_PO3, tail)
 
 class MH_s_FA_PO3x(MH_s_PO3):  # [M+-H-FA-PO3]+-
   '''[ M(+/-)H - RCOOH - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -923,15 +954,16 @@ def MH_s_FAk_PO3(lipid, adduct, intensity):
   Fragment for (de)protonated molecular ion with loss of a fatty acid ketone AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield MH_s_FAk_PO3x(lipid, adduct, intensity, MH_s_FAk_PO3, tail)
 
 class MH_s_FAk_PO3x(MH_s_PO3):
   '''[ M(+/-)H - RC=O - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass-Masses['H2O'])
   def Formula(self):
@@ -1015,15 +1047,16 @@ def M2H_s_FA(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield M2H_s_FAx(lipid, adduct, intensity, M2H_s_FA, tail)
 
 class M2H_s_FAx(M2H):
   '''[ M(+/-)2H - RCOOH ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/2)
   def Formula(self):
@@ -1059,15 +1092,16 @@ def M2H_s_FAk(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield M2H_s_FAkx(lipid, adduct, intensity, M2H_s_FAk, tail)
 
 class M2H_s_FAkx(M2H):
   '''[ M(+/-)2H - RCOOH ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass-Masses['H2O'])/2
   def Formula(self):
@@ -1107,15 +1141,16 @@ def FAH(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield FAHx(lipid, adduct, intensity, FAH, tail)
 
 class FAHx(Fragment):
   '''[ FA - H ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return self.tail.mass - Masses['H']
   def Formula(self):
@@ -1169,15 +1204,16 @@ def FAkH(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield FAkHx(lipid, adduct, intensity, FAkH, tail)
 
 class FAkHx(Fragment):
   '''[ FA - H2O +/- H ]\n
   Do not use this class, intended for use in loop''' 
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-    super().__init__(lipid, adduct, intensity, fragmentType)
     self.tail = tail
+    super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     if self.adduct[1] == 'Positive':
       return self.tail.mass - Masses['H2O'] + Masses['H']
@@ -1269,17 +1305,18 @@ def FAkA(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield FAkAx(lipid, adduct, intensity, FAkA, tail)
 
 class FAkAx(Fragment):
   '''[ FA - H2O + Adduct ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
-    return (self.lipid.tail[0].mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
+    return (self.lipid.tails[0].mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
   def Formula(self):
     formula = Counter(self.tail.formula)
     formula.subtract({'H':2, 'O':1})
@@ -1344,10 +1381,11 @@ class HG_NL_A(MA):
   B = Headgroup NL, without phosphate\n
   C = Headgroup NL, with phosphate MA -> MH'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
-      super().__init__(lipid, adduct, intensity, fragmentType)
-      for sn in self.lipid.tails: # ie, sn1, sn2, or sn3
+      for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
       return super().MZ() - (self.headgroup.mass - Masses['H2O'])/abs(Masses[self.adduct][2])
   def Formula(self):
@@ -1378,14 +1416,15 @@ def HG_FA_NL_A(lipid, adduct, intensity):
   i.e. loss of headgroup, including phospate from adducted molecular ion\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FA_NL_Ax(lipid, adduct, intensity, HG_FA_NL_A, tail)
 
 class HG_FA_NL_Ax(HG_NL_A):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -1423,14 +1462,15 @@ def HG_FA_NL_H2O_A(lipid, adduct, intensity):
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FA_NL_H2O_Ax(lipid, adduct, intensity, HG_FA_NL_H2O_A, tail)
 
 class HG_FA_NL_H2O_Ax(HG_NL_H2O_A):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -1468,14 +1508,15 @@ def HG_FAk_NL_A(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FAk_NL_Ax(lipid, adduct, intensity, HG_FAk_NL_A, tail)
 
 class HG_FAk_NL_Ax(HG_NL_A):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass-Masses['H2O'])/abs(Masses[self.adduct][2])
   def Formula(self):
@@ -1517,10 +1558,11 @@ class HG_NL_B(MH):
   B = Headgroup NL, without phosphate\n
   C = Headgroup NL, with phosphate MA -> MH'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
-      super().__init__(lipid, adduct, intensity, fragmentType)
-      for sn in self.lipid.tails: # ie, sn1, sn2, or sn3
+      for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
       return super().MZ() - (self.headgroup.mass - Masses['PO4'])
   def Formula(self):
@@ -1537,10 +1579,11 @@ class HG_NL_2B(MH):  # Headgroup neutral loss
   B = Headgroup NL, without phosphate\n
   C = Headgroup NL, with phosphate MA -> MH'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
-      super().__init__(lipid, adduct, intensity, fragmentType)
-      for sn in self.lipid.tails: # ie, sn1, sn2, or sn3
+      for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
-          self.headgroup = sn  
+          self.headgroup = sn
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  
   def MZ(self):
       return super().MZ() - (self.headgroup.mass - 2*Masses['PO3'])
   def Formula(self):
@@ -1569,14 +1612,15 @@ def HG_FA_NL_B(lipid, adduct, intensity):
   Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FA_NL_Bx(lipid, adduct, intensity, HG_FA_NL_B, tail)
 
 class HG_FA_NL_Bx(HG_NL_B):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -1614,14 +1658,15 @@ def HG_FAk_NL_B(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FAk_NL_Bx(lipid, adduct, intensity, HG_FAk_NL_A, tail)
 
 class HG_FAk_NL_Bx(HG_NL_B):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass-Masses['H2O'])
   def Formula(self):
@@ -1659,14 +1704,15 @@ def HG_FA_NL_H2O_B(lipid, adduct, intensity):
   Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid and water\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FA_NL_H2O_Bx(lipid, adduct, intensity, HG_FA_NL_H2O_B, tail)
 
 class HG_FA_NL_H2O_Bx(HG_NL_H2O_B):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -1706,10 +1752,11 @@ class HG_NL_C(MH):
   B = Headgroup NL, without phosphate\n
   C = Headgroup NL, with phosphate MA -> MH'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
-      super().__init__(lipid, adduct, intensity, fragmentType)
-      for sn in self.lipid.tails: # ie, sn1, sn2, or sn3
+      for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
       return super().MZ() - self.headgroup.mass + Masses['H2O']
   def Formula(self):
@@ -1740,14 +1787,15 @@ def HG_FA_NL_C(lipid, adduct, intensity):
   i.e. loss of headgroup, including phospate from adducted molecular ion\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FA_NL_Cx(lipid, adduct, intensity, HG_FA_NL_C, tail)
 
 class HG_FA_NL_Cx(HG_NL_C):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -1783,14 +1831,15 @@ def HG_FAk_NL_C(lipid, adduct, intensity):
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FAk_NL_Cx(lipid, adduct, intensity, HG_FAk_NL_C, tail)
 
 class HG_FAk_NL_Cx(HG_NL_C):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - (self.tail.mass-Masses['H2O'])
   def Formula(self):
@@ -1829,14 +1878,15 @@ def HG_FA_NL_H2O_C(lipid, adduct, intensity):
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
-    if tail.type == 'Acyl':
+    if tail.type in ['Acyl']:
       yield HG_FA_NL_H2O_Cx(lipid, adduct, intensity, HG_FA_NL_H2O_C, tail)
     
 class HG_FA_NL_H2O_Cx(HG_NL_H2O_C):
   '''Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
-      super().__init__(lipid, adduct, intensity, fragmentType)
       self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -1870,10 +1920,11 @@ class HG_sn2_NL_H2O_C(HG_NL_H2O_C):
 
 class HGA(Fragment):  # Headgroup + Adduct
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
-      super().__init__(lipid, adduct, intensity, fragmentType)
-      for sn in self.lipid.tails: # ie, sn1, sn2, or sn3
+      for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
     return (self.headgroup.mass + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
   def Formula(self):
