@@ -71,6 +71,11 @@ class sn:
       self.name = f"{c}:{d};O"
       #           O mass    + c*CH2 mass    - d*H2 mass
       self.mass = 18.010565 + c*14.01565007 - d*2.01565007
+      self.formula = Counter({'C':c, 'H':(2*c-2*(d-1)),'O':1})
+    elif self.type == 'Vinyl':
+      self.name = f"{c}:{d};P"
+      #           O mass    + c*CH2 mass    - d*H2 mass
+      self.mass = 18.010565 + c*14.01565007 - (d+1)*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':1})
     elif self.type == 'Headgroup':
       self.name = 'Headgroup'
@@ -688,19 +693,19 @@ class MH(Fragment):
   '''[ M-H ] or [ M+H ]\n
   Fragment for molecular ion (de)protonation'''
   def MZ(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return self.lipid.mass + Masses['H']
     else:
       return self.lipid.mass - Masses['H']
   def Formula(self):
     formula = Counter(self.lipid.formula)
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       formula.update({'H':1})
     else:
       formula.subtract({'H':1})
     return formula
   def Charge(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return 1
     else:
       return -1
@@ -784,7 +789,6 @@ class MH_s_FAx(MH):
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
       super().__init__(lipid, adduct, intensity, fragmentType)
-
   def MZ(self):
     return super().MZ() - self.tail.mass
   def Formula(self):
@@ -810,6 +814,16 @@ class MH_s_sn2(MH):
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.tails[1].formula)
+    return formula
+
+class MH_s_sn3(MH):
+  '''[ M(+/-)H - RCOOH ] (sn3)\n
+  Fragment for (de)protonated molecular ion, with loss of sn2 as free-fatty acid'''
+  def MZ(self):
+    return super().MZ() - self.lipid.tails[2].mass
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.tails[2].formula)
     return formula
 
 # ~ # 
@@ -1002,19 +1016,19 @@ class M2H(Fragment):
   '''[ M-2H ] or [ M+2H ]\n
   Fragment for molecular ion double (de)protonation'''
   def MZ(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return (self.lipid.mass + 2*Masses['H'])/2
     else:
       return (self.lipid.mass - 2*Masses['H'])/2
   def Formula(self):
     formula = Counter(self.lipid.formula)
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       formula.update({'H':2})
     else:
       formula.subtract({'H':2})
     return formula
   def Charge(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return 2
     else:
       return -2
@@ -1215,20 +1229,20 @@ class FAkHx(Fragment):
     super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return self.tail.mass - Masses['H2O'] + Masses['H']
     else:
       return self.tail.mass - Masses['H2O'] - Masses['H']
   def Formula(self):
     formula = Counter(self.tail.formula)
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       formula.subtract({'H':1, 'O':1})
       return formula
     else:
       formula.subtract({'H':3, 'O':1})
       return formula
   def Charge(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return 1
     else:
       return -1
@@ -1237,20 +1251,20 @@ class sn1k(Fragment):
   '''[ FA - H2O +/- H ] (sn1)\n
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return self.lipid.tails[0].mass - Masses['H2O'] + Masses['H']
     else:
       return self.lipid.tails[0].mass - Masses['H2O'] - Masses['H']
   def Formula(self):
     formula = Counter(self.lipid.tails[0].formula)
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       formula.subtract({'H':1, 'O':1})
       return formula
     else:
       formula.subtract({'H':3, 'O':1})
       return formula
   def Charge(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return 1
     else:
       return -1
@@ -1259,20 +1273,20 @@ class sn2k(Fragment):
   '''[ FA - H2O +/- H ] (sn2)\n
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return self.lipid.tails[1].mass - Masses['H2O'] + Masses['H']
     else:
       return self.lipid.tails[1].mass - Masses['H2O'] - Masses['H']
   def Formula(self):
     formula = Counter(self.lipid.tails[1].formula)
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       formula.subtract({'H':1, 'O':1})
       return formula
     else:
       formula.subtract({'H':3, 'O':1})
       return formula
   def Charge(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return 1
     else:
       return -1
@@ -1281,20 +1295,20 @@ class sn3k(Fragment):
   '''[ FA - H2O +/- H ] (sn3)\n
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return self.lipid.tails[2].mass - Masses['H2O'] + Masses['H']
     else:
       return self.lipid.tails[2].mass - Masses['H2O'] - Masses['H']
   def Formula(self):
     formula = Counter(self.lipid.tails[2].formula)
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       formula.subtract({'H':1, 'O':1})
       return formula
     else:
       formula.subtract({'H':3, 'O':1})
       return formula
   def Charge(self):
-    if self.adduct[1] == 'Positive':
+    if Masses[self.adduct][1] == 'Positive':
       return 1
     else:
       return -1
@@ -1659,7 +1673,7 @@ def HG_FAk_NL_B(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   for tail in lipid.tails:
     if tail.type in ['Acyl']:
-      yield HG_FAk_NL_Bx(lipid, adduct, intensity, HG_FAk_NL_A, tail)
+      yield HG_FAk_NL_Bx(lipid, adduct, intensity, HG_FAk_NL_B, tail)
 
 class HG_FAk_NL_Bx(HG_NL_B):
   '''Do not use this class, intended for use in loop'''
@@ -2088,6 +2102,17 @@ class C3H8O6P(Fragment):
     return 171.006398
   def Formula(self):
     formula = Counter({'C':3, 'H':8, 'O':6, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+
+class HO6P2(Fragment):
+  '''X-H Headgroup fragment for PPA\n
+  MZ: 158.925383'''
+  def MZ(self):
+      return 158.925383
+  def Formula(self):
+    formula = Counter({'H':1, 'O':6, 'P':2})
     return formula
   def Charge(self):
       return -1

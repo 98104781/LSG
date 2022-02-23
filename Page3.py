@@ -90,6 +90,7 @@ class Page(QWizardPage):
             self.progress_bar.setMinimum(0)
             self.progress_bar.setMaximum(len(self.classes_to_generate)+2)
             self.tails = GL.generate_acyl_tails(self.tails_to_generate)
+            print(len(self.tails))
             self.progress_bar.setValue(self.progress_bar.value()+1)
 
             if self.field('isomerism') == True:

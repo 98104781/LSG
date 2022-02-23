@@ -62,7 +62,7 @@ class SpectraScatter(QChartView):
             self.spectra.append(x, y)
 
         self.yaxis.setRange(0, 100)
-        self.xaxis.setRange(100, binMax)
+        self.xaxis.setRange(0, binMax)
 
 class SpectraTableModel(QAbstractTableModel):
     '''

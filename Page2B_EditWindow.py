@@ -105,7 +105,8 @@ class NewWindow(QDialog):
         try:
             adduct = self.lipidAdduct.currentData()
             lipid.resolve_spectra(adduct, lipid.adducts[adduct])
-            name = lipid.name+' '+adduct
+            formula = ''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())
+            name = lipid.name+' '+adduct+' '+formula
             mz = GL.MA(lipid, adduct, 0).mass
             frags = lipid.spectra[adduct]
         except: name, mz, frags = '', 0, []
@@ -147,6 +148,12 @@ class TailWindow(QDialog):
         self.hLayout = QHBoxLayout(self)
         self.button = button
     
+        self.ty = QComboBox()
+        self.ty.addItem('Acyl')
+        self.ty.addItem('Ether')
+        self.ty.addItem('Vinyl')
+        self.hLayout.addWidget(self.ty)
+
         self.c = QLineEdit()
         self.c.setPlaceholderText('Chain Length')
         self.c.setValidator(QIntValidator(1, 100))
@@ -172,6 +179,7 @@ class TailWindow(QDialog):
 
     def acceptTail(self):
 
+        ty = self.ty.currentText()
         c = self.c.text()
         d = self.d.text()
         oh= self.oh.text()
@@ -180,7 +188,7 @@ class TailWindow(QDialog):
         try: # Tail must be possible
             if (int(d or 0)+int(oh or 0)) > int(c or 1)/2: return # D + -OH < C
             if int(dt or 0) > (2*int(c or 1)-2*int(d or 0)-1): return # Deuterium <= Hydrogens
-            self.tail = GL.sn(int(c), int(d or 0), type='Acyl', oh=int(oh or 0), dt=int(dt or 0))
+            self.tail = GL.sn(int(c), int(d or 0), type=ty, oh=int(oh or 0), dt=int(dt or 0))
             self.button.tail = self.tail
             self.button.setText(self.tail.name)
             self.done(1)
