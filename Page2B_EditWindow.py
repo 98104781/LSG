@@ -5,7 +5,6 @@ import Classes
 import Classes_isomers
 import GenerateLipids as GL
 
-from itertools import combinations_with_replacement as cwr
 from PySide6.QtGui import QIntValidator
 from PySide6.QtCore import QModelIndex
 from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QTableView, QHeaderView
@@ -18,9 +17,10 @@ class NewWindow(QDialog):
         super().__init__()
 
         if parent.field('isomerism') == False:
-            self.classes_to_generate = [cls for _, cls in inspect.getmembers(Classes) if inspect.isclass(cls)]
+            self.classes_to_generate = [cls for cls in GL.Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
+            self.classes_to_generate.extend([cls for cls in GL.Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
         else:
-            self.classes_to_generate = [cls for _, cls in inspect.getmembers(Classes_isomers) if inspect.isclass(cls)]
+            self.classes_to_generate = [cls for cls in GL.Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
 
         self.setWindowTitle('LSG3')
         self.setFixedSize(600, 510)
@@ -96,7 +96,6 @@ class NewWindow(QDialog):
             for button in self.tailButton.values():
                 self.tails.append(button.tail)
             lipidClass = self.lipidClass.currentData()
-            self.tails.reverse()
             self.lipid = lipidClass(*self.tails)
             self.updateSpectra(self.lipid)
         except: self.updateSpectra()

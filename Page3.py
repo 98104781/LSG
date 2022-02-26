@@ -10,7 +10,6 @@ from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QProgressBar
 from PySide6.QtWidgets import QPlainTextEdit, QPushButton, QVBoxLayout, QWizard, QWizardPage
-from memory_profiler import profile
 
 class Page(QWizardPage):
     '''
@@ -80,7 +79,6 @@ class Page(QWizardPage):
     
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-    #@profile
     def save_as(self):
         '''
         Popup 'Save as' dialogue box.
@@ -90,21 +88,21 @@ class Page(QWizardPage):
             self.progress_bar.setMinimum(0)
             self.progress_bar.setMaximum(len(self.classes_to_generate)+2)
             self.tails = GL.generate_acyl_tails(self.tails_to_generate)
-            print(len(self.tails))
             self.progress_bar.setValue(self.progress_bar.value()+1)
 
             if self.field('isomerism') == True:
                 for cls in self.classes_to_generate:
+                    for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
                     for comb in product(self.tails, repeat = cls.No_Tails):
                         yield cls(*comb)
                     self.progress_bar.setValue(self.progress_bar.value()+1)
 
             else:
                 for cls in self.classes_to_generate:
+                    for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
                     for comb in cwr(self.tails, cls.No_Tails):
                         yield cls(*comb)
                     self.progress_bar.setValue(self.progress_bar.value()+1)
-
 
         def generate_specific():
 
@@ -139,17 +137,19 @@ class Page(QWizardPage):
                 generate = generate_specific
             else: generate = generate_range
 
-            save_file = open(file_name, 'x', newline='')
-            # Based on file extension, export differently
-            if filter == "MSP (*.msp)":
-                count = SaveAs.as_msp(self, save_file, generate())
-            elif filter == "Orbitrap Inclusion (*.csv)":
-                count = SaveAs.as_orb(self, save_file, generate())
-            elif filter =="Skyline Transition (*.csv)":
-                count = SaveAs.as_sky(self, save_file, generate())
-                pass
-            else: self.output_console.appendPlainText('Unsupported file type')
-            save_file.close()
+            try: 
+                save_file = open(file_name, 'x', newline='')
+                # Based on file extension, export differently
+                if filter == "MSP (*.msp)":
+                    count = SaveAs.as_msp(self, save_file, generate())
+                elif filter == "Orbitrap Inclusion (*.csv)":
+                    count = SaveAs.as_orb(self, save_file, generate())
+                elif filter =="Skyline Transition (*.csv)":
+                    count = SaveAs.as_sky(self, save_file, generate())
+                    pass
+                else: self.output_console.appendPlainText('Unsupported file type')
+                save_file.close()
+            except: self.output_console.appendPlainText('File unavailable')
 
             t1 = time.time()
             self.progress_bar.setValue(self.progress_bar.value()+1)        

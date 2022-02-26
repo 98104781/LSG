@@ -40,7 +40,7 @@ class Page(QWizardPage):
         # Input box for C min value, which determines the minimum fatty acid chain length
         # Fatty acids will be generated from C min to C max
         self.cmin = QLineEdit()
-        self.cmin.setPlaceholderText(' C min:                                                                                                            (1 -> 40)')
+        self.cmin.setPlaceholderText(' C min:                                                                                                                               (1 -> 40)')
         self.cmin.setValidator(QIntValidator(1, 40)) # Only allow ints between 1 - 40
         self.registerField('cmin*', self.cmin) # Register field to make it mandatory
         self.vLayout.addWidget(self.cmin)
@@ -48,7 +48,7 @@ class Page(QWizardPage):
         # Input box for C max value, which determines the maximum fatty acid chain length
         # Fatty acids will be generated from C min to C max
         self.cmax = QLineEdit()
-        self.cmax.setPlaceholderText(' C max:                                                                                                  (C min -> 40)')
+        self.cmax.setPlaceholderText(' C max:                                                                                                                     (C min -> 40)')
         self.cmax.setValidator(QIntValidator(1, 40))
         self.registerField('cmax*', self.cmax)
         self.vLayout.addWidget(self.cmax)
@@ -56,7 +56,7 @@ class Page(QWizardPage):
         # Input box for D min value, which determines the minimum desaturation of a fatty acid
         # Fatty acids of a given length will be generated from D min to D max where D < C/2
         self.dmin = QLineEdit()
-        self.dmin.setPlaceholderText(' D min:                                                                                            (0 -> 40 < C min)')
+        self.dmin.setPlaceholderText(' D min:                                                                                                               (0 -> 40 < C min)')
         self.dmin.setValidator(QIntValidator(0, 40))
         self.registerField('dmin*', self.dmin)
         self.vLayout.addWidget(self.dmin)
@@ -64,7 +64,7 @@ class Page(QWizardPage):
         # Input box for D min value, which determines the maximum desaturation of a fatty acid
         # Fatty acids of a given length will be generated from D min to D max where D < C/2
         self.dmax = QLineEdit()     
-        self.dmax.setPlaceholderText(' D max:                                                                                  (D min -> 40 < C max)')
+        self.dmax.setPlaceholderText(' D max:                                                                                                     (D min -> 40 < C max)')
         self.dmax.setValidator(QIntValidator(0, 40))
         self.registerField('dmax*', self.dmax)
         self.vLayout.addWidget(self.dmax)
@@ -75,7 +75,7 @@ class Page(QWizardPage):
         self.registerField('hydroxytickbox', self.hydroxytickbox)
         self.vLayout.addWidget(self.hydroxytickbox)
         self.omax = QLineEdit()
-        self.omax.setPlaceholderText(' O max:                                                                                                            (1 -> 10)')
+        self.omax.setPlaceholderText(' O max:                                                                                                                               (1 -> 10)')
         self.omax.setDisabled(True)
         self.omax.setValidator(QIntValidator(1, 10))
         self.registerField('omax', self.omax)

@@ -1,9 +1,8 @@
 import csv
 import GenerateLipids as GL
-from memory_profiler import profile
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
-#@profile
+
 def as_msp(self, save_file, lipid_data):
     '''
     Defines how to export data when saved as .MSP.

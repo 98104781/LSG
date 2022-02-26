@@ -2,6 +2,7 @@ import inspect
 
 import Classes
 import Classes_isomers
+from GenerateLipids import Glycerolipid
 import Page2_EditWindow as P2EW
 
 from PySide6.QtCore import Property, Qt, Signal
@@ -9,8 +10,8 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
 
 # This gives me the classes, but not in the order that I set them... Really irks me !
-gplClassList = [cls for _, cls in inspect.getmembers(Classes) if inspect.isclass(cls)]
-gplClassList_Isomers = [cls for _, cls in inspect.getmembers(Classes_isomers) if inspect.isclass(cls)]
+gplClassList = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
+gplClassList_Isomers = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]  
 
 class Page(QWizardPage):
     '''

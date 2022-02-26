@@ -1,10 +1,9 @@
-
 import GenerateLipids as GL
 import Spectra
 
 from itertools import combinations_with_replacement as cwr
 from PySide6.QtCore import QModelIndex
-from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QVBoxLayout, QHBoxLayout, QLabel
 
 class NewWindow(QDialog): # Opened from SpectraSetupPage
     '''
@@ -30,16 +29,12 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         self.spectra.setFixedWidth(400)
         self.label = QLabel("If generated spectra don't respect sn isomerism, all isomer dependent\n"
                             "fragments will be equal in intensity.\n\nIf the observed fragment intensities"
-                            " differ from the default provided, they may\nbe manually updated on the left.")
+                            " differ from the default provided, they may\nbe manually updated on the left.\n\n"
+                            "Any fragment with '0' intensity will be removed when lipids are generated. ")
         self.comboBox.currentTextChanged.connect(self.buildList) # Lipid data will be stored in comboboxs
         for lipidClass, adductList in treeData.items():  # Unpack lipid/adduct data from Treeview for use
             for adduct in adductList: # Unpack all adducts from adduct list for use in separate comboboxs
                 self.comboBox.addItem(lipidClass.text(0)+' '+adduct.text(0), [lipidClass, adduct]) # here
-
-        self.applyBTN = QPushButton('Apply Changes')
-        self.applyBTN.clicked.connect(self.applyChanges)
-        #self.resetBTN = QPushButton('Reset Changes')
-        #self.applyBTN.clicked.connect(self.resetChanges)
 
         self.vLayout.addWidget(self.comboBox)
         self.hLayout.addWidget(self.tableView)
@@ -47,7 +42,6 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         self.vLayout2.addWidget(self.spectra)
         self.vLayout2.addWidget(self.label)
         self.vLayout2.addStretch()
-        self.vLayout2.addWidget(self.applyBTN)
         self.hLayout.addLayout(self.vLayout2)
 
         self.vLayout.addLayout(self.hLayout)
@@ -96,22 +90,3 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         fragmentList[data.fragmentType] = data.intensity
         self.comboBox.currentData()[1].fragmentList = fragmentList
         self.buildList()
-
-    def applyChanges(self):
-        '''
-        Overwrites adduct spectra in memory
-        with new adduct spectra.
-        '''
-        for x in range(self.comboBox.count()):
-            data = self.comboBox.itemData(x)
-            lipidClass = data[0].lipidClass
-            adduct = data[1].text(0)
-            fragmentList = data[1].fragmentList
-            for fragment in list(fragmentList):
-                if fragmentList[fragment] == 0:
-                    fragmentList.pop(fragment)
-            lipidClass.adducts[adduct] = fragmentList
-        self.buildList()
-
-    def resetChanges(self):
-        pass

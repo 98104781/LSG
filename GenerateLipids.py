@@ -1,47 +1,77 @@
 from collections import Counter
-from typing import Iterable
 
 Masses = {
 
   #[Delta_mz,   Polarity,  z, chnops]
   "[M-H]-":     
-   [-1.007276, 'Negative', -1, {'H':-1}],
+   [ -1.007276467, 'Negative', -1, {'H':-1}],
+
   "[M-2H]2-":   
-   [-2.014552, 'Negative', -2, {'H':-2}],
+   [ -2.014552934, 'Negative', -2, {'H':-2}],
+
   "[M-3H]3-":   
-   [-3.021828, 'Negative', -3, {'H':-3}],
-  "[M+Cl]-":    
-   [34.969401, 'Negative', -1, {'Cl':1}],
+   [ -3.021829401, 'Negative', -3, {'H':-3}],
+
+  "[M+Cl]-": # Cl 35, as is major isotope    
+   [ 34.96830412,  'Negative', -1, {'Cl':1}],
+   # Calculated by Mass of CL[35] - Mass of e-
+
   "[M+Na-2H]-":    
-   [20.974668, 'Negative', -1, {'Na':1, 'H':-2}],
+   [ 20.974668486, 'Negative', -1, {'Na':1, 'H':-2}],
+
   "[M+2Na-3H]-":    
-   [42.956613, 'Negative', -1, {'Na':2, 'H':-3}],
+   [ 42.956613439, 'Negative', -1, {'Na':2, 'H':-3}],
+
   "[M+H]+":     
-   [1.007276,  'Positive',  1, {'H':1}],
+   [  1.007276467, 'Positive',  1, {'H':1}],
+
   "[M+H-H2O]+": 
-   [-17.003289,'Positive',  1, {'H':-1, 'O':-1}],
+   [-17.003288217, 'Positive',  1, {'H':-1, 'O':-1}],
+
   "[M+Na]+":    
-   [22.989221, 'Positive',  1, {'Na':1}],
-  "[M+Li]+":    
-   [7.015455,  'Positive' , 1, {'Li':1}],
+   [ 22.98922142,  'Positive',  1, {'Na':1}],
+   # Calculated by Mass of Na[23] - Mass of e-
+
+  "[M+Li]+": # Li 7 as is major isotope    
+   [  7.01545542,  'Positive' , 1, {'Li':1}],
+   # Calculated by Mass of Li[7] - Mass of e-
+
   "[M+NH4]+":   
-   [18.033826, 'Positive',  1, {'N':1, 'H':4}],
+   [ 18.033825568, 'Positive',  1, {'N':1, 'H':4}],
    
   #  Handy masses 
+  "e-":           
+    0.000548580,
+
   "H":           
-   1.007276,
+    1.007825032,
+
+  "H+":           
+    1.007276467,
+
+  "OH-": # Calculated by H2O - H+           
+   17.003288217, 
+
   "H2O":         
-   18.010565,
+   18.010564684,
+
   "Glycerol":
-   92.047344,
-   "PO3":
-   79.96633,
-   "PO4":
-   97.976895,
+   92.047344116,
+
+  "NH3":
+   17.026549101,
+
+   "PO3H":
+   79.966329892,
+
+   "PO4H3":
+   97.976894576,
+
    "TMA": # Trimethylamine, fragment for PC+Na/Li
-   59.073499,
+   59.073499293,
+
    "AZD": # Aziridine, fragment for PE+Na/Li
-   43.042199}
+   43.042199165}
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -65,17 +95,17 @@ class sn:
     if self.type == 'Acyl':
       self.name = f"{c}:{d}"
       #           O2 mass     + c*CH2 mass    - d*H2 mass
-      self.mass = 31.98982926 + c*14.01565007 - d*2.01565007
+      self.mass = 31.98982924 + c*14.01565007 - d*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':2})
     elif self.type == 'Ether':
-      self.name = f"{c}:{d};O"
-      #           O mass    + c*CH2 mass    - d*H2 mass
-      self.mass = 18.010565 + c*14.01565007 - d*2.01565007
+      self.name = f"{c}:{d};E"
+      #           H2O mass      + c*CH2 mass    - d*H2 mass
+      self.mass = Masses['H2O'] + c*14.01565007 - d*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*(d-1)),'O':1})
     elif self.type == 'Vinyl':
       self.name = f"{c}:{d};P"
-      #           O mass    + c*CH2 mass    - d*H2 mass
-      self.mass = 18.010565 + c*14.01565007 - (d+1)*2.01565007
+      #           H2O mass      + c*CH2 mass    - d*H2 mass
+      self.mass = Masses['H2O'] + c*14.01565007 - (d+1)*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':1})
     elif self.type == 'Headgroup':
       self.name = 'Headgroup'
@@ -83,7 +113,7 @@ class sn:
       self.formula = Counter(chnops)
     else: # If nothing, just give it values for water
       self.name = '0:0'
-      self.mass = 18.010565
+      self.mass = Masses['H2O']
       self.formula = Counter({'H':2,'O':1})
 
     # Perhaps exclude?  Identical to fatty acid of c = c+m
@@ -92,15 +122,13 @@ class sn:
       self.mass += me*14.01565007
       self.formula += {'C':me, 'H':2*me}
     if oh > 0: # Hydroxy functionalisation of fatty acid
-      self.name += f";{oh}-OH"
-      self.mass += oh*15.996013
+      self.name += f";O{oh}"
+      self.mass += oh*15.99491462
       self.formula += {'O':oh}
     if dt > 0: # deuterium labelled fatty acids
       self.name += f"(D{dt})"
-      self.mass += dt*1.006277
+      self.mass += dt*1.006276746 # Calculated by D - H
       self.formula += {'H':-dt, 'D':dt}
-
-
 
 def generate_acyl_tails(n):
     tail_list = []
@@ -112,16 +140,95 @@ def generate_acyl_tails(n):
        if d+oh <= (c-1)/2]
     return tail_list
 
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-class Glycerolipid:
-  instances = []  # All created GPLs stored here
-  def __init__(self, adducts, sn3=sn(), sn2=sn(), sn1=sn()):
+class base:
+  '''Moiety to use as backbone for sphingoids\n
+  c = carbon number of base\n
+  d = desaturation number of base\n
+  m = number of branching methyl-groups (currently unused)\n
+  mass = mass if preset group is provided (e.g. a headgroup)\n
+  chnops = formula if preset group is provided (e.g. a headgroup)\n
+  type = 'Base', 'Headgroup', anything else will return water\n
+  providing no parameters also returns a water (-OH), which does not modify backbone.
+  '''
+  def __init__(self, c=3, d=0, mass=None, chnops={}, type=None, me=0, oh=2, dt=0):
+
+    self.type = type
+
+    if self.type == 'Base':
+      self.name = f"{c}:{d}"
+      #           H2O mass      + c*CH2 mass    - d*H2 mass
+      self.mass = Masses['H2O'] + c*14.01565007 - d*2.01565007
+      self.formula = Counter({'C':c, 'H':(2+2*c-2*d),'O':1})
+      # Despite being based around an ammonia group, H2O is still
+      # used as the default mass. These groups are attached to an
+      # ammonia group in the 'Sphingolipid' class like how fatty 
+      # acids are attached to a glycerol in the 'Glycerolipid' class.
+      # The water is removed when the bonds are formed. This is to be
+      # consistant with the headgroups which are attached via an ether /
+      # ester on the base backbone and not the ammonia group.
+    else: # If nothing, just give it values for water
+      self.name = '0:0'
+      self.mass = Masses['H2O']
+      self.formula = Counter({'H':2,'O':1})
+
+    # Perhaps exclude?  Identical to fatty acid of c = c+m
+    if me > 0: # Methyl branching of fatty acid
+      self.name += f";M{me}" 
+      self.mass += me*14.01565007
+      self.formula += {'C':me, 'H':2*me}
+    if oh > 0: # Hydroxy functionalisation of fatty acid
+      self.name += f";O{oh}"
+      self.mass += oh*15.99491462
+      self.formula += {'O':oh}
+    if dt > 0: # deuterium labelled fatty acids
+      self.name += f"(D{dt})"
+      self.mass += dt*1.006276746 # Calculated by D - H
+      self.formula += {'H':-dt, 'D':dt}
+
+def generate_base_tails(n):
+    tail_list = []
+    [tail_list.append(base(c, d, type='Base', oh=oh))
+     for c in range(n[0], n[1] + 1)
+      for d in range(n[2], n[3] + 1)
+       if d <= (c-3)/2
+       for oh in range(0, n[4]+1)
+       if d+oh <= (c-1)/2]
+    return tail_list
+
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
+class Lipid:
+  def __init__(self, adducts):
+
+    self.adducts = adducts
+    self.spectra = {}
+
+  def resolve_spectra(self, adduct, spectra={}):
+    x = []
+    for fragment, intensity in spectra.items():
+      fgmt = fragment(self, adduct, intensity)
+      try: x.extend(fgmt)
+      except:
+        try: x.append(fgmt)
+        except:
+          print('Error assigning', fragment)
+    self.spectra[adduct] = sorted(set(x), reverse=True)
+      
+class Glycerolipid(Lipid):
+
+  def __init__(self, adducts, sn1=sn(), sn2=sn(), sn3=sn()):
+    super().__init__(adducts)
 
     self.tails = [sn1, sn2, sn3]
     self.lipid_class = type(self).__name__  # Takes name from class which generated it
     self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name != 'Headgroup')}"
-    self.mass = round( Masses['Glycerol']  +  sum([ snx.mass  -  Masses['H2O']  for snx in self.tails]), 6) 
+    self.mass = round(Masses['Glycerol'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6) 
 
     formula = Counter({'C':3, 'H':8, 'O':3})  # Glycerol
     for snx in self.tails:  # Works out CHNOPS for lipid
@@ -129,21 +236,24 @@ class Glycerolipid:
       formula.subtract({'H':2,'O':1}) # -H2O for bonding
     self.formula = dict(formula)
 
-    self.adducts = adducts  # list of all adducts
-    self.spectra = {}   # generated spectra for an adduct stored here
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-    #Glycerolipid.instances.append(self) # Finish by appending to list of all GPLs
+# ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-  def resolve_spectra(self, adduct, spectra={}):
-    x = []
-    for fragment, intensity in spectra.items():
-      fgmt = fragment(self, adduct, intensity)
-      try: x.extend(list(set(fgmt)))
-      except:
-        try: x.append(fgmt)
-        except:
-          print('Error assigning', fragment)
-    self.spectra[adduct] = x
+class Sphingolipid(Lipid):
+  def __init__(self, adducts, base=base(), sn1=sn(), headgroup=sn()):
+    super().__init__(adducts)
+
+    self.tails = [base, sn1, headgroup] # Base and headgroup included to be consistant with fragment generation for 
+    self.lipid_class = type(self).__name__ # Takes name from class which generated it
+    self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
+    self.mass = round(Masses['NH3'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6)
+
+    formula = Counter({'H':3,'N':1}) # Unlike GPLs, sphingoids built around the base
+    for snx in self.tails: # Works out CHNOPS for lipid
+      formula.update(snx.formula)
+      formula.subtract({'H':2,'O':1}) # -H2O for bonding
+    self.formula = dict(formula)
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -178,6 +288,8 @@ class Fragment:
     return hash(('mass', self.mass))
   def __eq__(self, other):
     return self.mass == other.mass
+  def __lt__(self, other):
+    return self.mass < other.mass
 
 # ~ # ~ # ~ # [M +/- adduct]
 
@@ -217,7 +329,7 @@ class MA_s_PO3(MA):
   '''[ MA - PO3 ]\n
   Fragment for adducted molecular ion, with loss of phosphite'''
   def MZ(self):
-    return super().MZ() - (Masses['PO3']/abs(Masses[self.adduct][2]))
+    return super().MZ() - (Masses['PO3H']/abs(Masses[self.adduct][2]))
   def Formula(self):
     formula = super().Formula()
     formula.subtract({'P':1,'O':3})
@@ -227,10 +339,23 @@ class MA_s_PO4(MA):
   '''[ MA - PO4 ]\n
   Fragment for adducted molecular ion, with loss of phosphate'''
   def MZ(self):
-    return super().MZ() - (Masses['PO4']/abs(Masses[self.adduct][2]))
+    return super().MZ() - (Masses['PO4H3']/abs(Masses[self.adduct][2]))
   def Formula(self):
     formula = super().Formula()
     formula.subtract({'P':1,'O':4})
+    return formula
+
+# ~ # Fragments for DGDG
+
+class MA_s_Gal_H2O(MA):
+  '''[ MA - Galactose - H2O ]\n
+  Fragment for adducted molecular ion, with loss of galactose, leaving -OH\n
+  galactose NL common to DGDG lipids'''
+  def MZ(self):
+    return super().MZ() - (162.052823/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'C':6, 'H':10,'O':5})
     return formula
 
 # ~ # Fragments for PC+Na/Li
@@ -257,6 +382,41 @@ class MA_s_AZD(MA):
     formula.subtract({'C':2, 'H':5 ,'N':1})
     return formula
 
+# ~ # Fragments for Ceramides
+
+class MA_s_MeOH(MA):
+  '''[ MA - CH4O ]\n
+  Fragment for adducted molecular ion, with loss of methanol\n
+  Common for ceramides in -ve ESI'''
+  def MZ(self):         #    MeOH mass  
+    return super().MZ() - (32.026214784/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'C':1, 'H':4 ,'O':1})
+    return formula
+
+class MA_s_Al(MA):
+  '''[ MA - CH2O ]\n
+  Fragment for adducted molecular ion, with loss of formaldehyde\n
+  Common for ceramides in -ve ESI'''
+  def MZ(self):         #  Formaldehyde mass  
+    return super().MZ() - (30.010564684/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'C':1, 'H':2 ,'O':1})
+    return formula
+
+class MA_s_CH2O(MA_s_Al):
+  '''[ MA - CH2O ]\n
+  Fragment for adducted molecular ion, with loss of formaldehyde\n
+  Common for ceramides in -ve ESI'''
+  def MZ(self):          
+    return super().MZ() - (Masses['H2O']/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'H':2 ,'O':1})
+    return formula    
+
 # ~ # ~ # ~ # [M +/- adduct] - fatty acid
 
 def MA_s_FA(lipid, adduct, intensity):
@@ -268,18 +428,24 @@ def MA_s_FA(lipid, adduct, intensity):
     if tail.type in ['Acyl']:
       yield MA_s_FAx(lipid, adduct, intensity, MA_s_FA, tail)
 
-
 class MA_s_FAx(MA):
   '''[ MA - RCOOH ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
       super().__init__(lipid, adduct, intensity, fragmentType)
-
   def MZ(self):
-    return super().MZ() - (self.tail.mass/abs(Masses[self.adduct][2]))
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    # https://doi.org/10.1016/j.algal.2016.05.016
+    return super().MZ() - ((self.tail.mass+x)/abs(Masses[self.adduct][2]))
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.tail.formula)
     return formula
 
@@ -287,9 +453,16 @@ class MA_s_sn1(MA):
   '''[ MA - RCOOH ] (sn1)\n
   Fragment for adducted molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
-    return super().MZ() - (self.lipid.tails[0].mass/abs(Masses[self.adduct][2]))
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - ((self.lipid.tails[0].mass+x)/abs(Masses[self.adduct][2]))
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.lipid.tails[0].formula)
     return formula
 
@@ -297,9 +470,16 @@ class MA_s_sn2(MA):
   '''[ MA - RCOOH ] (sn2)\n
   Fragment for adducted molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
-    return super().MZ() - (self.lipid.tails[1].mass/abs(Masses[self.adduct][2]))
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - ((self.lipid.tails[1].mass+x)/abs(Masses[self.adduct][2]))
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.lipid.tails[1].formula)
     return formula
 
@@ -398,6 +578,25 @@ class MA_s_sn2k(MA):
     formula = super().Formula()
     formula.subtract(self.lipid.tails[1].formula)
     formula.update({'H':2 ,'O':1})
+    return formula
+
+# ~ #
+
+class MA_s_allFAk(MA):
+  '''[ MA - RC=O ] (ALL)\n
+  Fragment for adducted molecular ion, with loss of ALL fatty acids'''
+  def MZ(self):
+    mass = super().MZ()
+    for tail in self.lipid.tails:
+      if tail.type != 'Headgroup':
+        mass -= (tail.mass-Masses['H2O']/abs(Masses[self.adduct][2]))
+    return mass
+  def Formula(self):
+    formula = super().Formula()
+    for tail in self.lipid.tails:
+      if tail.type != 'Headgroup':
+        formula.subtract(tail.formula)
+        formula.update({'H':2 ,'O':1})
     return formula
 
 # ~ #
@@ -685,6 +884,72 @@ class MA_s_sn2k_AZD(MA_s_AZD):  # [M+-H-FAk-AZD]+-
     formula.update({'H':2 ,'O':1})
     return formula
 
+# ~ #
+
+def MA_s_FA_Gal(lipid, adduct, intensity):
+  '''[ MA - RCOOH ]\n
+  Fragment for adducted molecular ion, with loss of a free-fatty acid\n
+  For nonspecific sn position\n
+  Method used to generate multiple objects'''
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield MA_s_FA_Galx(lipid, adduct, intensity, MA_s_FA_Gal, tail)
+
+class MA_s_FA_Galx(MA_s_Gal_H2O):
+  '''[ MA - RCOOH ]\n
+  Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    # https://doi.org/10.1016/j.algal.2016.05.016
+    return super().MZ() - ((self.tail.mass+x)/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
+    formula = super().Formula()
+    formula.update(x)
+    formula.subtract(self.tail.formula)
+    return formula
+
+class MA_s_sn1_Gal(MA_s_Gal_H2O):
+  '''[ MA - RCOOH ] (sn1)\n
+  Fragment for adducted molecular ion, with loss of sn1 as free-fatty acid'''
+  def MZ(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - ((self.lipid.tails[0].mass+x)/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
+    formula = super().Formula()
+    formula.update(x)
+    formula.subtract(self.lipid.tails[0].formula)
+    return formula
+
+class MA_s_sn2_Gal(MA_s_Gal_H2O):
+  '''[ MA - RCOOH ] (sn2)\n
+  Fragment for adducted molecular ion, with loss of sn2 as free-fatty acid'''
+  def MZ(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - ((self.lipid.tails[1].mass+x)/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
+    formula = super().Formula()
+    formula.update(x)
+    formula.subtract(self.lipid.tails[1].formula)
+    return formula
+
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 # ~ # ~ # ~ # [M +/- H]
@@ -694,9 +959,9 @@ class MH(Fragment):
   Fragment for molecular ion (de)protonation'''
   def MZ(self):
     if Masses[self.adduct][1] == 'Positive':
-      return self.lipid.mass + Masses['H']
+      return self.lipid.mass + Masses['H+']
     else:
-      return self.lipid.mass - Masses['H']
+      return self.lipid.mass - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.formula)
     if Masses[self.adduct][1] == 'Positive':
@@ -734,7 +999,7 @@ class MH_s_PO3(MH):
   '''[ M(+/-)H - PO3 ]\n
   Fragment for (de)protonated molecular ion with loss of phosphite'''
   def MZ(self):
-    return super().MZ() - Masses['PO3']
+    return super().MZ() - Masses['PO3H']
   def Formula(self):
     formula = super().Formula()
     formula.subtract({'P':1,'O':3})
@@ -744,10 +1009,23 @@ class MH_s_PO4(MH):
   '''[ M(+/-)H - PO4 ]\n
   Fragment for (de)protonated molecular ion with loss of phosphate'''
   def MZ(self):
-    return super().MZ() - Masses['PO4']
+    return super().MZ() - Masses['PO4H3']
   def Formula(self):
     formula = super().Formula()
     formula.subtract({'P':1,'O':4})
+    return formula
+
+# ~ # Fragments for DGDG
+
+class MH_s_Gal_H2O(MH):
+  '''[ MA - Galactose - H2O ]\n
+  Fragment for (de)protonated molecular ion, with loss of galactose, leaving -OH\n
+  galactose NL common to DGDG lipids'''
+  def MZ(self):
+    return super().MZ() - (162.052823/abs(Masses[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'C':6, 'H':10,'O':5})
     return formula
 
 # ~ # Fragments for PE / PC+Na/Li
@@ -789,10 +1067,18 @@ class MH_s_FAx(MH):
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
       super().__init__(lipid, adduct, intensity, fragmentType)
+
   def MZ(self):
-    return super().MZ() - self.tail.mass
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - (self.tail.mass+x)
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.tail.formula)
     return formula
 
@@ -800,9 +1086,16 @@ class MH_s_sn1(MH):
   '''[ M(+/-)H - RCOOH ] (sn1)\n
   Fragment for (de)protonated molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
-    return super().MZ() - self.lipid.tails[0].mass
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - (self.lipid.tails[0].mass+x)
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.lipid.tails[0].formula)
     return formula
 
@@ -810,9 +1103,16 @@ class MH_s_sn2(MH):
   '''[ M(+/-)H - RCOOH ] (sn2)\n
   Fragment for (de)protonated molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
-    return super().MZ() - self.lipid.tails[1].mass
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - (self.lipid.tails[1].mass+x)
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.lipid.tails[1].formula)
     return formula
 
@@ -820,9 +1120,16 @@ class MH_s_sn3(MH):
   '''[ M(+/-)H - RCOOH ] (sn3)\n
   Fragment for (de)protonated molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
-    return super().MZ() - self.lipid.tails[2].mass
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = 1.006277
+    else: x = 0 # Rearrangement on tail loss exchanges a hydrogen
+    return super().MZ() - (self.lipid.tails[2].mass+x)
   def Formula(self):
+    # If the tail is fully deuterated: special case
+    if self.tail.formula['D'] and self.tail.formula['H'] == 1: x = {'H':1, 'D':-1}
+    else: x = {} # Rearrangement on tail loss exchanges a hydrogen
     formula = super().Formula()
+    formula.update(x)
     formula.subtract(self.lipid.tails[2].formula)
     return formula
 
@@ -915,6 +1222,23 @@ class MH_s_sn2k(MH):
     formula = super().Formula()
     formula.subtract(self.lipid.tails[1].formula)
     formula.update({'H':2 ,'O':1})
+    return formula
+
+class MH_s_allFAk(MH):
+  '''[ M(+/-)H - RC=O ] (ALL)\n
+  Fragment for (de)protonated molecular ion, with loss of ALL fatty acids'''
+  def MZ(self):
+    mass = super().MZ()
+    for tail in self.lipid.tails:
+      if tail.type != 'Headgroup':
+        mass -= (tail.mass-Masses['H2O'])
+    return mass
+  def Formula(self):
+    formula = super().Formula()
+    for tail in self.lipid.tails:
+      if tail.type != 'Headgroup':
+        formula.subtract(tail.formula)
+        formula.update({'H':2 ,'O':1})
     return formula
 
 # ~ # 
@@ -1017,9 +1341,9 @@ class M2H(Fragment):
   Fragment for molecular ion double (de)protonation'''
   def MZ(self):
     if Masses[self.adduct][1] == 'Positive':
-      return (self.lipid.mass + 2*Masses['H'])/2
+      return (self.lipid.mass + 2*Masses['H+'])/2
     else:
-      return (self.lipid.mass - 2*Masses['H'])/2
+      return (self.lipid.mass - 2*Masses['H+'])/2
   def Formula(self):
     formula = Counter(self.lipid.formula)
     if Masses[self.adduct][1] == 'Positive':
@@ -1159,56 +1483,92 @@ def FAH(lipid, adduct, intensity):
       yield FAHx(lipid, adduct, intensity, FAH, tail)
 
 class FAHx(Fragment):
-  '''[ FA - H ]\n
+  '''[ FA (+ / -) H ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
-    return self.tail.mass - Masses['H']
+    if Masses[self.adduct][1] == 'Positive':
+      return self.tail.mass + Masses['H+']
+    else:
+      return self.tail.mass - Masses['H+']
   def Formula(self):
     formula = Counter(self.tail.formula)
-    formula.subtract({'H':1})
+    if Masses[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
     return formula
   def Charge(self):
-    return -1
+    if Masses[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1
 
 class sn1(Fragment):
   '''[ FA - H ] (sn1)\n
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
-    return self.lipid.tails[0].mass - Masses['H']
+    if Masses[self.adduct][1] == 'Positive':
+      return self.lipid.tails[0].mass + Masses['H+']
+    else:
+      return self.lipid.tails[0].mass - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.tails[0].formula)
-    formula.subtract({'H':1})
+    if Masses[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
     return formula
   def Charge(self):
-    return -1
+    if Masses[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1
 
 class sn2(Fragment):
   '''[ FA - H ] (sn2)\n
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
-    return self.lipid.tails[1].mass - Masses['H']
+    if Masses[self.adduct][1] == 'Positive':
+      return self.lipid.tails[1].mass + Masses['H+']
+    else:
+      return self.lipid.tails[1].mass - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.tails[1].formula)
-    formula.subtract({'H':1})
+    if Masses[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
     return formula
   def Charge(self):
-    return -1
+    if Masses[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1
 
 class sn3(Fragment):
   '''[ FA - H ] (sn3)\n
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
-    return self.lipid.tails[2].mass - Masses['H']
+    if Masses[self.adduct][1] == 'Positive':
+      return self.lipid.tails[2].mass + Masses['H+']
+    else:
+      return self.lipid.tails[2].mass - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.tails[2].formula)
-    formula.subtract({'H':1})
+    if Masses[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
     return formula
   def Charge(self):
-    return -1
+    if Masses[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1
 
 # ~ # 
 
@@ -1230,9 +1590,9 @@ class FAkHx(Fragment):
 
   def MZ(self):
     if Masses[self.adduct][1] == 'Positive':
-      return self.tail.mass - Masses['H2O'] + Masses['H']
+      return self.tail.mass - Masses['H2O'] + Masses['H+']
     else:
-      return self.tail.mass - Masses['H2O'] - Masses['H']
+      return self.tail.mass - Masses['H2O'] - Masses['H+']
   def Formula(self):
     formula = Counter(self.tail.formula)
     if Masses[self.adduct][1] == 'Positive':
@@ -1252,9 +1612,9 @@ class sn1k(Fragment):
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
     if Masses[self.adduct][1] == 'Positive':
-      return self.lipid.tails[0].mass - Masses['H2O'] + Masses['H']
+      return self.lipid.tails[0].mass - Masses['H2O'] + Masses['H+']
     else:
-      return self.lipid.tails[0].mass - Masses['H2O'] - Masses['H']
+      return self.lipid.tails[0].mass - Masses['H2O'] - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.tails[0].formula)
     if Masses[self.adduct][1] == 'Positive':
@@ -1274,9 +1634,9 @@ class sn2k(Fragment):
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
     if Masses[self.adduct][1] == 'Positive':
-      return self.lipid.tails[1].mass - Masses['H2O'] + Masses['H']
+      return self.lipid.tails[1].mass - Masses['H2O'] + Masses['H+']
     else:
-      return self.lipid.tails[1].mass - Masses['H2O'] - Masses['H']
+      return self.lipid.tails[1].mass - Masses['H2O'] - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.tails[1].formula)
     if Masses[self.adduct][1] == 'Positive':
@@ -1296,9 +1656,9 @@ class sn3k(Fragment):
   Fragment for a deprotonated free fatty acid'''
   def MZ(self):
     if Masses[self.adduct][1] == 'Positive':
-      return self.lipid.tails[2].mass - Masses['H2O'] + Masses['H']
+      return self.lipid.tails[2].mass - Masses['H2O'] + Masses['H+']
     else:
-      return self.lipid.tails[2].mass - Masses['H2O'] - Masses['H']
+      return self.lipid.tails[2].mass - Masses['H2O'] - Masses['H+']
   def Formula(self):
     formula = Counter(self.lipid.tails[2].formula)
     if Masses[self.adduct][1] == 'Positive':
@@ -1330,7 +1690,7 @@ class FAkAx(Fragment):
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
-    return (self.lipid.tails[0].mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
+    return (self.tail.mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
   def Formula(self):
     formula = Counter(self.tail.formula)
     formula.subtract({'H':2, 'O':1})
@@ -1377,6 +1737,94 @@ class sn3kA(Fragment):
     return formula
   def Charge(self):
     return Masses[self.adduct][2]
+
+# ~ # ~ # Ceramide dC fragments
+
+class FA_C2H5NO(Fragment):
+  '''[ FA + C2H5NO - H2O - H+ ]-'''
+  def MZ(self):
+    return (self.lipid.tails[1].mass + (59.037113785-Masses['H2O']-Masses['H+']))
+  def Formula(self):
+    formula = Counter(self.lipid.tails[1].formula)
+    formula.update({'C':2, 'H':2, 'N':1})
+    return formula
+  def Charge(self):
+    return -1
+
+class FA_C2H5N(Fragment):
+  '''[ FA + C2H5N - H2O - H+ ]-'''
+  def MZ(self):
+    return (self.lipid.tails[1].mass + (43.042199165-Masses['H2O']-Masses['H+']))
+  def Formula(self):
+    formula = Counter(self.lipid.tails[1].formula)
+    formula.update({'C':2, 'H':2, 'N':1, 'O':-1})
+    return formula
+  def Charge(self):
+    return -1
+
+class FA_C2H3N(Fragment):
+  '''[ FA + C2H3N - HO- ]+'''
+  def MZ(self):
+    return (self.lipid.tails[1].mass + 41.026549101 - Masses['OH-'])
+  def Formula(self):
+    formula = Counter(self.lipid.tails[1].formula)
+    formula.update({'C':2, 'H':2, 'N':1, 'O':-1})
+    return formula
+  def Charge(self):
+    return 1
+
+class FA_N(Fragment):
+  '''[ FA + NH3 - H2O (+/-) H+ ]-'''
+  def MZ(self):
+    if Masses[self.adduct][1] == 'Positive':
+      return (self.lipid.tails[1].mass + (Masses['NH3']-Masses['H2O']+Masses['H+']))
+    else:
+      return (self.lipid.tails[1].mass + (Masses['NH3']-Masses['H2O']-Masses['H+']))
+  def Formula(self):
+    formula = Counter(self.lipid.tails[1].formula)
+    if Masses[self.adduct][1] == 'Positive':
+      formula.update({'N':1, 'H':2, 'O':-1})
+    else:  
+      formula.update({'N':1, 'O':-1})
+    return formula
+  def Charge(self):
+    if Masses[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1  
+
+class B_s_C2H6O2(Fragment):
+  '''[ Base - C2H6O2 - H+ ]-'''
+  def MZ(self):
+    return (self.lipid.tails[0].mass - 62.036779432 - Masses['H+'])
+  def Formula(self):
+    formula = Counter(self.lipid.tails[0].formula)
+    formula.subtract({'C':2, 'H':7, 'O':2})
+    return formula
+  def Charge(self):
+    return -1
+
+class B_LC(Fragment):
+  '''Long-Chain-Base fragment\n
+  [ Base - 2H2O + H+ ]+\n or
+  [ Base - NH3 - H2O - H+ ]-'''
+  def MZ(self):
+    if Masses[self.adduct][1] == 'Positive': # Base is created without the ammonia, so needs to be added here
+      return (self.lipid.tails[0].mass - 3*Masses['H2O'] + Masses['NH3'] + Masses['H+'])
+    else:
+      return (self.lipid.tails[0].mass - 2*Masses['H2O'] - Masses['H+'])
+  def Formula(self):
+    formula = Counter(self.lipid.tails[0].formula)
+    if Masses[self.adduct][1] == 'Positive':
+      formula.update({'N':1, 'H':-2, 'O':-3})
+    else:
+      formula.subtract({'H':5, 'O':2})
+    return formula
+  def Charge(self):
+    if Masses[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1     
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -1578,7 +2026,7 @@ class HG_NL_B(MH):
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
-      return super().MZ() - (self.headgroup.mass - Masses['PO4'])
+      return super().MZ() - (self.headgroup.mass - Masses['PO4H3'])
   def Formula(self):
       formula = super().Formula()
       formula.subtract(self.headgroup.formula)
@@ -1599,7 +2047,7 @@ class HG_NL_2B(MH):  # Headgroup neutral loss
       super().__init__(lipid, adduct, intensity, fragmentType)
   
   def MZ(self):
-      return super().MZ() - (self.headgroup.mass - 2*Masses['PO3'])
+      return super().MZ() - (self.headgroup.mass - 2*Masses['PO3H'])
   def Formula(self):
       formula = super().Formula()
       formula.subtract(self.headgroup.formula)
@@ -2051,6 +2499,17 @@ class C6H12O7P(Fragment):
   def Charge(self):
       return -1
 
+class C6H9O7S(Fragment):
+  '''X-H Fragment common to Sulphoquinovosyl diacylglycerol under negative ESI\n
+  MZ: 225.007446'''
+  def MZ(self):
+      return 225.007446
+  def Formula(self):
+    formula = Counter({'C':6, 'H':9, 'O':7, 'S':1})
+    return formula
+  def Charge(self):
+      return -1
+
 class C6H8O7P(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 223.001312'''
@@ -2128,6 +2587,17 @@ class C3H6O5P(Fragment):
   def Charge(self):
       return -1
 
+class C7H14N1O2(Fragment):
+  '''X+H Fragment common to N-trimethylhomoserine diacylglycerol under positive ESI\n
+  MZ: 144.101905'''
+  def MZ(self):
+    return 144.101905
+  def Formula(self):
+    formula = Counter({'C':7, 'H':14, 'N':1, 'O':2})
+    return formula
+  def Charge(self):
+      return 1
+
 class C2H7NO4P(Fragment):
   '''X-H Headgroup fragment for PE\n
   MZ: 140.011817'''
@@ -2146,6 +2616,17 @@ class H2O4P(Fragment):
       return 96.969618
   def Formula(self):
     formula = Counter({'H':2, 'O':4, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+
+class O3S(Fragment):
+  '''X-H Fragment common to Sulphoquinovosyl diacylglycerol under negative ESI\n
+  MZ: 80.965187'''
+  def MZ(self):
+      return 80.965187
+  def Formula(self):
+    formula = Counter({'O':3, 'S':1})
     return formula
   def Charge(self):
       return -1
