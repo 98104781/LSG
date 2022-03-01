@@ -2,16 +2,12 @@ import inspect
 
 import Classes
 import Classes_isomers
-from GenerateLipids import Glycerolipid
+from GenerateLipids import Glycerolipid, Sphingolipid
 import Page2_EditWindow as P2EW
 
 from PySide6.QtCore import Property, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
-
-# This gives me the classes, but not in the order that I set them... Really irks me !
-gplClassList = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
-gplClassList_Isomers = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]  
 
 class Page(QWizardPage):
     '''
@@ -48,9 +44,10 @@ class Page(QWizardPage):
         self.treeView.clear()
 
         if self.field('isomerism') == False:
-            classes_to_generate = gplClassList
+            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
+            classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
         else:
-            classes_to_generate = gplClassList_Isomers
+            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
 
         for cls in classes_to_generate: #  Make boxes for Treeview
             self.classQbox[cls]  =  QTreeWidgetItem(self.treeView)

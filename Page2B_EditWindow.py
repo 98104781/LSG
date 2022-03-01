@@ -1,5 +1,6 @@
 import copy
 import inspect
+from mimetypes import types_map
 import Spectra
 import Classes
 import Classes_isomers
@@ -60,7 +61,10 @@ class NewWindow(QDialog):
             if i != -1: self.lipidClass.setCurrentIndex(i)
             i = self.lipidAdduct.findText(adduct)
             if i != -1: self.lipidAdduct.setCurrentIndex(i)
-            for i in range(lipid.No_Tails): # assign tails to buttons
+
+            if issubclass(self.lipidClass.currentData(), GL.Sphingolipid): j = 1
+            else: j = 0 # Offset to let the base be first button 
+            for i in range(lipid.No_Tails+j): # assign tails to buttons
                 self.tailButton[i].tail = lipid.tails[i]
                 self.tailButton[i].setText(lipid.tails[i].name)
             self.updateSpectra(lipid)
@@ -80,14 +84,28 @@ class NewWindow(QDialog):
         for button in self.tailButton.keys():
             self.tailButton[button].setParent(None)
         self.tailButton = {}
+        
+        if issubclass(self.lipidClass.currentData(), GL.Sphingolipid):
+            i = 1 # Create a button for the base first!
+            self.tailButton[0] = QPushButton()
+            self.tailButton[0].clicked.connect(self.specifyBase)
+            self.hLayout3.addWidget(self.tailButton[0])
+        else: i = 0 # Offset to let the base be first button 
+
         for button in range(self.lipidClass.currentData().No_Tails):
-            self.tailButton[button] = QPushButton()
-            self.tailButton[button].clicked.connect(self.specifyTail)
-            self.hLayout3.addWidget(self.tailButton[button])
+            self.tailButton[button+i] = QPushButton()
+            self.tailButton[button+i].clicked.connect(self.specifyTail)
+            self.hLayout3.addWidget(self.tailButton[button+i])
 
     def specifyTail(self):
         button = self.sender()
         editspectrawindow = TailWindow(button)
+        if editspectrawindow.exec() > 0: self.buildLipid()
+
+    def specifyBase(self):
+        button = self.sender()
+        types = self.lipidClass.currentData().base_types
+        editspectrawindow = BaseWindow(button, types)
         if editspectrawindow.exec() > 0: self.buildLipid()
 
     def buildLipid(self):
@@ -194,3 +212,52 @@ class TailWindow(QDialog):
             self.close()
         except: pass
     
+class BaseWindow(QDialog):
+    '''
+    Popup window to specify base stats.
+    '''
+    def __init__(self, button, types):
+        super().__init__()
+
+        self.setWindowTitle('LSG3')
+        self.setFixedSize(600, 125)
+        self.vLayout = QVBoxLayout(self)
+        self.hLayout = QHBoxLayout(self)
+        self.button = button
+        self.types = types
+    
+        self.ty = QComboBox()
+        for type in self.types:
+            self.ty.addItem(type)
+        self.hLayout.addWidget(self.ty)
+
+        self.c = QLineEdit()
+        self.c.setPlaceholderText('Chain Length')
+        self.c.setValidator(QIntValidator(6, 100))
+        self.hLayout.addWidget(self.c)
+
+        self.dt = QLineEdit()
+        self.dt.setPlaceholderText('# of deuterium labels')
+        self.dt.setValidator(QIntValidator(1, 100))
+        self.hLayout.addWidget(self.dt)
+        self.vLayout.addLayout(self.hLayout)
+
+        self.tail = None
+        self.acceptButton = QPushButton('Accept')
+        self.acceptButton.clicked.connect(self.acceptTail)
+        self.vLayout.addWidget(self.acceptButton)
+
+    def acceptTail(self):
+
+        ty= self.ty.currentText()
+        c = self.c.text()
+        dt= self.dt.text()
+
+        try: # Base must be possible
+            if int(dt or 0) > (2*int(c or 1)): return # Deuterium <= Hydrogens
+            self.tail = GL.base(int(c), type=ty, dt=int(dt or 0))
+            self.button.tail = self.tail
+            self.button.setText(self.tail.name)
+            self.done(1)
+            self.close()
+        except: pass

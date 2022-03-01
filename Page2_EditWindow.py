@@ -49,12 +49,15 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
     def buildLipid(self, data):
         '''
         Returns an example lipid for use.
-        Lipid will be GPL (16:0_) 16:0_18:1.
+        Lipid will be GPL (16:0_) 16:0_18:1\n
+        or Sphingolipid with 18:0.
         '''
-        GL.Glycerolipid.instances = []
-        cls = data[0].lipidClass # Example lipid
-        _, comb, *_ = cwr(self.tails, cls.No_Tails)
-        example = cls(*comb) # comb will be (16:0_) 16:0_18:1
+        cls = data[0].lipidClass # Example lipid with No of tails -> 1 - 3.
+        if issubclass(cls, GL.Glycerolipid): # Automatically cals number of
+            _, comb, *_ = cwr(self.tails, cls.No_Tails) # tails needed here.
+            example = cls(*comb) # comb will be (16:0_) 16:0_18:1
+        elif issubclass(cls, GL.Sphingolipid):
+            example = cls(GL.base(18, cls.base_types[0]), self.tails[0])
         example.resolve_spectra(data[1].text(0), data[1].fragmentList)
         return example 
     

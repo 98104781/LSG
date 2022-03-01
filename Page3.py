@@ -1,3 +1,4 @@
+from asyncio import base_tasks
 import os
 import time
 
@@ -40,7 +41,8 @@ class Page(QWizardPage):
         '''
         When the page is opened, update console information.
         '''
-        self.output_console.clear()
+
+        self.output_console.clear() # Clear console, update with tails and lipids chosen
         if self.field('radButton2'): # If generate specific lipids is selected:
             self.output_console.appendPlainText('The following specific lipids will be generated:')
             for lipid in self.field('lipidList'):
@@ -53,24 +55,34 @@ class Page(QWizardPage):
             if self.field('hydroxytickbox'):
                 self.output_console.appendPlainText('Hydroxy-functionalised tails included.\n')
             self.output_console.appendPlainText('The following classes will be generated:')
-
             caString = '' # Generates string, and class list
             self.classes_to_generate = []
             for item, item2 in self.selected_class_adducts.items():
-
                 caString += '- '+item.text(0)+'\n'
                 self.classes_to_generate.append(item.lipidClass)
-
                 self.adducts_to_generate = {}
                 for adduct in item2: # Update the selected adducts
                     self.adducts_to_generate.update({adduct.text(0):adduct.fragmentList})
                 item.lipidClass.adducts = self.adducts_to_generate
-
             self.output_console.appendPlainText(caString)
 
+            # Prepare information to generate lipids:
+
+            # List with limits for generated tails
             self.tails_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0),
-                                    int(self.field('dmin') or 0), int(self.field('dmax') or 0),
-                                    int(self.field('omax') or 0)]
+                                      int(self.field('dmin') or 0), int(self.field('dmax') or 0),
+                                      int(self.field('omax') or 0)]
+            
+
+            base_types = [] # List with types of sphingoid bases to generate
+            for cls in self.classes_to_generate: # Sphingolipids can have one of many base type, which the lipid
+                if issubclass(cls, GL.Sphingolipid): # is centered around. The possible types are defined in the
+                    base_types.extend(cls.base_types) # Sphingolipid.base_types list. Collect all unique base types 
+                base_types = list(set(base_types)) # used so that they can be generated with the lipids.
+
+            if self.field('ceramideVariability') is False:
+                self.bases_to_generate = [18, 18, base_types]
+            else: self.bases_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0), base_types]
             
         self.progress_bar.reset()
 
@@ -88,20 +100,33 @@ class Page(QWizardPage):
             self.progress_bar.setMinimum(0)
             self.progress_bar.setMaximum(len(self.classes_to_generate)+2)
             self.tails = GL.generate_acyl_tails(self.tails_to_generate)
+            self.bases = GL.generate_base_tails(self.bases_to_generate)
             self.progress_bar.setValue(self.progress_bar.value()+1)
 
             if self.field('isomerism') == True:
                 for cls in self.classes_to_generate:
                     for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
-                    for comb in product(self.tails, repeat = cls.No_Tails):
-                        yield cls(*comb)
+                    if issubclass(cls, GL.Glycerolipid):
+                        for comb in product(self.tails, repeat = cls.No_Tails):
+                            yield cls(*comb)
+                    elif issubclass(cls, GL.Sphingolipid):
+                        for type in cls.base_types:
+                            for comb in product(self.bases[type], self.tails):
+                                yield cls(*comb)
+                    else: pass
                     self.progress_bar.setValue(self.progress_bar.value()+1)
 
             else:
                 for cls in self.classes_to_generate:
                     for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
-                    for comb in cwr(self.tails, cls.No_Tails):
-                        yield cls(*comb)
+                    if issubclass(cls, GL.Glycerolipid):
+                        for comb in cwr(self.tails, cls.No_Tails):
+                            yield cls(*comb)
+                    elif issubclass(cls, GL.Sphingolipid):
+                        for type in cls.base_types:
+                            for comb in product(self.bases[type], self.tails):
+                                yield cls(*comb)
+                    else: pass
                     self.progress_bar.setValue(self.progress_bar.value()+1)
 
         def generate_specific():

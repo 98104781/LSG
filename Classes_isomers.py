@@ -44,7 +44,7 @@ class sn1_lysoPI(GL.Glycerolipid):
   # sn3 = headgroup
   def __init__(self, sn1):
     sn3 = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1})
-    super().__init__(sn1_lysoPI.adducts, sn3, sn1=sn1)
+    super().__init__(sn1_lysoPI.adducts, sn3=sn3, sn1=sn1)
     self.name = f"{self.lipid_class} {'/'.join(snx.name for snx in self.tails if snx.name != 'Headgroup')}"
 
 class sn2_lysoPI(GL.Glycerolipid):
@@ -71,7 +71,7 @@ class sn2_lysoPI(GL.Glycerolipid):
   # sn3 = headgroup
   def __init__(self, sn2):
     sn3 = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1})
-    super().__init__(sn2_lysoPI.adducts, sn3, sn2=sn2)
+    super().__init__(sn2_lysoPI.adducts, sn3=sn3, sn2=sn2)
     self.name = f"{self.lipid_class} {'/'.join(snx.name for snx in self.tails if snx.name != 'Headgroup')}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -114,7 +114,7 @@ class PI(GL.Glycerolipid):
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
     sn3 = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1})
-    super().__init__(PI.adducts, sn3, sn2, sn1)
+    super().__init__(PI.adducts, sn3=sn3, sn2=sn2, sn1=sn1)
     self.name = f"{self.lipid_class} {'/'.join(snx.name for snx in self.tails if snx.name != 'Headgroup')}"
     
 
@@ -171,7 +171,7 @@ class PIP(GL.Glycerolipid):
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
     sn3 = GL.sn(mass=339.996048, type='Headgroup', chnops={'C':6, 'H':14, 'O':12, 'P':2})
-    super().__init__(PIP.adducts, sn3, sn2, sn1)
+    super().__init__(PIP.adducts, sn3=sn3, sn2=sn2, sn1=sn1)
     self.name = f"{self.lipid_class} {'/'.join(snx.name for snx in self.tails if snx.name != 'Headgroup')}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -197,7 +197,7 @@ class PI2P(GL.Glycerolipid):
   # sn3 = headgroup
   def __init__(self, sn2, sn1):
     sn3 = ['Head', 419.962378]
-    super().__init__(PI2P.adducts, sn3, sn2, sn1)
+    super().__init__(PI2P.adducts, sn3=sn3, sn2=sn2, sn1=sn1)
 '''
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
