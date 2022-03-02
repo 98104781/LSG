@@ -1,4 +1,3 @@
-from re import A
 import GenerateLipids as GL
 
 ''' EXAMPLE EXAMPLE EXAMPLE
@@ -922,3 +921,22 @@ class Sulfatide(GL.Sphingolipid):
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
+class Cholesteryl_Ester(GL.OtherLipid):
+
+  No_Tails = 1
+  adducts = {  # adduct:{spectra}
+
+  "[M+NH4]+":{ #
+    GL.MA      :10, # Molecular ion
+    GL.C27H45 :100, # Present in lipidblast
+    GL.C13H19  :20, # Present in lipidblast
+    GL.C12H17  :20, # Present in lipidblast
+    GL.C11H15  :20, # Present in lipidblast
+    GL.C10H15  :20  # Present in lipidblast
+    }
+    }
+    
+  def __init__(self, sn1):
+    body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1})
+    super().__init__(Cholesteryl_Ester.adducts, body, sn1)

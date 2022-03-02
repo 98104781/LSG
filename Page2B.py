@@ -1,10 +1,4 @@
-import inspect
-
-import Classes
-import Classes_isomers
-
 import Page2B_EditWindow as P2BEW
-from GenerateLipids import Glycerolipid, Sphingolipid
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QAbstractTableModel, Property, Signal
@@ -24,6 +18,7 @@ class Page(QWizardPage):
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
+        self.setCommitPage(True)
 
         self.lipidList = []
         self.tableView = QTableView()

@@ -2,7 +2,7 @@ import inspect
 
 import Classes
 import Classes_isomers
-from GenerateLipids import Glycerolipid, Sphingolipid
+from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
 import Page2_EditWindow as P2EW
 
 from PySide6.QtCore import Property, Qt, Signal
@@ -20,9 +20,10 @@ class Page(QWizardPage):
         super(Page, self).__init__(parent)
 
         self.setTitle("Select lipid classes")
-        self.setSubTitle("Select from the list of available glycerophospholipid classes below.\n"
-                         "Spectra will be generated for the selected classes using the fatty acid ranges.")
+        self.setSubTitle("Select from the list of available lipid classes below.\n"
+                         "Spectra will be generated for the selected classes using the defined fatty acid ranges.")
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
+        self.setCommitPage(True)
         self.vLayout = QVBoxLayout(self)
 
         self.classQbox = {} # GPL QCheckBoxes        
@@ -46,6 +47,7 @@ class Page(QWizardPage):
         if self.field('isomerism') == False:
             classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
             classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
+            classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__() if inspect.getmodule(cls) == Classes])
         else:
             classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
 

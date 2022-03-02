@@ -1,6 +1,5 @@
 import copy
 import inspect
-from mimetypes import types_map
 import Spectra
 import Classes
 import Classes_isomers
@@ -20,6 +19,7 @@ class NewWindow(QDialog):
         if parent.field('isomerism') == False:
             self.classes_to_generate = [cls for cls in GL.Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
             self.classes_to_generate.extend([cls for cls in GL.Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
+            self.classes_to_generate.extend([cls for cls in GL.OtherLipid.__subclasses__() if inspect.getmodule(cls) == Classes])
         else:
             self.classes_to_generate = [cls for cls in GL.Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
 

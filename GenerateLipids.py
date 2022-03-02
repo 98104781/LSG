@@ -278,7 +278,7 @@ class OtherLipid(Lipid): # For cholsterols?
 
     self.tails = [sn1]
     self.lipid_class = type(self).__name__
-    self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
+    self.name = f"{body.name} {(sn1.name if sn1.name not in ['Headgroup', '0:0'] else '')}"
     self.mass = round(body.mass + sn1.mass - Masses['H2O'], 6)
 
     self.formula = body.formula
@@ -2852,4 +2852,63 @@ class O3P(Fragment):
   def Charge(self):
       return -1
 
+# ~ # ~ # Cholesteryl ring fragments:
+
+class C27H45(Fragment):
+  '''X+H Fragment common to cholesteryl under positive ESI\n
+  MZ: 369.351577875'''
+  def MZ(self):
+      return 369.351577875
+  def Formula(self):
+    formula = Counter({'C':27, 'H':45})
+    return formula
+  def Charge(self):
+      return 1
+
+class C13H19(Fragment):
+  '''X+H Fragment common to cholesteryl under positive ESI\n
+  MZ: 175.148127043'''
+  def MZ(self):
+      return 175.148127043
+  def Formula(self):
+    formula = Counter({'C':13, 'H':19})
+    return formula
+  def Charge(self):
+      return 1
+
+class C12H17(Fragment):
+  '''X+H Fragment common to cholesteryl under positive ESI\n
+  MZ: 161.132476979'''
+  def MZ(self):
+      return 161.132476979
+  def Formula(self):
+    formula = Counter({'C':12, 'H':17})
+    return formula
+  def Charge(self):
+      return 1
+
+class C11H15(Fragment):
+  '''X+H Fragment common to cholesteryl under positive ESI\n
+  MZ: 147.116826915'''
+  def MZ(self):
+      return 147.116826915
+  def Formula(self):
+    formula = Counter({'C':11, 'H':15})
+    return formula
+  def Charge(self):
+      return 1
+
+class C10H15(Fragment):
+  '''X+H Fragment common to cholesteryl under positive ESI\n
+  MZ: 135.116826915'''
+  def MZ(self):
+      return 135.116826915
+  def Formula(self):
+    formula = Counter({'C':10, 'H':15})
+    return formula
+  def Charge(self):
+      return 1
+
 # ~ # Goodness gracious that's a lot of fragments...
+
+

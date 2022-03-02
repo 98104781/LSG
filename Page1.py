@@ -23,7 +23,7 @@ class Page(QWizardPage):
         # from AA to ZZ, or whether specific lipids are to be generated.
         self.radButton1 = QRadioButton('Generate range of lipids')
         self.radButton2 = QRadioButton('Generate specific lipids')
-        self.registerField('radButton2', self.radButton2)
+        self.registerField('specifics', self.radButton2)
         self.radButton1.setChecked(True)
         self.hLayout.addWidget(self.radButton1)
         self.hLayout.addWidget(self.radButton2)
@@ -34,7 +34,8 @@ class Page(QWizardPage):
         # Generation takes a very long time when activated !!
         self.isomerism = QCheckBox('Respect sn isomerism', self)
         self.registerField('isomerism', self.isomerism)
-        self.vLayout.addWidget(self.isomerism)
+        self.isomerism.hide()
+        #self.vLayout.addWidget(self.isomerism) # Lipid isomers incomplete
 
         # Text and inputs on Page 1
         # Input box for C min value, which determines the minimum fatty acid chain length

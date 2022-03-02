@@ -10,7 +10,6 @@ class CreateWindow(QWizard):
     '''
     Wizard to guide through spectra generation
     '''
-
     def __init__(self):
         super().__init__()
 
