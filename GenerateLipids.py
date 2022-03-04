@@ -98,6 +98,7 @@ class sn:
   def __init__(self, c=0, d=0, mass=None, chnops={}, smiles='', type=None, me=0, oh=0, dt=0):
 
     self.type = type
+    string = []
     
     if self.type == 'Acyl':
       self.name = f"{c}:{d}"
@@ -107,6 +108,8 @@ class sn:
       string = ['C(=O)',bool(d>0)*'/'+d*'C=C/',oh*'C(O)',(c-1-2*d-oh)*'C']
       # string is used to generate smiles for the tails. Made as a list first
       # in case the order needs to be reversed later on.
+      self.smiles = ''.join(string) # smiles order can be reversed.
+      self.inverseSmiles = ''.join(string[::-1])
 
     elif self.type == 'Ether':
       self.name = f"{c}:{d};E"
@@ -114,6 +117,8 @@ class sn:
       self.mass = Masses['H2O'] + c*14.01565007 - d*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*(d-1)),'O':1})
       string = ['C',bool(d>0)*'/'+d*'C=C/',oh*'C(O)',(c-1-2*d-oh)*'C']
+      self.smiles = ''.join(string) # Repeated in each as to not overwrite
+      self.inverseSmiles = ''.join(string[::-1]) # self.smiles set for headgroup
 
     elif self.type == 'Vinyl':
       self.name = f"{c}:{d};P"
@@ -121,21 +126,19 @@ class sn:
       self.mass = Masses['H2O'] + c*14.01565007 - (d+1)*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':1})
       string = ['\C=C/',d*'C=C/',oh*'C(O)',(c-2-2*d-oh)*'C']
+      self.smiles = ''.join(string) # Repeated in each as to not overwrite
+      self.inverseSmiles = ''.join(string[::-1]) # self.smiles set for headgroup
 
     elif self.type == 'Headgroup':
       self.name = 'Headgroup'
       self.mass = mass
-      self.formula = Counter(chnops)    
+      self.formula = Counter(chnops)
       self.smiles = smiles
 
     else: # If nothing, just give it values for water
       self.name = '0:0'
       self.mass = Masses['H2O']
       self.formula = Counter({'H':2,'O':1})
-      string = []
-
-    self.smiles = ''.join(string) # smiles order can be reversed.
-    self.inverseSmiles = ''.join(string[::-1])
 
     # Perhaps exclude?  Identical to fatty acid of c = c+m
     if me > 0: # Methyl branching of fatty acid
@@ -150,6 +153,7 @@ class sn:
       self.name += f"(D{dt})" # Deuterium doesn't update smiles currently.
       self.mass += dt*1.006276746 # Calculated by D - H
       self.formula += {'H':-dt, 'D':dt}
+
 
 def generate_acyl_tails(n):
   tail_list = []
@@ -280,7 +284,7 @@ class Glycerolipid(Lipid):
     self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.type != 'Headgroup')}"
     self.mass = round(Masses['Glycerol'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6)
 
-    if sn3.type !='Headgroup': string = sn3.inverseSmiles
+    if sn3.type != 'Headgroup': string = sn3.inverseSmiles
     else: string = sn3.smiles # TAGs need the first tail reversed.
     self.smiles = f"{string}OCC(O{sn2.smiles})CO{sn1.smiles}"
 
