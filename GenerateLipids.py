@@ -139,6 +139,7 @@ class sn:
       self.name = '0:0'
       self.mass = Masses['H2O']
       self.formula = Counter({'H':2,'O':1})
+      self.smiles = ''
 
     # Perhaps exclude?  Identical to fatty acid of c = c+m
     if me > 0: # Methyl branching of fatty acid
@@ -284,7 +285,7 @@ class Glycerolipid(Lipid):
     self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.type != 'Headgroup')}"
     self.mass = round(Masses['Glycerol'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6)
 
-    if sn3.type != 'Headgroup': string = sn3.inverseSmiles
+    if sn3.type in ['Acyl', 'Ether', 'Vinyl']: string = sn3.inverseSmiles
     else: string = sn3.smiles # TAGs need the first tail reversed.
     self.smiles = f"{string}OCC(O{sn2.smiles})CO{sn1.smiles}"
 

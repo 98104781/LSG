@@ -53,11 +53,11 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         or Sphingolipid with 18:0.
         '''
         cls = data[0].lipidClass # Example lipid with No of tails -> 1 - 3.
-        if issubclass(cls, GL.Glycerolipid): # Automatically cals number of
+        if issubclass(cls, GL.Sphingolipid):
+            example = cls(GL.base(18, cls.base_types[0]), self.tails[0])
+        else: # Automatically cals number of
             _, comb, *_ = cwr(self.tails, cls.No_Tails) # tails needed here.
             example = cls(*comb) # comb will be (16:0_) 16:0_18:1
-        elif issubclass(cls, GL.Sphingolipid):
-            example = cls(GL.base(18, cls.base_types[0]), self.tails[0])
         example.resolve_spectra(data[1].text(0), data[1].fragmentList)
         return example 
     

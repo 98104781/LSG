@@ -955,8 +955,7 @@ class Cholesteryl_Ester(GL.OtherLipid):
     GL.C13H19  :20, # Present in lipidblast
     GL.C12H17  :20, # Present in lipidblast
     GL.C11H15  :20, # Present in lipidblast
-    GL.C10H15  :20  # Present in lipidblast
-    }
+    GL.C10H15  :20}  # Present in lipidblast
     }
     
   def __init__(self, sn1):
