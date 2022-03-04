@@ -39,10 +39,12 @@ class Generator(QObject):
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
+    # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
     def generate_range(self):
         self.tails = GL.generate_acyl_tails(self.tails_to_generate)
         self.bases = GL.generate_base_tails(self.bases_to_generate)
-        for cls in self.classes_to_generate:
+        for cls in self.classes_to_generate:                 # Remove all ions in spectra with an intensity of 0
             for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
             if not issubclass(cls, GL.Sphingolipid):
                 if self.isomerism == True:
@@ -64,61 +66,68 @@ class Generator(QObject):
             adducts = lipid.adducts
             lipid.adducts = {k: v for k, v in adducts.items() if k is selected_adduct}
             lipid.adducts[selected_adduct] = {k: v for k, v in adducts[selected_adduct].items() if v != 0}
-        return [x[0] for x in lipidList]
+        return [x[0] for x in lipidList]      # Remove all ions in spectra with an intensity of 0
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
-    
+
+    # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
     def as_msp(self):
         '''
         Defines how to export data when saved as .MSP.
         Contains lipid fragmentation informaiton.
         '''
 
-        self.noun = 'spectra'
+        self.noun = 'spectra' # Noun is used in Page 3 console when generation is completed
         for lipid in self.lipid_data:
             for adduct in lipid.adducts:
                 
                 lipid.resolve_spectra(adduct, lipid.adducts[adduct])
-
                 self.save_file.write(f"NAME: {lipid.name} {adduct}\n"
                                      f"IONMODE: {GL.Masses[adduct][1]}\n"
+                                     f"MW: {lipid.mass}\n"
                                      f"PRECURSORMZ: {GL.MA(lipid, adduct, 0).mass}\n"
                                      f"COMPOUNDCLASS: {lipid.lipid_class}\n"
                                      f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())} \n"
+                                     f"SMILES: {lipid.smiles}\n"
                                      f"RETENTIONTIME: 0.00\n" # Pointless
                                      f"PRECURSORTYPE: {adduct}\n")
+                
                 spectrum = lipid.spectra[adduct]
-
                 self.save_file.write(f"Num Peaks: {len(spectrum)}\n")
                 self.save_file.writelines(f"{peak.mass} {peak.intensity}\n" for peak in spectrum)
                 self.save_file.write("\n")
                 self.count += 1
-
-
             del lipid
 
         self.finished.emit()
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
-    
+
+    # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
     def as_orb(self):
         '''
         Defines how to export data when saved as .CSV.
         Specifically for use in QE 'Orbitrap' inclusion list.
         '''
 
-        self.noun = 'precursors'
-
+        self.noun = 'precursors' # Noun is used in Page 3 console when generation is completed
         writer = csv.writer(self.save_file)
-        writer.writerow(['Mass [m/z]','Formula [M]','Formula type','Species','CS [z]','Polarity','Start [min]','End [min]','(N)CE','(N)CE type','MSX ID','Comment'])
+        writer.writerow(['Mass [m/z]','Formula [M]','Formula type',
+                         'Species','CS [z]','Polarity','Start [min]',
+                         'End [min]','(N)CE','(N)CE type','MSX ID','Comment'])
 
         unique_mass = []
         for lipid in self.lipid_data:
             for adduct in lipid.adducts:
                 prec = GL.MA(lipid, adduct, 0)
-                if prec.mass not in unique_mass: # This takes a lot of time!
-                    unique_mass.append(prec.mass) # Removes all the duplicates, orbitrap inclusion looks for the mass, doesn't care about anything else!
-                    writer.writerow([prec.mass,'','',type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'','','','','',adduct])
+                if prec.mass not in unique_mass: # This can take some lot of time
+                    unique_mass.append(prec.mass) # Removes all the duplicate precursor masses
+
+                    writer.writerow([prec.mass,'','',
+                                     type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'',
+                                     '','','','',adduct])
                     self.count +=1
                 else: continue
             del lipid
@@ -126,17 +135,20 @@ class Generator(QObject):
         self.finished.emit()
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
-    
+
+    # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
+
     def as_sky(self):
         '''
         Defines how to export data when saved as .CSV.
         Specifically for use in Skyline Transition list.
         '''
 
-        self.noun = 'transitions'
-
+        self.noun = 'transitions'  # Noun is used in Page 3 console when generation is completed
         writer = csv.writer(self.save_file)
-        writer.writerow(['Molecule List Name', 'Precursor Name', 'Precursor Formula', 'Precursor Adduct', 'Precursor m/z', 'Precursor Charge', 'Product Formula', 'Product m/z', 'Product Charge', 'Explicit Retention Time', 'Explicit Collision Energy'])
+        writer.writerow(['Molecule List Name', 'Precursor Name', 'Precursor Formula',
+                         'Precursor Adduct', 'Precursor m/z', 'Precursor Charge', 'Product Formula',
+                         'Product m/z', 'Product Charge', 'Explicit Retention Time', 'Explicit Collision Energy'])
 
         for lipid in self.lipid_data:
 
@@ -144,14 +156,17 @@ class Generator(QObject):
                 lipid.resolve_spectra(adduct, lipid.adducts[adduct])
 
                 prec_mz = GL.MA(lipid, adduct, 0).mass
-                prec_formula = ''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())        
-            
+                prec_formula = ''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())       
+
                 written_masses = []
                 for prod in lipid.spectra[adduct]:
-
                     prod_formula = ''.join(''.join((key, str(val))) for (key, val) in prod.Formula().items())
                     if prod.mass not in written_masses and prod.intensity > 0 and prod.mass != prec_mz:
-                        writer.writerow([lipid.lipid_class, lipid.name, prec_formula, adduct, prec_mz, GL.Masses[adduct][2], prod_formula, prod.mass, prod.Charge(), '', ''])
+
+                        writer.writerow([lipid.lipid_class, lipid.name, prec_formula,
+                                         adduct, prec_mz, GL.Masses[adduct][2], prod_formula,
+                                         prod.mass, prod.Charge(), '', ''])
+
                         written_masses.append(prod.mass)
                         self.count +=1            
             del lipid
