@@ -6,7 +6,7 @@ import SaveAs
 
 from PySide6.QtWidgets import QFileDialog
 
-from PySide6.QtCore import QThread, QThreadPool
+from PySide6.QtCore import QThread
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QProgressBar
 from PySide6.QtWidgets import QPlainTextEdit, QPushButton, QVBoxLayout, QWizard, QWizardPage
@@ -42,7 +42,7 @@ class Page(QWizardPage):
         self.generatebutton.setEnabled(True)
         self.output_console.appendPlainText('Unsupported file type')
         time.sleep(0.5) # Sometimes takes some time for thread to exit.
-        self.completeChanged.emit()
+        self.completeChanged.emit() # Waits a bit before emitting.
 
     def completionText(self):
         self.generatorThread.exit()
@@ -52,7 +52,7 @@ class Page(QWizardPage):
         self.generatebutton.setEnabled(True)
         self.output_console.appendPlainText(f"Generated {self.generatorObject.count} {self.generatorObject.noun} in {self.t1-self.t0:.4f} seconds!")
         time.sleep(0.5) # Sometimes takes some time for thread to exit.
-        self.completeChanged.emit()
+        self.completeChanged.emit() # Waits a bit before emitting.
 
     def save_as(self):
         '''Popup 'Save as' dialogue box'''
@@ -101,9 +101,9 @@ class Page(QWizardPage):
                 self.generatebutton.setEnabled(False)
         except: pass
 
-        self.classes_to_generate = []
-        self.tails_to_generate = []
-        self.bases_to_generate = []
+        self.classes_to_generate = [] # Empty lists initialised here
+        self.tails_to_generate = [] # otherwise error thrown when
+        self.bases_to_generate = [] # coming from page 2B
 
         if self.field('specifics'): # If generate specific lipids is selected:
             self.output_console.appendPlainText('The following specific lipids will be generated:')
@@ -111,15 +111,17 @@ class Page(QWizardPage):
                 self.output_console.appendPlainText(lipid[0].name+' '+lipid[1])
        
         else: # If generate lipid range is selected:
+            # Print to console the range of tails to be generated
             self.selected_class_adducts = self.field('tree')
             self.output_console.appendPlainText('Tails will be generated from '
                                     +self.field('cmin')+':'+self.field('dmin')+
                             ' -> '+self.field('cmax')+':'+self.field('dmax'))
 
-            if self.field('hydroxytickbox'):
+            if self.field('hydroxytickbox'): # Include any hydroxy tails in console too!
                 self.output_console.appendPlainText('Hydroxy-functionalised tails included.\n')
             self.output_console.appendPlainText('The following classes will be generated:')
             caString = '' # Generates string, and class list
+
 
             for item, item2 in self.selected_class_adducts.items():
                 caString += '- '+item.text(0)+'\n'
@@ -130,8 +132,8 @@ class Page(QWizardPage):
                 item.lipidClass.adducts = self.adducts_to_generate
             self.output_console.appendPlainText(caString)
 
-            # Prepare information to generate lipids:
 
+            # Prepare information to generate lipids:
             # List with limits for generated tails
             self.tails_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0),
                                       int(self.field('dmin') or 0), int(self.field('dmax') or 0),

@@ -2,42 +2,42 @@ from collections import Counter
 
 Masses = {
 
-  #[Delta_mz,   Polarity,  z, chnops]
+  #[Delta_mz,       Polarity,  z,   chnops, smiles]
   "[M-H]-":     
-   [ -1.007276467, 'Negative', -1, {'H':-1}],
+   [ -1.007276467, 'Negative', -1, {'H':-1},         ''],
 
   "[M-2H]2-":   
-   [ -2.014552934, 'Negative', -2, {'H':-2}],
+   [ -2.014552934, 'Negative', -2, {'H':-2},         ''],
 
   "[M-3H]3-":   
-   [ -3.021829401, 'Negative', -3, {'H':-3}],
+   [ -3.021829401, 'Negative', -3, {'H':-3},         ''],
 
   "[M+Cl]-": # Cl 35, as is major isotope    
-   [ 34.96830412,  'Negative', -1, {'Cl':1}],
+   [ 34.96830412,  'Negative', -1, {'Cl':1},         '[Cl-].'],
    # Calculated by Mass of CL[35] - Mass of e-
 
   "[M+Na-2H]-":    
-   [ 20.974668486, 'Negative', -1, {'Na':1, 'H':-2}],
+   [ 20.974668486, 'Negative', -1, {'Na':1, 'H':-2}, '[Na+].'],
 
   "[M+2Na-3H]-":    
-   [ 42.956613439, 'Negative', -1, {'Na':2, 'H':-3}],
+   [ 42.956613439, 'Negative', -1, {'Na':2, 'H':-3}, '[Na+].[Na+].'],
 
   "[M+H]+":     
-   [  1.007276467, 'Positive',  1, {'H':1}],
+   [  1.007276467, 'Positive',  1, {'H':1},          '[H+].'],
 
   "[M+H-H2O]+": 
-   [-17.003288217, 'Positive',  1, {'H':-1, 'O':-1}],
+   [-17.003288217, 'Positive',  1, {'H':-1, 'O':-1}, '[H+].'],
 
   "[M+Na]+":    
-   [ 22.98922142,  'Positive',  1, {'Na':1}],
+   [ 22.98922142,  'Positive',  1, {'Na':1},         '[Na+].'],
    # Calculated by Mass of Na[23] - Mass of e-
 
   "[M+Li]+": # Li 7 as is major isotope    
-   [  7.01545542,  'Positive' , 1, {'Li':1}],
+   [  7.01545542,  'Positive' , 1, {'Li':1},         '[Li+].'],
    # Calculated by Mass of Li[7] - Mass of e-
 
   "[M+NH4]+":   
-   [ 18.033825568, 'Positive',  1, {'N':1, 'H':4}],
+   [ 18.033825568, 'Positive',  1, {'N':1, 'H':4},   '[NH4+].'],
    
   #  Handy masses 
   "e-":           
@@ -75,6 +75,13 @@ Masses = {
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
+def invertSmiles(smiles):
+  smiles = smiles[::-1]
+  smiles = smiles.replace('(','~')
+  smiles = smiles.replace(')','(')
+  smiles = smiles.replace('~',')')
+  return smiles
+
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class sn:
@@ -88,7 +95,7 @@ class sn:
   type = 'Acyl', 'Ether', 'Methyl', 'Headgroup', anything else will return water\n
   providing no parameters also returns a water (-OH), which does not modify backbone.
   '''
-  def __init__(self, c=0, d=0, mass=None, chnops={}, type=None, me=0, oh=0, dt=0):
+  def __init__(self, c=0, d=0, mass=None, chnops={}, smiles='', type=None, me=0, oh=0, dt=0):
 
     self.type = type
     
@@ -97,24 +104,38 @@ class sn:
       #           O2 mass     + c*CH2 mass    - d*H2 mass
       self.mass = 31.98982924 + c*14.01565007 - d*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':2})
+      string = ['C(=O)',bool(d>0)*'/'+d*'C=C/',oh*'C(O)',(c-1-2*d-oh)*'C']
+      # string is used to generate smiles for the tails. Made as a list first
+      # in case the order needs to be reversed later on.
+
     elif self.type == 'Ether':
       self.name = f"{c}:{d};E"
       #           H2O mass      + c*CH2 mass    - d*H2 mass
       self.mass = Masses['H2O'] + c*14.01565007 - d*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*(d-1)),'O':1})
+      string = ['C',bool(d>0)*'/'+d*'C=C/',oh*'C(O)',(c-1-2*d-oh)*'C']
+
     elif self.type == 'Vinyl':
       self.name = f"{c}:{d};P"
       #           H2O mass      + c*CH2 mass    - d*H2 mass
       self.mass = Masses['H2O'] + c*14.01565007 - (d+1)*2.01565007
       self.formula = Counter({'C':c, 'H':(2*c-2*d),'O':1})
+      string = ['\C=C/',d*'C=C/',oh*'C(O)',(c-2-2*d-oh)*'C']
+
     elif self.type == 'Headgroup':
       self.name = 'Headgroup'
       self.mass = mass
-      self.formula = Counter(chnops)
+      self.formula = Counter(chnops)    
+      self.smiles = smiles
+
     else: # If nothing, just give it values for water
       self.name = '0:0'
       self.mass = Masses['H2O']
       self.formula = Counter({'H':2,'O':1})
+      string = []
+
+    self.smiles = ''.join(string) # smiles order can be reversed.
+    self.inverseSmiles = ''.join(string[::-1])
 
     # Perhaps exclude?  Identical to fatty acid of c = c+m
     if me > 0: # Methyl branching of fatty acid
@@ -126,7 +147,7 @@ class sn:
       self.mass += oh*15.99491462
       self.formula += {'O':oh}
     if dt > 0: # deuterium labelled fatty acids
-      self.name += f"(D{dt})"
+      self.name += f"(D{dt})" # Deuterium doesn't update smiles currently.
       self.mass += dt*1.006276746 # Calculated by D - H
       self.formula += {'H':-dt, 'D':dt}
 
@@ -153,22 +174,33 @@ class base:
   def __init__(self, c=3, type=None, dt=0):
 
     self.type = type
-
+    # The bases, (ceramide bodies) can fall into one of several categories.
+    # The categories are listed here (instead of just allowing the loop to
+    # generate a range) because the fragmentation patterns change depending on
+    # the positioning of functional groups.
     if self.type == 'Sphinganine':
       self.name = f"{c}:0;O2"
       #           H2O mass      + c*CH2 mass    + 2* O mass
       self.mass = Masses['H2O'] + c*14.01565007 + 2*15.99491462
       self.formula = Counter({'C':c, 'H':(2+2*c),'O':3})
+      self.smiles = 'OCC(N)C(O)'
+      self.smiles += (c-3)*'C'
+
     elif self.type == 'Sphingosine':
       self.name = f"{c}:1;O2"
       #           H2O mass      + c*CH2 mass    - H2 mass    + 2* O mass
       self.mass = Masses['H2O'] + c*14.01565007 - 2.01565007 + 2*15.99491462
       self.formula = Counter({'C':c, 'H':(2*c),'O':3})
+      self.smiles = 'OCC(N)C(O)/C=C/'
+      self.smiles += (c-5)*'C'
+
     elif self.type == 'Phytosphingosine':
       self.name = f"{c}:0;O3"
       #           H2O mass      + c*CH2 mass    + 3* O mass
       self.mass = Masses['H2O'] + c*14.01565007 + 3*15.99491462
       self.formula = Counter({'C':c, 'H':(2+2*c),'O':4})
+      self.smiles = 'OCC(N)C(O)C(O)'
+      self.smiles += (c-4)*'C'
       # Despite being based around an ammonia group, H2O is still
       # used as the default mass. These groups are attached to an
       # ammonia group in the 'Sphingolipid' class like how fatty 
@@ -180,6 +212,7 @@ class base:
       self.name = '0:0'
       self.mass = Masses['H2O']
       self.formula = Counter({'H':2,'O':1})
+      self.smiles = ''
 
     if dt > 0: # deuterium labels
       self.name += f"(D{dt})"
@@ -201,11 +234,12 @@ def generate_base_tails(n):
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class Other:
-  def __init__(self, name='H2O', mass=Masses['H2O'], chnops={'H':2,'O':1}, dt=0):
+  def __init__(self, name='H2O', mass=Masses['H2O'], chnops={'H':2,'O':1}, smiles='', dt=0):
     
     self.name = name
     self.mass = mass
     self.formula = Counter(chnops)
+    self.smiles=smiles
 
     if dt > 0: # deuterium labels
       self.name += f"(D{dt})"
@@ -220,6 +254,7 @@ class Lipid:
 
     self.adducts = adducts
     self.spectra = {}
+    self.smiles = ''
 
   def resolve_spectra(self, adduct, spectra={}):
     x = []
@@ -242,8 +277,12 @@ class Glycerolipid(Lipid):
 
     self.tails = [sn1, sn2, sn3]
     self.lipid_class = type(self).__name__  # Takes name from class which generated it
-    self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name != 'Headgroup')}"
-    self.mass = round(Masses['Glycerol'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6) 
+    self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.type != 'Headgroup')}"
+    self.mass = round(Masses['Glycerol'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6)
+
+    if sn3.type !='Headgroup': string = sn3.inverseSmiles
+    else: string = sn3.smiles # TAGs need the first tail reversed.
+    self.smiles = f"{string}OCC(O{sn2.smiles})CO{sn1.smiles}"
 
     self.formula = Counter({'C':3, 'H':8, 'O':3})  # Glycerol
     for snx in self.tails:  # Works out CHNOPS for lipid
@@ -262,6 +301,7 @@ class Sphingolipid(Lipid):
     self.lipid_class = type(self).__name__ # Takes name from class which generated it
     self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
     self.mass = round(Masses['NH3'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6)
+    self.smiles= f'{headgroup.smiles}{base.smiles[:5]}{sn1.smiles}{base.smiles[5:]}'
 
     self.formula = Counter({'H':3,'N':1}) # Unlike GPLs, sphingoids built around the base
     for snx in self.tails: # Works out CHNOPS for lipid
@@ -280,6 +320,7 @@ class OtherLipid(Lipid): # For cholsterols?
     self.lipid_class = type(self).__name__
     self.name = f"{body.name} {(sn1.name if sn1.name not in ['Headgroup', '0:0'] else '')}"
     self.mass = round(body.mass + sn1.mass - Masses['H2O'], 6)
+    self.smiles=f'{body.smiles}{sn1.smiles}'
 
     self.formula = body.formula
     self.formula.update(sn1.formula)

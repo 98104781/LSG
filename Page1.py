@@ -41,32 +41,32 @@ class Page(QWizardPage):
         # Input box for C min value, which determines the minimum fatty acid chain length
         # Fatty acids will be generated from C min to C max
         self.cmin = QLineEdit()
-        self.cmin.setPlaceholderText(' C min:'+86*' '+'(1 -> 40)')
-        self.cmin.setValidator(QIntValidator(1, 40)) # Only allow ints between 1 - 40
+        self.cmin.setPlaceholderText(' C min:'+86*' '+'(2 -> C max )')
+        self.cmin.setValidator(QIntValidator(2, 30)) # Only allow ints between 1 - 40
         self.registerField('cmin*', self.cmin) # Register field to make it mandatory
         self.vLayout.addWidget(self.cmin)
 
         # Input box for C max value, which determines the maximum fatty acid chain length
         # Fatty acids will be generated from C min to C max
         self.cmax = QLineEdit()
-        self.cmax.setPlaceholderText(' C max:'+85*' '+'(C min -> 40)')
-        self.cmax.setValidator(QIntValidator(1, 40))
+        self.cmax.setPlaceholderText(' C max:'+85*' '+'(C min -> 30)')
+        self.cmax.setValidator(QIntValidator(1, 30))
         self.registerField('cmax*', self.cmax)
         self.vLayout.addWidget(self.cmax)
 
         # Input box for D min value, which determines the minimum desaturation of a fatty acid
         # Fatty acids of a given length will be generated from D min to D max where D < C/2
         self.dmin = QLineEdit()
-        self.dmin.setPlaceholderText(' D min:'+86*' '+'(0 -> 40 < C min)')
-        self.dmin.setValidator(QIntValidator(0, 40))
+        self.dmin.setPlaceholderText(' D min:'+86*' '+'(0 -> D max )')# < C min)')
+        self.dmin.setValidator(QIntValidator(0, 12))
         self.registerField('dmin*', self.dmin)
         self.vLayout.addWidget(self.dmin)
 
         # Input box for D min value, which determines the maximum desaturation of a fatty acid
         # Fatty acids of a given length will be generated from D min to D max where D < C/2
         self.dmax = QLineEdit()     
-        self.dmax.setPlaceholderText(' D max:'+85*' '+'(D min -> 40 < C max)')
-        self.dmax.setValidator(QIntValidator(0, 40))
+        self.dmax.setPlaceholderText(' D max:'+85*' '+'(D min -> 12)')# < C max)')
+        self.dmax.setValidator(QIntValidator(0, 12))
         self.registerField('dmax*', self.dmax)
         self.vLayout.addWidget(self.dmax)
 
@@ -76,9 +76,9 @@ class Page(QWizardPage):
         self.registerField('hydroxytickbox', self.hydroxytickbox)
         self.vLayout.addWidget(self.hydroxytickbox)
         self.omax = QLineEdit()
-        self.omax.setPlaceholderText(' O max:'+85*' '+'(1 -> 10)')
+        self.omax.setPlaceholderText(' O max:'+85*' '+'(1 -> 8)')
         self.omax.setDisabled(True)
-        self.omax.setValidator(QIntValidator(1, 10))
+        self.omax.setValidator(QIntValidator(1, 8))
         self.registerField('omax', self.omax)
         self.hydroxytickbox.toggled.connect(self.omax.setEnabled)
         self.hydroxytickbox.toggled.connect(self.omax.clear)

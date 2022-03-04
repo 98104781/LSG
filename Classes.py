@@ -132,7 +132,8 @@ class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
     }
 
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=180.063388, type='Headgroup', chnops={'C':6, 'H':12, 'O':6})
+    headgroup = GL.sn(mass=180.063388, type='Headgroup', chnops={'C':6, 'H':12, 'O':6},
+    smiles='OC1C(O)C(O)C(CO)OC1')
     super().__init__(MGDG.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -147,14 +148,15 @@ class SQDG(GL.Glycerolipid): # Sulphoquinovosyl diacylglycerol
     GL.MA_s_FA    :10, # Present in lipidBlast
     GL.FAH        :10, # Present in lipidBlast
     GL.C6H9O7S   :100, # Present in lipidBlast
-    GL.O3SH        :20}}
+    GL.O3SH       :20}}
 
   #"[M+NH4]+":{    
   #  GL.MA          :5
   #  }
 
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=244.025287, type='Headgroup', chnops={'C':6, 'H':12, 'O':8, 'S':1})
+    headgroup = GL.sn(mass=244.025287, type='Headgroup', chnops={'C':6, 'H':12, 'O':8, 'S':1},
+    smiles='OC1C(O)C(O)C(CS(=O)(=O)O)OC1')
     super().__init__(SQDG.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -181,7 +183,8 @@ class DGDG(GL.Glycerolipid): # Digalactosyl diacylglycerol
     }
 
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=342.116212, type='Headgroup', chnops={'C':12, 'H':22, 'O':11})
+    headgroup = GL.sn(mass=342.116212, type='Headgroup', chnops={'C':12, 'H':22, 'O':11},
+    smiles='OC1C(O)C(O)C(CO(C2OC(CO)C(O)C(O)C2(O)))OC1')
     super().__init__(DGDG.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -204,7 +207,8 @@ class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
   #  }
 
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=161.105193, type='Headgroup', chnops={'C':7, 'H':15, 'N':1, 'O':3})
+    headgroup = GL.sn(mass=161.105193, type='Headgroup', chnops={'C':7, 'H':15, 'N':1, 'O':3},
+    smiles='[O-]C(=O)C([N+](C)(C)(C))CC')
     # headgroup mass has -H to maintain neutral charge
     super().__init__(DGTS.adducts, sn1, sn2, headgroup)
 
@@ -242,7 +246,8 @@ class PA(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
+    smiles='O=P(O)(O)')
     super().__init__(PA.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -277,7 +282,8 @@ class PC(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
+    smiles='C[N+](C)(C)CCOP([O-])(=O)')
     # headgroup mass has -H to maintain neutral charge
     super().__init__(PC.adducts, sn1, sn2, headgroup)
 
@@ -323,7 +329,8 @@ class PE(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
+    smiles='NCCOP(O)(=O)')
     super().__init__(PE.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -363,7 +370,8 @@ class PG(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1})
+    headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
+    smiles='OCC(O)COP(O)(=O)')
     super().__init__(PG.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -407,7 +415,8 @@ class PI(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13, 'O':9, 'P':1})
+    headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13, 'O':9, 'P':1},
+    smiles='OC1C(O)C(O)C(O)C(O)C1OP(O)(=O)')
     super().__init__(PI.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -465,7 +474,8 @@ class PIP(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=339.996048, type='Headgroup', chnops={'C':6, 'H':14, 'O':12, 'P':2})
+    headgroup = GL.sn(mass=339.996048, type='Headgroup', chnops={'C':6, 'H':14, 'O':12, 'P':2},
+    smiles='OC1C(O)C(O)C(OP(=O)(O)O)C(O)C1OP(O)(=O)')
     super().__init__(PIP.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -491,7 +501,8 @@ class PI2P(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=419.962378, type='Headgroup', chnops={'C':6, 'H':15, 'O':15, 'P':3})
+    headgroup = GL.sn(mass=419.962378, type='Headgroup', chnops={'C':6, 'H':15, 'O':15, 'P':3},
+    smiles='OC1C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C(O)C1OP(O)(=O)')
     super().__init__(PI2P.adducts, sn1, sn2, headgroup)
 '''
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -535,7 +546,8 @@ class PS(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1})
+    headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1},
+    smiles='[O-]C(=O)C([NH3+])COP(O)(=O)')
     super().__init__(PS.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -564,7 +576,8 @@ class PPA(GL.Glycerolipid):
     
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=177.943224, type='Headgroup', chnops={'H':4, 'O':7, 'P':2})
+    headgroup = GL.sn(mass=177.943224, type='Headgroup', chnops={'H':4, 'O':7, 'P':2},
+    smiles='O=P(O)(O)OP(=O)(O)')
     super().__init__(PPA.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -589,7 +602,8 @@ class lyPA(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
+    smiles='O=P(O)(O)')
     super().__init__(lyPA.adducts, sn1=sn1, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -623,7 +637,8 @@ class lyPC(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
+    smiles='C[N+](C)(C)CCOP([O-])(=O)')
     # headgroup mass has -H to maintain neutral charge
     super().__init__(lyPC.adducts, sn1=sn1, sn3=headgroup)
 
@@ -660,7 +675,8 @@ class lyPE(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
+    smiles='NCCOP(O)(=O)')
     super().__init__(lyPE.adducts, sn1=sn1, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -689,7 +705,8 @@ class lyPG(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1})
+    headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
+    smiles='OCC(O)COP(O)(=O)')
     super().__init__(lyPG.adducts, sn1=sn1, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -722,7 +739,8 @@ class lyPI(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1})
+    headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1},
+    smiles='OC1C(O)C(O)C(O)C(O)C1OP(O)(=O)')
     super().__init__(lyPI.adducts, sn1=sn1, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -744,7 +762,8 @@ class lyPS(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1):
-    headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1})
+    headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1},
+    smiles='[O-]C(=O)C([NH3+])COP(O)(=O)')
     super().__init__(lyPS.adducts, sn1=sn1, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -876,7 +895,8 @@ class Ceramide_PA(GL.Sphingolipid):
   #  }}#,
 
   def __init__(self, base, sn1):
-    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
+    smiles='O=P(O)(O)')
     super().__init__(Ceramide_PA.adducts, base, sn1, headgroup)
 
 class Ceramide_PC(GL.Sphingolipid):
@@ -895,7 +915,8 @@ class Ceramide_PC(GL.Sphingolipid):
     }
     
   def __init__(self, base, sn1):
-    headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1})
+    headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
+    smiles='C[N+](C)(C)CCOP([O-])(=O)')
     # headgroup mass has -H to maintain neutral charge
     super().__init__(Ceramide_PC.adducts, base, sn1, headgroup)
 
@@ -915,7 +936,8 @@ class Sulfatide(GL.Sphingolipid):
     }
     
   def __init__(self, base, sn1):
-    headgroup = GL.sn(mass=260.020201964, type='Headgroup', chnops={'C':6, 'H':12, 'O':9, 'S':1})
+    headgroup = GL.sn(mass=260.020201964, type='Headgroup', chnops={'C':6, 'H':12, 'O':9, 'S':1},
+    smiles='OC1C(OS(=O)(=O)O)C(O)C(CO)OC1')
     super().__init__(Sulfatide.adducts, base, sn1, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -938,5 +960,6 @@ class Cholesteryl_Ester(GL.OtherLipid):
     }
     
   def __init__(self, sn1):
-    body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1})
+    body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1},
+    smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O')
     super().__init__(Cholesteryl_Ester.adducts, body, sn1)
