@@ -1,4 +1,4 @@
-import Page2B_EditWindow as P2BEW
+import Page4_EditWindow as P2BEW
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QAbstractTableModel, Property, Signal
@@ -66,11 +66,10 @@ class Page(QWizardPage):
         except: pass
         self.buildList()
 
-    def removeSelectedLipid(self):
-        try:
-            row = self.tableView.selectedIndexes()[0].row()
-            self.lipidList.pop(row)
-        except: pass
+    def removeSelectedLipid(self): # Reverse list of indexes so ones towards the end are deleted first
+        indexesToDelete = sorted([row.row() for row in self.tableView.selectedIndexes()], reverse=True)
+        for index in indexesToDelete:
+            self.tailList.pop(index)
         self.buildList()
 
     def isComplete(self):
@@ -85,7 +84,7 @@ class Page(QWizardPage):
         return self.lipidList
 
     def nextId(self):
-        return 3 # Page 3
+        return 5
 
     tableProperty = Property(list, getLipidList, setLipidList)
     lipidListChanged = Signal()

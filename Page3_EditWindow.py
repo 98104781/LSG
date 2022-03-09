@@ -27,7 +27,7 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         self.spectra = Spectra.SpectraScatter()
         self.spectra.setFixedHeight(200)
         self.spectra.setFixedWidth(400)
-        self.label = QLabel("If generated spectra don't respect sn isomerism, all isomer dependent\n"
+        self.label = QLabel("Generated spectra don't respect sn isomerism. All isomer dependent\n"
                             "fragments will be equal in intensity.\n\nIf the observed fragment intensities"
                             " differ from the default provided, they may\nbe manually updated on the left.\n\n"
                             "Any fragment with '0' intensity will be removed when lipids are generated. ")

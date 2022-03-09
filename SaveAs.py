@@ -12,23 +12,28 @@ class Generator(QObject):
     progress_bar_increment = Signal()
 
     def __init__(self, file_name, filter, classes_to_generate, tails_to_generate, bases_to_generate, 
-                 isomerism, specifics, lipidList):
+                 isomerism, lipidSpecifics, lipidList, tailSpecifics, tailList):
         super().__init__()
 
         self.file_name = file_name
         self.filter = filter
+
         self.classes_to_generate = classes_to_generate
         self.tails_to_generate = tails_to_generate
         self.bases_to_generate = bases_to_generate
+
         self.isomerism = isomerism
-        self.specifics = specifics
+        self.lipidSpecifics = lipidSpecifics
         self.lipidList = lipidList
+        self.tailSpecifics = tailSpecifics
+        self.tailList = tailList
+
         self.count = 0
 
 
     def run(self):
         self.save_file = open(self.file_name, 'x', newline='')
-        if self.specifics:
+        if self.lipidSpecifics:
             self.lipid_data = self.generate_specific()
         else: self.lipid_data = self.generate_range()
         if self.filter == "MSP (*.msp)": self.as_msp()
@@ -42,8 +47,14 @@ class Generator(QObject):
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
     def generate_range(self):
-        self.tails = GL.generate_acyl_tails(self.tails_to_generate)
-        self.bases = GL.generate_base_tails(self.bases_to_generate)
+
+        if self.tailSpecifics:
+            self.tails = self.tailList
+            self.bases = GL.generate_base_tails(self.bases_to_generate)
+        else:
+            self.tails = GL.generate_tails(self.tails_to_generate, 'Acyl')
+            self.bases = GL.generate_base_tails(self.bases_to_generate)
+
         for cls in self.classes_to_generate:                 # Remove all ions in spectra with an intensity of 0
             for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
             if not issubclass(cls, GL.Sphingolipid):
@@ -95,7 +106,7 @@ class Generator(QObject):
                 
                 spectrum = lipid.spectra[adduct]
                 self.save_file.write(f"Num Peaks: {len(spectrum)}\n")
-                self.save_file.writelines(f"{peak.mass} {peak.intensity}\n" for peak in spectrum)
+                self.save_file.writelines(f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n' for peak in spectrum)
                 self.save_file.write("\n")
                 self.count += 1
             del lipid

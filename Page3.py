@@ -1,161 +1,117 @@
-import os
-import time
+import inspect
 
-import GenerateLipids as GL
-import SaveAs
+import Classes
+import Classes_isomers
+from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
+import Page3_EditWindow as P2EW
 
-from PySide6.QtWidgets import QFileDialog
-
-from PySide6.QtCore import QThread
+from PySide6.QtCore import Property, Qt, Signal
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QProgressBar
-from PySide6.QtWidgets import QPlainTextEdit, QPushButton, QVBoxLayout, QWizard, QWizardPage
+from PySide6.QtWidgets import QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
 
 class Page(QWizardPage):
     '''
-    Final page of GUI. Allows for generation.
+    Displays currently supported lipid classes
+    with their currently supported adducts for generation.
     '''
+    treeDataChanged = Signal()
+
     def __init__(self, parent=None):
         super(Page, self).__init__(parent)
 
-        self.setTitle("Select filetype to generate")
-        self.setSubTitle("Press 'Generate' to create and export file \n"
-                         ".msp spectral libraries, .csv QE+ inclusion list and .csv skyline transition lists supported")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\ADs.png'))
+        self.setTitle("Select lipid classes to generate")
+        self.setSubTitle("Select from the list of available lipid classes below.\n"
+                         "Spectra will be generated for the selected classes using the tails previously defined.")
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
+        self.setCommitPage(True)
         self.vLayout = QVBoxLayout(self)
 
-        self.generatebutton = QPushButton("Generate")
-        self.generatebutton.clicked.connect(self.save_as)
+        self.classQbox = {} # GPL QCheckBoxes        
+        self.classAdductQbox = {} # Adduct QCheckBoxes
 
-        self.vLayout.addWidget(self.generatebutton)
+        self.treeView = QTreeWidget()
+        self.treeView.setHeaderHidden(True)
+        self.registerField("tree", self, "tree_property")
 
-        self.output_console = QPlainTextEdit()
-        self.output_console.setReadOnly(True)
-        self.vLayout.addWidget(self.output_console)
+        self.modifybutton = QPushButton("Modify fragmentation spectra for selected adduct(s)")
+        self.modifybutton.clicked.connect(self.open_editspectrawindow)
 
-        self.progress_bar = QProgressBar()
-        self.vLayout.addWidget(self.progress_bar)
-
-    def unsupported_fileType(self):
-        self.generatorThread.exit()
-        self.progress_bar.setMaximum(1)
-        self.generatebutton.setEnabled(True)
-        self.output_console.appendPlainText('Unsupported file type')
-        time.sleep(0.5) # Sometimes takes some time for thread to exit.
-        self.completeChanged.emit() # Waits a bit before emitting.
-
-    def completionText(self):
-        self.generatorThread.exit()
-        self.t1 = time.time()
-        self.progress_bar.setMaximum(1)
-        self.progress_bar.setValue(1)
-        self.generatebutton.setEnabled(True)
-        self.output_console.appendPlainText(f"Generated {self.generatorObject.count} {self.generatorObject.noun} in {self.t1-self.t0:.4f} seconds!")
-        time.sleep(0.5) # Sometimes takes some time for thread to exit.
-        self.completeChanged.emit() # Waits a bit before emitting.
-
-    def save_as(self):
-        '''Popup 'Save as' dialogue box'''
-        # Create save location
-        file_name, filter = QFileDialog.getSaveFileName(filter="MSP (*.msp);;Orbitrap Inclusion (*.csv);;Skyline Transition (*.csv)", selectedFilter='')
-
-        if file_name:
-            if os.path.exists(file_name): # If save location exists, override
-                self.output_console.appendPlainText('Overwriting {}...'.format(file_name))
-                try:os.remove(file_name) # Removes if exists
-                except PermissionError:
-                    self.output_console.appendPlainText("Could not overwrite file. File may be in use.")
-                    pass
-            else: self.output_console.appendPlainText('Creating {}'.format(file_name))
-
-            try:
-                self.progress_bar.setValue(0)
-                self.progress_bar.setMaximum(0)
-                self.generatorThread = QThread()
-                self.generatorObject = SaveAs.Generator(file_name, filter,
-                    self.classes_to_generate, self.tails_to_generate, self.bases_to_generate, 
-                    self.field('isomerism'), self.field('specifics'), self.field('lipidList'))
-                self.generatorObject.moveToThread(self.generatorThread)
-                self.generatorObject.fileError.connect(self.unsupported_fileType)
-                self.generatorThread.started.connect(self.generatorObject.run)
-                self.generatorObject.finished.connect(self.completionText)
-                self.generatorObject.finished.connect(self.generatorObject.deleteLater)
-                self.generatorThread.finished.connect(self.generatorThread.deleteLater)
-                self.generatorThread.start()
-                self.generatebutton.setEnabled(False)
-                self.completeChanged.emit()
-                self.t0 = time.time()
-            except: self.output_console.appendPlainText('Save location unavailable')
-        else: pass
+        self.vLayout.addWidget(self.treeView)
+        self.vLayout.addWidget(self.modifybutton)
+     
 
     def initializePage(self) -> None:
-        '''
-        When the page is opened, update console information.
-        '''
-        self.output_console.clear() # Clear console, update with tails and lipids chosen
 
-        try:
-            if self.generatorThread.isRunning():
-                self.progress_bar.setValue(0)
-                self.progress_bar.setMaximum(0)
-                self.generatebutton.setEnabled(False)
-        except: pass
+        self.treeView.clear()
 
-        self.classes_to_generate = [] # Empty lists initialised here
-        self.tails_to_generate = [] # otherwise error thrown when
-        self.bases_to_generate = [] # coming from page 2B
+        if self.field('isomerism') == False:
+            # Glycerolipids
+            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
+            # Sphingolipids
+            classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
+            # ETC Lipids, Cholesterol ester
+            classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__() if inspect.getmodule(cls) == Classes])
+        else:
+            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
 
-        if self.field('specifics'): # If generate specific lipids is selected:
-            self.output_console.appendPlainText('The following specific lipids will be generated:')
-            for lipid in self.field('lipidList'):
-                self.output_console.appendPlainText(lipid[0].name+' '+lipid[1])
-       
-        else: # If generate lipid range is selected:
-            # Print to console the range of tails to be generated
-            self.selected_class_adducts = self.field('tree')
-            self.output_console.appendPlainText('Tails will be generated from '
-                                    +self.field('cmin')+':'+self.field('dmin')+
-                            ' -> '+self.field('cmax')+':'+self.field('dmax'))
+        for cls in classes_to_generate: #  Make boxes for Treeview
+            self.classQbox[cls]  =  QTreeWidgetItem(self.treeView)
+            root = self.classQbox[cls] # Creates tickbox for class
+            root.lipidClass = cls # Custom variable to store class
+            root.setText(0, cls.__name__) # Gives name for tickbox
+            root.setCheckState(0, Qt.Unchecked) #   Untick tickbox
+            root.setFlags(root.flags() | Qt.ItemIsAutoTristate | Qt.ItemIsUserCheckable)
+            self.classAdductQbox[cls] = {} # Open dict for adducts
 
-            if self.field('hydroxytickbox'): # Include any hydroxy tails in console too!
-                self.output_console.appendPlainText('Hydroxy-functionalised tails included.\n')
-            self.output_console.appendPlainText('The following classes will be generated:')
-            caString = '' # Generates string, and class list
-
-
-            for item, item2 in self.selected_class_adducts.items():
-                caString += '- '+item.text(0)+'\n'
-                self.classes_to_generate.append(item.lipidClass)
-                self.adducts_to_generate = {}
-                for adduct in item2: # Update the selected adducts
-                    self.adducts_to_generate.update({adduct.text(0):adduct.fragmentList})
-                item.lipidClass.adducts = self.adducts_to_generate
-            self.output_console.appendPlainText(caString)
-
-
-            # Prepare information to generate lipids:
-            # List with limits for generated tails
-            self.tails_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0),
-                                      int(self.field('dmin') or 0), int(self.field('dmax') or 0),
-                                      int(self.field('omax') or 0)]
-            
-            base_types = [] # List with types of sphingoid bases to generate
-            for cls in self.classes_to_generate: # Sphingolipids can have one of many base type, which the lipid
-                if issubclass(cls, GL.Sphingolipid): # is centered around. The possible types are defined in the
-                    base_types.extend(cls.base_types) # Sphingolipid.base_types list. Collect all unique base types 
-                base_types = list(set(base_types)) # used so that they can be generated with the lipids.
-
-            if self.field('ceramideVariability') is False:
-                self.bases_to_generate = [18, 18, base_types]
-            else: self.bases_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0), base_types]
-            
-        self.progress_bar.reset()
+            for adduct in cls.adducts: # Make sub-box for treeview
+                self.classAdductQbox[cls][adduct] = QTreeWidgetItem(self.classQbox[cls])
+                child = self.classAdductQbox[cls][adduct] # Assign
+                child.fragmentList = cls.adducts[adduct] # Adducts
+                child.setText(0, adduct) #  Gives name for tickbox
+                child.setCheckState(0, Qt.Unchecked) #  Untick box
+                child.setFlags(child.flags() | Qt.ItemIsUserCheckable) 
 
         return super().initializePage()
-    
-    def isComplete(self):
-        try: # Disable finish button if running.
-            if self.generatorThread.isRunning():
-                return False
-        except: pass # Thread not yet created.
-        return super().isComplete()
+
+    def open_editspectrawindow(self):
+        '''
+        Opens external window to modify selected spectra.
+        Should display an example lipid spectra of GPL
+        16:0_18:1 with appropriate masses and intensity.
+        '''
+        editspectrawindow = P2EW.NewWindow(self.field('tree'))
+        editspectrawindow.exec()
+            
+    def treeData(self):
+        '''
+        Custom storage for tree data.
+        Allows later determination of selected class/adducts.
+        '''
+        checkedBoxes = {}
+        root = self.treeView.invisibleRootItem()
+
+        childs_1 = root.childCount()
+        for i in range(childs_1):
+            item = root.child(i)
+            if bool(item.checkState(0)):
+                checkedBoxes[item] = []
+                #item.lipidClass
+                
+                adducts = []
+                childs_2 = item.childCount()
+                for j in range(childs_2):
+                    item2 = item.child(j)
+                    if bool(item2.checkState(0)):
+                        adducts.append(item2)
+                        #item2.fragmentList
+                checkedBoxes[item] = adducts
+
+        return checkedBoxes
+
+    def setTreeData(self, data):
+        pass
+
+    tree_property = Property("QVariant", treeData, setTreeData, treeDataChanged)
+
+    def nextId(self):
+        return 5

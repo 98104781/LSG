@@ -1,114 +1,153 @@
-import inspect
+import TailEditWindow as TEW
+import GenerateLipids as GL
 
-import Classes
-import Classes_isomers
-from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
-import Page2_EditWindow as P2EW
-
-from PySide6.QtCore import Property, Qt, Signal
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
+from PySide6.QtCore import Qt, QAbstractTableModel, Property, Signal
+from PySide6.QtWidgets import QPushButton, QTableView, QVBoxLayout, QHBoxLayout, QWizard, QWizardPage, QHeaderView
 
 class Page(QWizardPage):
     '''
-    Second page. Displays currently supported lipid classes
-    with their currently supported adducts for generation.
+    Define Specific Tails
     '''
-    treeDataChanged = Signal()
 
     def __init__(self, parent=None):
         super(Page, self).__init__(parent)
 
-        self.setTitle("Select lipid classes")
-        self.setSubTitle("Select from the list of available lipid classes below.\n"
-                         "Spectra will be generated for the selected classes using the defined fatty acid ranges.")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
-        self.setCommitPage(True)
+        self.setTitle("Generate a range of lipids using specific tails")
+        self.setSubTitle("Please define a list of tails to use.\nSome common tails are preset.")
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\FAs.png'))
         self.vLayout = QVBoxLayout(self)
+        self.hLayout = QHBoxLayout(self)
 
-        self.classQbox = {} # GPL QCheckBoxes        
-        self.classAdductQbox = {} # Adduct QCheckBoxes
+        self.tableView = QTableView()
+        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.vLayout.addWidget(self.tableView)
 
-        self.treeView = QTreeWidget()
-        self.treeView.setHeaderHidden(True)
-        self.registerField("tree", self, "tree_property")
+        self.addLipid = QPushButton('New Tail')
+        self.addLipid.clicked.connect(self.addNewTail)
+        self.hLayout.addWidget(self.addLipid)
+        self.editLipid = QPushButton('Edit Selected')
+        self.editLipid.clicked.connect(self.editSelectedTail)
+        self.hLayout.addWidget(self.editLipid)
+        self.removeLipid = QPushButton('Remove Selected')
+        self.removeLipid.clicked.connect(self.removeSelectedTail)
+        self.hLayout.addWidget(self.removeLipid)
+        self.vLayout.addLayout(self.hLayout)
 
-        self.modifybutton = QPushButton("Modify fragmentation spectra for selected adduct(s)")
-        self.modifybutton.clicked.connect(self.open_editspectrawindow)
+        self.registerField("tailList", self, "tableProperty")
 
-        self.vLayout.addWidget(self.treeView)
-        self.vLayout.addWidget(self.modifybutton)
-     
+        # Common fatty acids according to LipidMatch
+        self.tailList =  [GL.sn( 8, 0, type='Acyl'), GL.sn(10, 0, type='Acyl'), GL.sn(12, 0, type='Acyl'), GL.sn(13, 0, type='Acyl'),
+                          GL.sn(14, 0, type='Acyl'), GL.sn(14, 1, type='Acyl'), GL.sn(15, 0, type='Acyl'), GL.sn(15, 1, type='Acyl'),
+                          GL.sn(16, 0, type='Acyl'), GL.sn(16, 1, type='Acyl'), GL.sn(17, 0, type='Acyl'), GL.sn(17, 1, type='Acyl'),
+                          GL.sn(17, 2, type='Acyl'), GL.sn(18, 0, type='Acyl'), GL.sn(18, 1, type='Acyl'), GL.sn(18, 2, type='Acyl'),
+                          GL.sn(18, 3, type='Acyl'), GL.sn(18, 4, type='Acyl'), GL.sn(19, 0, type='Acyl'), GL.sn(19, 1, type='Acyl'),
+                          GL.sn(20, 1, type='Acyl'), GL.sn(20, 2, type='Acyl'), GL.sn(20, 3, type='Acyl'), GL.sn(20, 4, type='Acyl'),
+                          GL.sn(20, 5, type='Acyl'), GL.sn(21, 0, type='Acyl'), GL.sn(22, 0, type='Acyl'), GL.sn(22, 1, type='Acyl'),
+                          GL.sn(22, 2, type='Acyl'), GL.sn(22, 3, type='Acyl'), GL.sn(22, 4, type='Acyl'), GL.sn(22, 5, type='Acyl'),
+                          GL.sn(22, 6, type='Acyl'), GL.sn(23, 0, type='Acyl'), GL.sn(24, 0, type='Acyl'), GL.sn(24, 1, type='Acyl'),
+                          GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl')]                        
+        self.buildList()
 
-    def initializePage(self) -> None:
+    def buildList(self):
+        self.tailList = sorted(self.tailList)
+        self.tableModel = TailTableModel(self.tailList)
+        self.tableView.setModel(self.tableModel)
+        self.completeChanged.emit()
 
-        self.treeView.clear()
+    def getTail(self, tail):
+        if tail not in self.tailList:
+            self.tailList.append(tail)
+            self.buildList()
 
-        if self.field('isomerism') == False:
-            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
-            classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
-            classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__() if inspect.getmodule(cls) == Classes])
-        else:
-            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
+    def openTailEditor(self, selection=None):
+        tailWindow = TEW.TailWindow()
+        if tailWindow.exec() > 0:
+            tail = ''
+            return tail
 
-        for cls in classes_to_generate: #  Make boxes for Treeview
-            self.classQbox[cls]  =  QTreeWidgetItem(self.treeView)
-            root = self.classQbox[cls] # Creates tickbox for class
-            root.lipidClass = cls # Custom variable to store class
-            root.setText(0, cls.__name__) # Gives name for tickbox
-            root.setCheckState(0, Qt.Unchecked) #   Untick tickbox
-            root.setFlags(root.flags() | Qt.ItemIsAutoTristate | Qt.ItemIsUserCheckable)
-            self.classAdductQbox[cls] = {} # Open dict for adducts
+    def addNewTail(self):
+        tailWindow = TEW.TailWindow()
+        tailWindow.output.connect(self.getTail)
+        tailWindow.exec()
 
-            for adduct in cls.adducts: # Make sub-box for treeview
-                self.classAdductQbox[cls][adduct] = QTreeWidgetItem(self.classQbox[cls])
-                child = self.classAdductQbox[cls][adduct] # Assign
-                child.fragmentList = cls.adducts[adduct] # Adducts
-                child.setText(0, adduct) #  Gives name for tickbox
-                child.setCheckState(0, Qt.Unchecked) #  Untick box
-                child.setFlags(child.flags() | Qt.ItemIsUserCheckable) 
+    def editSelectedTail(self):
+        try: 
+            row = self.tableView.selectedIndexes()[0].row()
+            tail = self.openTailEditor(self.lipidList[row])
+            if tail: self.lipidList[row] = tail
+        except: pass
+        self.buildList()
 
-        return super().initializePage()
+    def removeSelectedTail(self): # Reverse list of indexes so ones towards the end are deleted first
+        indexesToDelete = sorted([row.row() for row in self.tableView.selectedIndexes()], reverse=True)
+        for index in indexesToDelete:
+            self.tailList.pop(index)
+        self.buildList()
 
-    def open_editspectrawindow(self):
-        '''
-        Opens external window to modify selected spectra.
-        Should display an example lipid spectra of GPL
-        16:0_18:1 with appropriate masses and intensity.
-        '''
-        editspectrawindow = P2EW.NewWindow(self.field('tree'))
-        editspectrawindow.exec()
-            
-    def treeData(self):
-        '''
-        Custom storage for tree data.
-        Allows later determination of selected class/adducts.
-        '''
-        checkedBoxes = {}
-        root = self.treeView.invisibleRootItem()
+    def isComplete(self):
+        if self.tableModel.rowCount(self) < 1:
+            return False
+        return super().isComplete()
 
-        childs_1 = root.childCount()
-        for i in range(childs_1):
-            item = root.child(i)
-            if bool(item.checkState(0)):
-                checkedBoxes[item] = []
-                #item.lipidClass
-                
-                adducts = []
-                childs_2 = item.childCount()
-                for j in range(childs_2):
-                    item2 = item.child(j)
-                    if bool(item2.checkState(0)):
-                        adducts.append(item2)
-                        #item2.fragmentList
-                checkedBoxes[item] = adducts
+    def setTailList(self, data):
+        self.tailList = data
 
-        return checkedBoxes
-
-    def setTreeData(self, data):
-        pass
-
-    tree_property = Property("QVariant", treeData, setTreeData, treeDataChanged)
+    def getTailList(self):
+        return self.tailList
 
     def nextId(self):
-        return 3 # Page 3
+        return 3
+
+    tableProperty = Property(list, getTailList, setTailList)
+    lipidListChanged = Signal()
+
+
+class TailTableModel(QAbstractTableModel):
+    '''
+    Custom table type to organise and display
+    lipid data for inspection/modification.
+    '''
+    def __init__(self, data=[], parent=None):
+        QAbstractTableModel.__init__(self, parent)
+        self.tdata = data
+        self.headers = ['Tail']
+    
+    def flags(self, index):
+        '''
+        Forbids editing of value displayed in column 0.
+        '''
+        if index.column() == 0:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    def rowCount(self, parent):
+        return len(self.tdata)
+
+    def columnCount(self, parent):
+        return len(self.headers)
+    
+    def headerData(self, column, orientation, role=Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.headers[column]
+    
+    def data(self, index, role=Qt.DisplayRole):
+        row = index.row()
+        if role == Qt.DisplayRole:
+                return str(self.tdata[row].name)
+ 
+    def setData(self, index, value, role=Qt.EditRole):
+        if role == Qt.EditRole:
+            row = index.row()
+            column = index.column()
+            return True
+
+        return QAbstractTableModel.setData(self, index, value, role)
+
+    def resizeEvent(self, event):
+        pass
+
+    def insertRow(self):
+        pass
+
+    def removeRow(self, position):
+        pass

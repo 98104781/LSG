@@ -34,7 +34,7 @@ class sn1_lysoPI(GL.Glycerolipid):
 
   "[M-H]-":{
     GL.MA         :2,
-    GL.HG_NL_H2O_B:1,
+    GL.MH_PO4_s_HG_H2O:1,
     GL.sn1      :100, 
     GL.C9H16O10P :15, 
     GL.C6H10O8P  :40,
@@ -146,7 +146,7 @@ class PIP(GL.Glycerolipid):
     GL.MH          :1,
     GL.MH_s_H2O    :2,
     GL.MH_s_PO3    :5,
-    GL.HG_NL_2B    :5,
+    GL.MH_P2O6_s_HG    :5,
     GL.MH_s_sn2_H2O:1,
     GL.MH_s_sn2_PO3:4,
     GL.HG_sn2_NL_B :5,

@@ -114,6 +114,21 @@ class TAG(GL.Glycerolipid):
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
+class AcylGlcADG(GL.Glycerolipid):
+
+  No_Tails = 3
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{ # Taken from LipidMatch 
+    GL.MA       :10,
+    GL.FAH      :10}
+  }
+
+  def __init__(self, sn1, sn2, sn3):
+    headgroup = GL.sn(mass=194.042653, type='Headgroup', chnops={'C':6, 'H':10, 'O':7},
+    smiles='O('+sn1.smiles+')C1C(O)C(O)C(C(=O)O)OC1', hgtails = [sn1])
+    super().__init__(AcylGlcADG.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+
 class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
 
   No_Tails = 2
@@ -125,8 +140,8 @@ class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
 
   "[M+NH4]+":{ # https://doi.org/10.1002/pld3.183 Figure S4     
     GL.MA          :5, # LipidBlast includes fragment 'MA_s_FA' but
-    GL.HG_NL_C     :5, # the fragment is not present in the reference.
-    GL.HG_NL_H2O_C:60, # Included here at 0 intensity so it can be modified
+    GL.MH_s_HG     :5, # the fragment is not present in the reference.
+    GL.MH_s_HG_H2O:60, # Included here at 0 intensity so it can be modified
     GL.MA_s_FA     :0, # in the program if needed, otherwise it will be
     GL.HG_FA_NL_C:100} # ignored on spectra generation.
     }
@@ -151,7 +166,8 @@ class SQDG(GL.Glycerolipid): # Sulphoquinovosyl diacylglycerol
     GL.O3SH       :20}}
 
   #"[M+NH4]+":{    
-  #  GL.MA          :5
+  #  GL.MA          :5,
+  #  GL.
   #  }
 
   def __init__(self, sn1, sn2):
@@ -166,18 +182,28 @@ class DGDG(GL.Glycerolipid): # Digalactosyl diacylglycerol
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
+  "[M-H]-":{  
+    GL.MA              :5,
+    GL.C15H27O13      :15,
+    GL.C15H25O12      :40,
+    GL.C15H23O11      :15,
+    GL.C9H15O7        :15,
+    GL.C6H5O3         :15,
+    GL.FAH           :100
+    },
+
   "[M+Na]+":{ # https://doi.org/10.1111/j.1440-1835.2010.00582.x    
-    GL.MA          :5, # Molecular ion
-    GL.MA_s_Gal_H2O:5,
-    GL.MA_s_FA   :100, # Present in lipidBlast
-    GL.MA_s_FA_Gal:50, # Present in lipidBlast
+    GL.MA              :5, # Molecular ion
+    GL.MA_s_Gal_H2O    :5,
+    GL.MA_s_FA       :100, # Present in lipidBlast
+    GL.MA_s_FA_Gal_H2O:50, # Present in lipidBlast
     },
 
   "[M+NH4]+":{ # https://doi.org/10.1002/pld3.183 Figure S4   
     GL.MA          :5,
     GL.MH_s_Gal_H2O:5,
-    GL.HG_NL_C    :70,
-    GL.HG_NL_H2O_C:70,
+    GL.MH_s_HG    :70,
+    GL.MH_s_HG_H2O:70,
     GL.MA_s_FA     :0,
     GL.HG_FA_NL_C:100}
     }
@@ -199,8 +225,7 @@ class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
     GL.MA_s_FAk   :70,
     GL.MA_s_FA    :40,
     GL.MA_s_allFAk:20,
-    GL.C7H14N1O2   :5}
-  }
+    GL.C7H14N1O2   :5}}
 
   #"[M+NH4]+":{    
   #  GL.MA          :5}
@@ -213,6 +238,102 @@ class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
     super().__init__(DGTS.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
+
+class AC2PIM1(GL.Glycerolipid):
+
+  No_Tails = 2
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{ # Matches LipidBlast
+    GL.MA            :50, # Molecular ion
+    GL.MA_s_Gal_H2O  :20, # Present in lipidBlast
+    GL.MA_s_FA      :100, # Present in lipidBlast
+    GL.MH_PO4_s_HG   :60, # Present in lipidBlast
+    GL.MH_PO4_s_HG_FA:40, # Present in lipidBlast
+    GL.FAH           :40}}# Present in lipidBlast
+
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=422.082541, type='Headgroup', chnops={'C':12, 'H':23, 'O':14, 'P':1},
+    smiles='OC1C(O)C(O)C(O)C(OC2OC(CO)C(O)C(O)C2O)C1OP(O)(=O)')
+    super().__init__(AC2PIM1.adducts, sn1, sn2, headgroup)
+
+class AC2PIM2(GL.Glycerolipid):
+
+  No_Tails = 2
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{ # Matches LipidBlast
+    GL.MA            :10, # Molecular ion
+    GL.MA_s_Gal_H2O   :5, # Present in lipidBlast
+    GL.MA_s_FA      :100, # Present in lipidBlast
+    GL.MA_s_allFA    :20, # Present in lipidBlast
+    GL.FAH           :40}}# Present in lipidBlast
+
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
+    smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO)C(O)C(O)C2O)C1OP(O)(=O)')
+    super().__init__(AC2PIM2.adducts, sn1, sn2, headgroup)
+
+class AC3PIM2(GL.Glycerolipid):
+
+  No_Tails = 3
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{ # Matches LipidBlast
+    GL.MA            :20, # Molecular ion
+    GL.MA_s_Gal_H2O   :5, # Present in lipidBlast
+    GL.MA_s_FAk      :10, # Present in lipidBlast
+    GL.MA_s_FA      :100, # Present in lipidBlast
+    GL.MA_s_allFA    :20, # Present in lipidBlast
+    GL.HGA_s_H2O     :40, # Present in lipidBlast
+    GL.FAH           :40}}# Present in lipidBlast
+
+  def __init__(self, sn1, sn2, sn3):
+    headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
+    smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1])
+    super().__init__(AC3PIM2.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+
+class AC4PIM2(GL.Glycerolipid):
+
+  No_Tails = 4
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{ # Matches LipidBlast
+    GL.MA            :20, # Molecular ion
+    GL.MA_s_FA      :100, # Present in lipidBlast
+    GL.MA_s_allFA    :10, # Present in lipidBlast
+    GL.HGA_s_H2O     :30, # Present in lipidBlast
+    GL.FAH           :40}}# Present in lipidBlast
+
+  def __init__(self, sn1, sn2, sn3, sn4):
+    headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
+    smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O('+sn2.smiles+'))C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1, sn2])
+    super().__init__(AC4PIM2.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
+
+class Cardiolipin(GL.Glycerolipid):
+
+  No_Tails = 4
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{
+    GL.MA             :20,
+    GL.FAH           :100,
+    GL.MA_C3H8O8P2_s_HG:5,
+    GL.MA_PO4_s_HG    :20,
+    GL.C3H7O5P_FA     :10,
+    GL.C3H5O4P_FA     :10,
+    GL.C3H6O5P        :50},
+
+  "[M-2H]2-":{
+    GL.MA            :20,
+    GL.FAH          :100,
+    GL.C3H5O4P_FA    :10,
+    GL.C3H6O5P       :10}}
+
+  def __init__(self, sn1, sn2, sn3, sn4):
+    headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
+    smiles=sn1.inverseSmiles+'OCC(O'+sn2.smiles+')COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1, sn2])
+    super().__init__(Cardiolipin.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
 
 class PA(GL.Glycerolipid):
 
@@ -231,18 +352,17 @@ class PA(GL.Glycerolipid):
 
   "[M+H]+":{ # Needs Validation
     GL.MA          :90,
-    GL.HG_NL_H2O_A:100,
-    GL.HG_FA_NL_A  :10,
+    GL.MA_s_HG_H2O:100,
+    GL.MA_s_HG_FA  :10,
     GL.FAkH        :10},
 
   "[M+Na]+":{ # Matches LipidBlast
     GL.MA           :5, # Molecular ion
     GL.MA_s_H2O     :5, # Present in lipidblast
-    GL.HG_NL_H2O_A:100, # Present in lipidblast
-    GL.HG_NL_H2O_C :30, # Present in lipidblast
+    GL.MA_s_HG_H2O:100, # Present in lipidblast
+    GL.MH_s_HG_H2O :30, # Present in lipidblast
     GL.MA_s_FAk     :2, # Present in lipidblast
-    GL.MA_s_FA      :2} # Present in lipidblast
-    }
+    GL.MA_s_FA      :2}} # Present in lipidblast
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
@@ -264,21 +384,23 @@ class PC(GL.Glycerolipid):
     GL.MA          :10, # Lipidblast seems to provide a completely
     GL.MA_s_H2O     :0, # different spectra which is not consistant
     GL.MA_s_TMA     :0, # with literature. Perhaps a result of
-    GL.MH_s_FAk     :1, # instrumentation. The lipidblast spectra
-    GL.MH_s_FA      :1, # is included in here but with 0 intensity.
+    GL.MA_s_HG_H2O  :0, # instrumentation.
+    GL.MA_s_FA_TMA  :0,
+    GL.MH_s_FAk     :1,
+    GL.MH_s_FA      :1,
     GL.C5H15NO4P  :100},
 
   "[M+Na]+":{ # Looks Good, Matches lipidblast
     GL.MA          :10, # Molecular ion
     GL.MA_s_TMA   :100, # Present in lipidblast
-    GL.HG_NL_H2O_A :60, # Present in lipidblast
-    GL.HG_NL_H2O_C  :0,
+    GL.MA_s_HG_H2O :60, # Present in lipidblast
+    GL.MH_s_HG_H2O  :0,
     GL.MA_s_FA_TMA  :4, # Present in lipidblast
     GL.MA_s_FAk     :2, # Present in lipidblast
     GL.MA_s_FA      :2, # Present in lipidblast
     GL.MH_s_FA      :0,
-    GL.FAkH         :0}
-   }
+    GL.FAkH         :0,
+    GL.C2H5NaO4P    :0}}
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
@@ -310,28 +432,84 @@ class PE(GL.Glycerolipid):
   "[M+H]+":{ # Looks Good, Matches lipidblast
     GL.MA          :10, # Molecular ion
     GL.MA_s_H2O     :1, # Present in lipidblast
-    GL.HG_NL_H2O_A:100, # Present in lipidblast
+    GL.MA_s_HG_H2O:100, # Present in lipidblast
     GL.MH_s_FAk     :1, # Present in lipidblast
     GL.MH_s_FA      :1, # Present in lipidblast
-    GL.HG_FA_NL_A   :0,
+    GL.MA_s_HG_FA   :0,
     GL.FAkH         :1},# Present in lipidblast
     
   "[M+Na]+":{ # Looks Good, Matches lipidblast
     GL.MA          :10, # Molecular ion
     GL.MA_s_AZD   :100, # Present in lipidblast
-    GL.HG_NL_H2O_A :40, # Present in lipidblast
-    GL.HG_NL_H2O_C  :0,
+    GL.MA_s_HG_H2O :40, # Present in lipidblast
+    GL.MH_s_HG_H2O  :0,
     GL.MA_s_FA_AZD  :1, # Present in lipidblast
     GL.MH_s_FA      :0,
     GL.MA_s_FA      :0,
-    GL.FAkH         :0}
-   }
+    GL.FAkH         :0}}
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
     smiles='NCCOP(O)(=O)')
     super().__init__(PE.adducts, sn1, sn2, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
+class MMPE(GL.Glycerolipid):
+
+  No_Tails = 2
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{
+    GL.MA          :15,
+    GL.FAH        :100,
+    GL.MH_s_FAk    :10,
+    GL.MH_s_FA     :10,
+    GL.C3H6O5P     :10,
+    GL.H2O4P        :5,
+    GL.O3P          :5}}
+  
+  #"[M+H]+":{
+  #  GL.MA          :10,
+  #  GL.MA_s_HG_H2O :10}}
+    
+  #"[M+Na]+":{
+  #  GL.MA          :10}}
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=155.034744, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':4, 'P':1},
+    smiles='N(C)CCOP(O)(=O)')
+    super().__init__(MMPE.adducts, sn1, sn2, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
+class DMPE(GL.Glycerolipid):
+
+  No_Tails = 2
+  adducts = {  # adduct:{spectra}
+
+  "[M-H]-":{
+    GL.MA          :15,
+    GL.FAH        :100,
+    GL.MH_s_FAk    :10,
+    GL.MH_s_FA     :10,
+    GL.C3H6O5P     :10,
+    GL.H2O4P        :5,
+    GL.O3P          :5}}#,
+  
+  #"[M+H]+":{
+  #  GL.MA          :10},
+    
+  #"[M+Na]+":{
+  #  GL.MA          :10}}
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=169.050394, type='Headgroup', chnops={'C':4, 'H':8, 'N':1, 'O':4, 'P':1},
+    smiles='N(C)(C)CCOP(O)(=O)')
+    super().__init__(DMPE.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -342,23 +520,22 @@ class PG(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Looks Good, Matches lipidblast
-    GL.MA        :15, # Molecular ion
-    GL.MH_s_FAk  :20, # Present in lipidblast
-    GL.MH_s_FA   :20, # Present in lipidblast
-    GL.FAH      :100, # Present in lipidblast
-    GL.HG_FA_NL_B:20, # Present in lipidblast
-    GL.C6H12O7P   :2,
-    GL.C3H8O6P    :2,
-    GL.C3H6O5P   :10,
-    GL.H2O4P      :5,
-    GL.O3P        :5},
+    GL.MA            :15, # Molecular ion
+    GL.MH_s_FAk      :20, # Present in lipidblast
+    GL.MH_s_FA       :20, # Present in lipidblast
+    GL.FAH          :100, # Present in lipidblast
+    GL.MH_PO4_s_HG_FA:20, # Present in lipidblast
+    GL.C6H12O7P       :2,
+    GL.C3H8O6P        :2,
+    GL.C3H6O5P       :10,
+    GL.H2O4P          :5,
+    GL.O3P            :5},
 
   "[M+H]+":{ # Matches literature
     GL.MA          :10,
-    GL.HG_NL_H2O_A:100,
-    GL.HG_FA_NL_A  :10,
-    GL.FAkH        :10}
-    }#,
+    GL.MA_s_HG_H2O:100,
+    GL.MA_s_HG_FA  :10,
+    GL.FAkH        :10}}#,
     
   #"[M+Na]+":{
   #  GL.MA          :10,
@@ -395,23 +572,24 @@ class PI(GL.Glycerolipid):
   #  GL.C3H6O5P  :60}, 
 
   "[M-H]-":{ # Looks Good, Matches lipidblast
-    GL.MA        :2, # Molecular ion
-    GL.MH_s_FAk  :1, # Present in lipidblast
-    GL.MH_s_FA   :2, # Present in lipidblast
-    GL.HG_FA_NL_B:1, # Present in lipidblast
-    GL.FAH     :100, # Present in lipidblast 
-    GL.C9H16O10P :5, 
-    GL.C9H14O9P  :5,
-    GL.C6H12O9P  :5, 
-    GL.C6H10O8P :40,
-    GL.C6H8O7P  :15, 
-    GL.C3H6O5P  :20},
+    GL.MA            :2, # Molecular ion
+    GL.MH_s_FAk      :1, # Present in lipidblast
+    GL.MH_s_FA       :2, # Present in lipidblast
+    GL.MH_PO4_s_HG_FA:1, # Present in lipidblast
+    GL.FAH         :100, # Present in lipidblast 
+    GL.C9H16O10P     :5, 
+    GL.C9H14O9P      :5,
+    GL.C6H12O9P      :5, 
+    GL.C6H10O8P     :40,
+    GL.C6H8O7P      :15, 
+    GL.C3H6O5P      :20,
+    GL.H2O4P         :5,
+    GL.O3P           :5},
 
   "[M+NH4]+":{ # https://doi.org/10.1002/pld3.183 Figure S4   
     GL.MA           :5,
     GL.MH           :5,
-    GL.HG_NL_H2O_C:100}
-    }
+    GL.MH_s_HG_H2O:100}}
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
@@ -444,23 +622,22 @@ class PIP(GL.Glycerolipid):
   #  GL.C3H6O5P      :10},
 
   "[M-H]-":{ # Looks Good
-    GL.MH          :1,
-    GL.MH_s_H2O    :2,
-    GL.MH_s_PO3    :2,
-    GL.HG_NL_2B    :2,
-    GL.MH_s_FA     :4,
-    GL.MH_s_FA_H2O :1,
-    GL.MH_s_FAk_PO3:4,
-    GL.MH_s_FA_PO3 :4,
-    GL.HG_FA_NL_B  :5,
-    GL.FAH       :100,
-    GL.C6H11O11P2 :10, 
-    GL.C6H9O10P2  :15,
-    GL.C6H12O9P    :5, 
-    GL.C6H10O8P   :90,
-    GL.C6H8O7P    :90, 
-    GL.C3H6O5P    :40}
-    }#,
+    GL.MH            :1,
+    GL.MH_s_H2O      :2,
+    GL.MH_s_PO3      :2,
+    GL.MH_P2O6_s_HG  :2,
+    GL.MH_s_FA       :4,
+    GL.MH_s_FA_H2O   :1,
+    GL.MH_s_FAk_PO3  :4,
+    GL.MH_s_FA_PO3   :4,
+    GL.MH_PO4_s_HG_FA:5,
+    GL.FAH         :100,
+    GL.C6H11O11P2   :10, 
+    GL.C6H9O10P2    :15,
+    GL.C6H12O9P      :5, 
+    GL.C6H10O8P     :90,
+    GL.C6H8O7P      :90, 
+    GL.C3H6O5P      :40}}#,
 
   #"[M-2H]2-":{ # Looks Good
   #  GL.MA          :5,
@@ -515,34 +692,33 @@ class PS(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
   
   "[M-H]-":{ # Looks Good, Matches lipidblast
-    GL.MA         :15, # Molecular ion
-    GL.HG_NL_B   :100, # Present in lipidblast
-    GL.HG_FAk_NL_B:25, # Present in lipidblast
-    GL.HG_FA_NL_B :50, # Present in lipidblast
-    GL.FAH        :50, # Present in lipidblast
-    GL.C3H6O5P    :30,
-    GL.H2O4P       :5,
-    GL.O3P         :5},
+    GL.MA            :15, # Molecular ion
+    GL.MH_PO4_s_HG  :100, # Present in lipidblast
+    GL.HG_FAk_NL_B   :25, # Present in lipidblast
+    GL.MH_PO4_s_HG_FA:50, # Present in lipidblast
+    GL.FAH           :50, # Present in lipidblast
+    GL.C3H6O5P       :30,
+    GL.H2O4P          :5,
+    GL.O3P            :5},
 
   "[M+H]+":{ # Looks Good, Matches lipidblast
     GL.MA          :10, # Molecular ion
-    GL.HG_NL_B     :40, # Present in lipidblast
-    GL.HG_NL_H2O_A:100, # Present in lipidblast
+    GL.MH_PO4_s_HG :40, # Present in lipidblast
+    GL.MA_s_HG_H2O:100, # Present in lipidblast
     GL.MA_s_FAk    :20, # Present in lipidblast
     GL.MA_s_FA     :20, # Present in lipidblast
-    GL.HG_FA_NL_A   :0,
+    GL.MA_s_HG_FA   :0,
     GL.FAkH         :0},
     
   "[M+Na]+":{ # Looks Good, Matches lipidblast
     GL.MA          :10, # Molecular ion
-    GL.HG_NL_3B   :100, # Present in lipidblast
+    GL.MA_PO4_s_HG:100, # Present in lipidblast
     GL.MA_s_PO4    :30, # Present in lipidblast
-    GL.HG_NL_H2O_A:100, # Present in lipidblast
-    GL.HG_NL_H2O_C :50, # Present in lipidblast
-    GL.HG_FA_NL_A   :0,
+    GL.MA_s_HG_H2O:100, # Present in lipidblast
+    GL.MH_s_HG_H2O :50, # Present in lipidblast
+    GL.MA_s_HG_FA   :0,
     GL.FAkH         :0,
-    GL.HGA          :0}
-   }
+    GL.HGA          :0}}
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
@@ -563,8 +739,7 @@ class PPA(GL.Glycerolipid):
     GL.MH_s_FA  :2,
     GL.MH_s_FAk :2,
     GL.FAH      :5,
-    GL.HO6P2   :50}
-    }#,
+    GL.HO6P2   :50}}#,
 
   #"[M-2H]2-":{
   #  GL.MA     :10
@@ -650,22 +825,22 @@ class lyPE(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Matches lipidblast
-    GL.MA        :15, # Molecular ion
-    GL.HG_NL_H2O_B:1, # Present in lipidblast
-    GL.MH_s_FAk   :5, # Present in lipidblast
-    GL.MH_s_FA   :15, # Present in lipidblast
-    GL.FAH      :100, # Present in lipidblast
-    #GL.C5H11NO5P  :5,# Present in lipidblast
-    GL.C3H6O5P   :10,
-    GL.C2H7NO4P   :3,
-    GL.H2O4P      :5,
-    GL.O3P        :5},
+    GL.MA            :15, # Molecular ion
+    GL.MH_PO4_s_HG_H2O:1, # Present in lipidblast
+    GL.MH_s_FAk       :5, # Present in lipidblast
+    GL.MH_s_FA       :15, # Present in lipidblast
+    GL.FAH          :100, # Present in lipidblast
+    #GL.C5H11NO5P     :5,# Present in lipidblast
+    GL.C3H6O5P       :10,
+    GL.C2H7NO4P       :3,
+    GL.H2O4P          :5,
+    GL.O3P            :5},
   
   "[M+H]+":{ # Matches lipidblast
     GL.MA          :10, # Molecular ion
     GL.MA_s_H2O    :20, # Present in lipidblast
-    GL.HG_NL_H2O_A:100, # Present in lipidblast
-    GL.HG_NL_H2O_B :20, # Present in lipidblast
+    GL.MA_s_HG_H2O:100, # Present in lipidblast
+    GL.MH_PO4_s_HG_H2O :20, # Present in lipidblast
     GL.MH_s_FAk     :1, # Present in lipidblast
     GL.MH_s_FA      :1, # Present in lipidblast
     GL.FAkH         :0}
@@ -688,18 +863,18 @@ class lyPG(GL.Glycerolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # Needs Validation
-    GL.MH         :100,
-    GL.HG_NL_B      :1,
-    GL.HG_NL_H2O_B  :1,
-    GL.FAH        :100,
-    GL.C3H6O5P     :50,
-    GL.H2O4P        :1,
-    GL.O3P          :1},
+    GL.MH           :100,
+    GL.MH_PO4_s_HG    :1,
+    GL.MH_PO4_s_HG_H2O:1,
+    GL.FAH          :100,
+    GL.C3H6O5P       :50,
+    GL.H2O4P          :1,
+    GL.O3P            :1},
 
   "[M+H]+":{ # Needs Validation
     GL.MA          :10,
-    GL.HG_NL_H2O_A:100,
-    GL.HG_FA_NL_A  :10,
+    GL.MA_s_HG_H2O:100,
+    GL.MA_s_HG_FA  :10,
     GL.FAkH        :10}
     }
 
@@ -725,14 +900,14 @@ class lyPI(GL.Glycerolipid):
   #  GL.C3H6O5P  :80},
 
   "[M-H]-":{ # Needs Validation
-    GL.MA         :2,
-    GL.HG_NL_B    :1,
-    GL.HG_NL_H2O_B:1,
-    GL.FAH      :100, 
-    GL.C9H16O10P :10, 
-    GL.C6H10O8P  :45,  # mz 233.001 can be a major -
-    GL.C6H8O7P   :10,  # or minor fragment depending -
-    GL.C3H6O5P   :45}  # on if its a sn1 or sn2 lyso lipid.
+    GL.MA             :2,
+    GL.MH_PO4_s_HG    :1,
+    GL.MH_PO4_s_HG_H2O:1,
+    GL.FAH          :100, 
+    GL.C9H16O10P     :10, 
+    GL.C6H10O8P      :45,  # mz 233.001 can be a major -
+    GL.C6H8O7P       :10,  # or minor fragment depending -
+    GL.C3H6O5P       :45}  # on if its a sn1 or sn2 lyso lipid.
     } 
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
@@ -753,8 +928,8 @@ class lyPS(GL.Glycerolipid):
 
   "[M+H]+":{ # Needs Validation
     GL.MA          :10,
-    GL.HG_NL_H2O_A:100,
-    GL.HG_FA_NL_A  :10,
+    GL.MA_s_HG_H2O:100,
+    GL.MA_s_HG_FA  :10,
     GL.FAkH        :10}
     }#,
 
@@ -777,18 +952,18 @@ class Acylsphinganine(GL.Sphingolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # https://doi.org/10.1016/j.biochi.2016.07.012
-    GL.MA       :30,
-    GL.MA_s_H2O  :2,
-    GL.MA_s_MeOH:10,
-    GL.MA_s_CH2O:10,
-    GL.Cer_B    :10,
-    GL.Cer_C     :2,
-    GL.Cer_P    :10,
-    GL.Cer_R    :25,
-    GL.Cer_S    :20,
-    GL.Cer_T   :100,
-    GL.Cer_U     :5,
-    GL.FAkH     :10}
+    GL.MA           :30,
+    GL.MA_s_H2O      :2,
+    GL.MA_s_MeOH    :10,
+    GL.MA_s_CH2O_H2O:10,
+    GL.Cer_B        :10,
+    GL.Cer_C         :2,
+    GL.Cer_P        :10,
+    GL.Cer_R        :25,
+    GL.Cer_S        :20,
+    GL.Cer_T       :100,
+    GL.Cer_U         :5,
+    GL.FAkH         :10}
     }
     
   #"[M+H]+":{
@@ -809,18 +984,18 @@ class Acylsphingosine(GL.Sphingolipid):
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{ # https://doi.org/10.1006/abio.2001.5536, https://doi.org/10.1016/S1044-0305(02)00358-6, https://doi.org/10.1016/j.biochi.2016.07.012, https://doi.org/10.1002/rcm.878
-    GL.MA       :30,
-    GL.MA_s_H2O  :2,
-    GL.MA_s_Al  :20, # This fragment not present with sphinganine
-    GL.MA_s_MeOH:10,
-    GL.MA_s_CH2O:10,
-    GL.Cer_P    :10,
-    GL.Cer_R    :25,
-    GL.Cer_S    :20,
-    GL.Cer_T   :100,
-    GL.Cer_U     :5,
-    GL.FAH      :25,
-    GL.FAkH     :10},
+    GL.MA           :30,
+    GL.MA_s_H2O      :2,
+    GL.MA_s_CH2O    :20, # This fragment not present with sphinganine
+    GL.MA_s_MeOH    :10,
+    GL.MA_s_CH2O_H2O:10,
+    GL.Cer_P        :10,
+    GL.Cer_R        :25,
+    GL.Cer_S        :20,
+    GL.Cer_T       :100,
+    GL.Cer_U         :5,
+    GL.FAH          :25,
+    GL.FAkH         :10},
     
   "[M+H]+":{ # https://doi.org/10.1002/bmc.4790
     GL.MA       :20,
@@ -871,7 +1046,7 @@ class Acylphytosphingosine(GL.Sphingolipid):
   def __init__(self, base, sn1):
     super().__init__(Acylphytosphingosine.adducts, base, sn1)
 
-class Ceramide_PA(GL.Sphingolipid):
+class CerP(GL.Sphingolipid):
 
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
@@ -883,12 +1058,16 @@ class Ceramide_PA(GL.Sphingolipid):
     GL.MA_s_FAk   :20, # Present in lipidblast
     GL.MA_s_FA    :20, # Present in lipidblast
     GL.H2O4P     :100, # Present in lipidblast
-    GL.O3P       :100} # Present in lipidblast
-    }
+    GL.H2O2P       :0,
+    GL.O3P       :100},# Present in lipidblast
     
-  #"[M+H]+":{
-  #  GL.MA         :100
-  #  }}
+  "[M+H]+":{
+    GL.MA          :10,
+    GL.MA_s_H2O    :10,
+    GL.MA_s_HG_H2O :10,
+    GL.MA_s_HG_2H2O:10,
+    GL.Cer_R      :100,
+    }}
 
   #"[M+H-H2O]+":{ #
   #  GL.MA         :100
@@ -897,9 +1076,9 @@ class Ceramide_PA(GL.Sphingolipid):
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
     smiles='O=P(O)(O)')
-    super().__init__(Ceramide_PA.adducts, base, sn1, headgroup)
+    super().__init__(CerP.adducts, base, sn1, headgroup)
 
-class Ceramide_PC(GL.Sphingolipid):
+class CerPC(GL.Sphingolipid):
 
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
@@ -910,7 +1089,7 @@ class Ceramide_PC(GL.Sphingolipid):
     GL.MA_s_H2O   :100, # Present in lipidblast
     GL.MA_s_TMA     :1, # Present in lipidblast
     GL.MA_s_TMA_H2O :5, # Present in lipidblast
-    GL.HG_NL_H2O_A  :2, # Present in lipidblast
+    GL.MA_s_HG_H2O  :2, # Present in lipidblast
     GL.C5H15NO4P  :100}
     }
     
@@ -918,7 +1097,7 @@ class Ceramide_PC(GL.Sphingolipid):
     headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
     smiles='C[N+](C)(C)CCOP([O-])(=O)')
     # headgroup mass has -H to maintain neutral charge
-    super().__init__(Ceramide_PC.adducts, base, sn1, headgroup)
+    super().__init__(CerPC.adducts, base, sn1, headgroup)
 
 class Sulfatide(GL.Sphingolipid):
 
@@ -929,6 +1108,8 @@ class Sulfatide(GL.Sphingolipid):
   "[M-H]-":{ #
     GL.MA      :10, # Molecular ion
     GL.MA_s_H2O:10,
+    GL.Cer_T    :5,
+    GL.MA_s_HG  :5,
     GL.MA_s_FAk:20,
     GL.MA_s_FA :20,
     GL.C6H9O8S:100,
@@ -960,5 +1141,23 @@ class Cholesteryl_Ester(GL.OtherLipid):
     
   def __init__(self, sn1):
     body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1},
-    smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O')
-    super().__init__(Cholesteryl_Ester.adducts, body, sn1)
+    smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)OX') # smiles has an 'X' in it to
+    super().__init__(Cholesteryl_Ester.adducts, body, sn1) # indicate where tail is added
+
+class AcylCarnitine(GL.OtherLipid):
+
+  No_Tails = 1
+  adducts = {
+    "[M+H]+":{ # Taken from LipidMatch
+    GL.MA          :10, # Molecular ion
+    GL.MA_s_TMA    :10,
+    GL.MA_s_FA     :10,
+    GL.MA_s_FA_TMA:100,
+    GL.FAkH        :10,
+    GL.C3H10N      :10
+    }}
+
+  def __init__(self, sn1):
+    body = GL.Other(name='AcylCarnitine', mass=161.105193, chnops={'C':7, 'H':15, 'N':1, 'O':3},
+    smiles='C[N+](C)(C)CC(OX)CC(=O)[O-]')
+    super().__init__(AcylCarnitine.adducts, body, sn1)

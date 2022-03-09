@@ -5,7 +5,7 @@ import Classes
 import Classes_isomers
 import GenerateLipids as GL
 
-from PySide6.QtGui import QIntValidator
+import TailEditWindow as TEW
 from PySide6.QtCore import QModelIndex
 from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QTableView, QHeaderView
 
@@ -58,6 +58,7 @@ class NewWindow(QDialog):
             adduct = selection[1] # adduct]
             i = self.lipidClass.findText(lipid.lipid_class)
             # if i!= -1: it exists in the combo box.
+            # if it exists, set combo box to that option.
             if i != -1: self.lipidClass.setCurrentIndex(i)
             i = self.lipidAdduct.findText(adduct)
             if i != -1: self.lipidAdduct.setCurrentIndex(i)
@@ -97,20 +98,40 @@ class NewWindow(QDialog):
             self.tailButton[button+i].clicked.connect(self.specifyTail)
             self.hLayout3.addWidget(self.tailButton[button+i])
 
+    def getTail(self, tail):
+        # Signal captured from window
+        self.tail = tail
+
     def specifyTail(self):
+        # keep sender (button clicked)
         button = self.sender()
-        editspectrawindow = TailWindow(button)
-        if editspectrawindow.exec() > 0: self.buildLipid()
+        tailWindow = TEW.TailWindow()
+        tailWindow.output.connect(self.getTail)
+        if tailWindow.exec() > 0:
+        # tail stored in button for lipid
+            button.tail = self.tail
+        # button text updated to show tail
+            button.setText(self.tail.name)
+            self.buildLipid()
 
     def specifyBase(self):
+        # keep sender (button clicked)
         button = self.sender()
+        # sphingolipids can have several basetypes, use needed.
         types = self.lipidClass.currentData().base_types
-        editspectrawindow = BaseWindow(button, types)
-        if editspectrawindow.exec() > 0: self.buildLipid()
+        baseWindow = TEW.BaseWindow(types)
+        baseWindow.output.connect(self.getTail)
+        if baseWindow.exec() > 0:
+        # tail stored in button for lipid
+            button.tail = self.tail
+        # button text updated to show tail
+            button.setText(self.tail.name)
+            self.buildLipid()
 
     def buildLipid(self):
         self.tails = []
-        try:
+        try: # for all the buttons on screen, grab the
+             # tails that are assigned to them.
             for button in self.tailButton.values():
                 self.tails.append(button.tail)
             lipidClass = self.lipidClass.currentData()
@@ -148,116 +169,3 @@ class NewWindow(QDialog):
     def acceptLipid(self):
         self.done(1)
         self.close()
-
-
-
-
-class TailWindow(QDialog):
-    '''
-    Popup window to specify tail stats.
-    '''
-    def __init__(self, button):
-        super().__init__()
-
-        self.setWindowTitle('LSG3')
-        self.setFixedSize(600, 125)
-        self.vLayout = QVBoxLayout(self)
-        self.hLayout = QHBoxLayout(self)
-        self.button = button
-    
-        self.ty = QComboBox()
-        self.ty.addItem('Acyl')
-        self.ty.addItem('Ether')
-        self.ty.addItem('Vinyl')
-        self.hLayout.addWidget(self.ty)
-
-        self.c = QLineEdit()
-        self.c.setPlaceholderText('Chain Length')
-        self.c.setValidator(QIntValidator(1, 100))
-        self.hLayout.addWidget(self.c)
-        self.d = QLineEdit()
-        self.d.setPlaceholderText('Desaturation')
-        self.d.setValidator(QIntValidator(1, 100))
-        self.hLayout.addWidget(self.d)
-        self.oh = QLineEdit()
-        self.oh.setPlaceholderText('# of -OH groups')
-        self.oh.setValidator(QIntValidator(1, 100))
-        self.hLayout.addWidget(self.oh)
-        self.dt = QLineEdit()
-        self.dt.setPlaceholderText('# of deuterium labels')
-        self.dt.setValidator(QIntValidator(1, 100))
-        self.hLayout.addWidget(self.dt)
-        self.vLayout.addLayout(self.hLayout)
-
-        self.tail = None
-        self.acceptButton = QPushButton('Accept')
-        self.acceptButton.clicked.connect(self.acceptTail)
-        self.vLayout.addWidget(self.acceptButton)
-
-    def acceptTail(self):
-
-        ty = self.ty.currentText()
-        c = self.c.text()
-        d = self.d.text()
-        oh= self.oh.text()
-        dt= self.dt.text()
-
-        try: # Tail must be possible
-            if (int(d or 0)+int(oh or 0)) > int(c or 1)/2: return # D + -OH < C
-            if int(dt or 0) > (2*int(c or 1)-2*int(d or 0)-1): return # Deuterium <= Hydrogens
-            self.tail = GL.sn(int(c), int(d or 0), type=ty, oh=int(oh or 0), dt=int(dt or 0))
-            self.button.tail = self.tail
-            self.button.setText(self.tail.name)
-            self.done(1)
-            self.close()
-        except: pass
-    
-class BaseWindow(QDialog):
-    '''
-    Popup window to specify base stats.
-    '''
-    def __init__(self, button, types):
-        super().__init__()
-
-        self.setWindowTitle('LSG3')
-        self.setFixedSize(600, 125)
-        self.vLayout = QVBoxLayout(self)
-        self.hLayout = QHBoxLayout(self)
-        self.button = button
-        self.types = types
-    
-        self.ty = QComboBox()
-        for type in self.types:
-            self.ty.addItem(type)
-        self.hLayout.addWidget(self.ty)
-
-        self.c = QLineEdit()
-        self.c.setPlaceholderText('Chain Length')
-        self.c.setValidator(QIntValidator(6, 100))
-        self.hLayout.addWidget(self.c)
-
-        self.dt = QLineEdit()
-        self.dt.setPlaceholderText('# of deuterium labels')
-        self.dt.setValidator(QIntValidator(1, 100))
-        self.hLayout.addWidget(self.dt)
-        self.vLayout.addLayout(self.hLayout)
-
-        self.tail = None
-        self.acceptButton = QPushButton('Accept')
-        self.acceptButton.clicked.connect(self.acceptTail)
-        self.vLayout.addWidget(self.acceptButton)
-
-    def acceptTail(self):
-
-        ty= self.ty.currentText()
-        c = self.c.text()
-        dt= self.dt.text()
-
-        try: # Base must be possible
-            if int(dt or 0) > (2*int(c or 1)): return # Deuterium <= Hydrogens
-            self.tail = GL.base(int(c), type=ty, dt=int(dt or 0))
-            self.button.tail = self.tail
-            self.button.setText(self.tail.name)
-            self.done(1)
-            self.close()
-        except: pass

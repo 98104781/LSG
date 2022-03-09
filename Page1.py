@@ -1,5 +1,5 @@
 from PySide6.QtGui import QIntValidator, QPixmap
-from PySide6.QtWidgets import QRadioButton, QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, QWizard, QWizardPage
+from PySide6.QtWidgets import QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, QWizard, QWizardPage
 
 class Page(QWizardPage):
     '''
@@ -11,23 +11,13 @@ class Page(QWizardPage):
 
         self.parent = parent
 
-        self.setTitle("Fatty acid range")
-        self.setSubTitle("Lipids will be generated according to the fatty acid range:\n"
-                          "C min and C max determine chain lengths. "
-                          "D min and D max determine the range of desaturation.")
+        self.setTitle("Generate a range of lipids using a range of tails")
+        self.setSubTitle("Please define the limits of the range to use.   Be aware, large ranges can produce large libraries!\n"
+                         "C min and C max determine chain lengths.   "
+                         "D min and D max determine the range of desaturation.")
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\FAs.png'))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
-
-        # Determines whether a range of lipids will be generated, ie
-        # from AA to ZZ, or whether specific lipids are to be generated.
-        self.radButton1 = QRadioButton('Generate range of lipids')
-        self.radButton2 = QRadioButton('Generate specific lipids')
-        self.registerField('specifics', self.radButton2)
-        self.radButton1.setChecked(True)
-        self.hLayout.addWidget(self.radButton1)
-        self.hLayout.addWidget(self.radButton2)
-        self.vLayout.addLayout(self.hLayout)
 
         # Optional tickbox to consider every fatty acid combination, ie AA, AB, BA, BB, ...
         # instead of only the unique combinations, ie AA, AB, BB, ...
@@ -76,7 +66,7 @@ class Page(QWizardPage):
         self.registerField('hydroxytickbox', self.hydroxytickbox)
         self.vLayout.addWidget(self.hydroxytickbox)
         self.omax = QLineEdit()
-        self.omax.setPlaceholderText(' O max:'+85*' '+'(1 -> 8)')
+        self.omax.setPlaceholderText(' O max:'+85*' '+'(1 -> 5)')
         self.omax.setDisabled(True)
         self.omax.setValidator(QIntValidator(1, 8))
         self.registerField('omax', self.omax)
@@ -90,32 +80,6 @@ class Page(QWizardPage):
         self.registerField('ceramideVariability', self.ceramideVariability)
         self.vLayout.addWidget(self.ceramideVariability)
 
-        # Toggling radiobuttons 1 or 2 will toggle all entry fields
-        self.radButton1.toggled.connect(self.radButton1Enabled)
-        self.radButton2.toggled.connect(self.radButton2Enabled)
-        self.radButton2.toggled.connect(self.completeChanged)
-        # Enable everything for button 1
-    def radButton1Enabled(self):
-        self.cmin.setDisabled(False)
-        self.cmax.setDisabled(False)
-        self.dmin.setDisabled(False)
-        self.dmax.setDisabled(False)
-        self.hydroxytickbox.setDisabled(False)
-        self.ceramideVariability.setDisabled(False)
-        # Disable everything for button 2
-    def radButton2Enabled(self):
-        self.cmin.setDisabled(True)
-        self.cmin.clear()
-        self.cmax.setDisabled(True)
-        self.cmax.clear()
-        self.dmin.setDisabled(True)
-        self.dmin.clear()
-        self.dmax.setDisabled(True)
-        self.dmax.clear()
-        self.hydroxytickbox.setChecked(False)
-        self.hydroxytickbox.setDisabled(True)
-        self.ceramideVariability.setChecked(False)
-        self.ceramideVariability.setDisabled(True)
 
     def isComplete(self):
         '''
@@ -124,9 +88,7 @@ class Page(QWizardPage):
         Values for d should be from 0 to cmax.
         Restrictions also defined above (self.registerField()).
         '''
-        if self.radButton2.isChecked():
-            return True
-        elif int(self.cmin.text() or 1) > int(self.cmax.text() or 0):
+        if int(self.cmin.text() or 1) > int(self.cmax.text() or 0):
             return False
         elif int(self.dmin.text() or 1) > int(self.dmax.text() or 0):         
             return False
@@ -134,14 +96,11 @@ class Page(QWizardPage):
             return False
         elif int(self.dmax.text() or 0) > int(self.cmax.text() or 0)-1:
             return False
-        elif self.hydroxytickbox.isChecked() and int(self.omax.text() or 0) not in range(1, 11):
+        elif self.hydroxytickbox.isChecked() and int(self.omax.text() or 0) not in range(1, 6):
             return False  
         return super().isComplete()
 
     def nextId(self):
-        if self.radButton2.isChecked():
-            return 2 # Page 2B
-        else:
-            return 1 # Page 2
+        return 3
 
     
