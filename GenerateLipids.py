@@ -1,4 +1,5 @@
 from collections import Counter
+import copy
 
 Masses = {
 
@@ -90,9 +91,9 @@ class sn:
   '''
   def __init__(self, c=0, d=0, mass=None, chnops={}, smiles='', type=None, hgtails=[], me=0, oh=0, dt=0):
 
-    self.type = type
-    self.hgtails = hgtails
-    string = []
+    self.type = type # Tail list is shared. Deepcopy made as to not overwrite
+    self.hgtails = copy.deepcopy(hgtails) # the tails in the tail list.
+    string = [] # string is created in list so that constituent order can be reversed
 
     self.c  = c
     self.d  = d
@@ -252,13 +253,12 @@ def generate_base_tails(n):
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class Other:
-  def __init__(self, name='H2O', mass=Masses['H2O'], chnops={'H':2,'O':1}, smiles='', dt=0, tailLoc=-1):
+  def __init__(self, name='H2O', mass=Masses['H2O'], chnops={'H':2,'O':1}, smiles='', dt=0):
     
     self.name = name
     self.mass = mass
     self.formula = Counter(chnops)
     self.smiles=smiles
-    self.tailLoc = tailLoc
 
     if dt > 0: # deuterium labels
       self.name += f"(D{dt})"
@@ -608,7 +608,7 @@ class MA_s_CH2O_H2O(MA_s_CH2O):
 # ~ # ~ # ~ # [M +/- adduct] - fatty acid
 
 def MA_s_FA(lipid, adduct, intensity):
-  '''[ MA - RCOOH ]\n
+  '''[ MA - (ROOH) ]\n
   Fragment for adducted molecular ion, with loss of a free-fatty acid\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
@@ -617,7 +617,7 @@ def MA_s_FA(lipid, adduct, intensity):
       yield MA_s_FAx(lipid, adduct, intensity, MA_s_FA, tail)
 
 class MA_s_FAx(MA):
-  '''[ MA - RCOOH ]\n
+  '''[ MA - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -638,12 +638,12 @@ class MA_s_FAx(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1(MA):
-  '''[ MA - RCOOH ] (sn1)\n
+  '''[ MA - (ROOH) ] (sn1)\n
   Fragment for adducted molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -660,12 +660,12 @@ class MA_s_sn1(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2(MA):
-  '''[ MA - RCOOH ] (sn2)\n
+  '''[ MA - (ROOH) ] (sn2)\n
   Fragment for adducted molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -682,14 +682,14 @@ class MA_s_sn2(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 class MA_s_allFA(MA):
-  '''[ MA - RCOOH ] (ALL)\n
+  '''[ MA - (ROOH) ] (ALL)\n
   Fragment for adducted molecular ion, with loss of ALL fatty acid tails'''
   def MZ(self):
     mass = super().MZ()
@@ -705,13 +705,16 @@ class MA_s_allFA(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-RCOOH-RCOOH]')
+    comment = comment.replace('M', 'M-(ROOH)-(ROOH)')
+    comment += ' ('
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ')'
     return comment  
 
 # ~ #
 
 def MA_s_FA_H2O(lipid, adduct, intensity):
-  '''[ MA - RCOOH - H2O ]\n
+  '''[ MA - (ROOH) - H2O ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND water\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
@@ -720,7 +723,7 @@ def MA_s_FA_H2O(lipid, adduct, intensity):
       yield MA_s_FAx_H2O(lipid, adduct, intensity, MA_s_FA_H2O, tail)
 
 class MA_s_FAx_H2O(MA_s_H2O):
-  '''[ MA - RCOOH - H2O ]\n
+  '''[ MA - (ROOH) - H2O ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -734,12 +737,12 @@ class MA_s_FAx_H2O(MA_s_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1_H2O(MA_s_H2O):
-  '''[ MA - RCOOH - H2O ] (sn1)\n
+  '''[ MA - (ROOH) - H2O ] (sn1)\n
   Fragment for adducted molecular ion with loss of sn1 as a free fatty acid AND water'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass/abs(Masses[self.adduct][2]))
@@ -749,12 +752,12 @@ class MA_s_sn1_H2O(MA_s_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2_H2O(MA_s_H2O):
-  '''[ MA - RCOOH - H2O ] (sn2)\n
+  '''[ MA - (ROOH) - H2O ] (sn2)\n
   Fragment for adducted molecular ion with loss of sn2 as a free fatty acid AND water'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass/abs(Masses[self.adduct][2]))
@@ -764,15 +767,15 @@ class MA_s_sn2_H2O(MA_s_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 def MA_s_FAk(lipid, adduct, intensity):
-  '''[ MA - RC=O ]\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone\n
+  '''[ MA - (R=O) ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -780,8 +783,8 @@ def MA_s_FAk(lipid, adduct, intensity):
       yield MA_s_FAkx(lipid, adduct, intensity, MA_s_FAk, tail)
 
 class MA_s_FAkx(MA):
-  '''[ MA - RC=O ]\n
-  Fatty acid Ketone\n
+  '''[ MA - (R=O) ]\n
+  Fatty acid Ketene\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -799,13 +802,13 @@ class MA_s_FAkx(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1k(MA):
-  '''[ MA - RC=O ] (sn1)\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone'''
+  '''[ MA - (R=O) ] (sn1)\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[0].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -815,13 +818,13 @@ class MA_s_sn1k(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2k(MA):
-  '''[ MA - RC=O ] (sn2)\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone'''
+  '''[ MA - (R=O) ] (sn2)\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[1].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -831,14 +834,14 @@ class MA_s_sn2k(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 class MA_s_allFAk(MA):
-  '''[ MA - RC=O ] (ALL)\n
+  '''[ MA - (R=O) ] (ALL)\n
   Fragment for adducted molecular ion, with loss of ALL fatty acid tails'''
   def MZ(self):
     mass = super().MZ()
@@ -855,13 +858,16 @@ class MA_s_allFAk(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-RC=O-RC=O]')
-    return comment  
+    comment = comment.replace('M', 'M-(R=O)-(R=O)')
+    comment += ' ('
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ')'
+    return comment   
 
 # ~ #
 
 def MA_s_FA_PO3(lipid, adduct, intensity):
-  '''[ MA - RCOOH - PO3 ]\n
+  '''[ MA - (ROOH) - PO3 ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -869,7 +875,7 @@ def MA_s_FA_PO3(lipid, adduct, intensity):
       yield MA_s_FA_PO3x(lipid, adduct, intensity, MA_s_FA_PO3, tail)
 
 class MA_s_FA_PO3x(MA_s_PO3):
-  '''[ MA - RCOOH - PO3 ]\n
+  '''[ MA - (ROOH) - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -883,12 +889,12 @@ class MA_s_FA_PO3x(MA_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1_PO3(MA_s_PO3):
-  '''[ MA - RCOOH - PO3 ] (sn1)\n
+  '''[ MA - (ROOH) - PO3 ] (sn1)\n
   Fragment for adducted molecular ion with loss of sn1 as a free fatty acid AND phosphite'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass/abs(Masses[self.adduct][2]))
@@ -898,12 +904,12 @@ class MA_s_sn1_PO3(MA_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2_PO3(MA_s_PO3):
-  '''[ MA - RCOOH - PO3 ] (sn2)\n
+  '''[ MA - (ROOH) - PO3 ] (sn2)\n
   Fragment for adducted molecular ion with loss of sn1 as a free fatty acid AND phosphite'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass/abs(Masses[self.adduct][2]))
@@ -913,22 +919,22 @@ class MA_s_sn2_PO3(MA_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 def MA_s_FAk_PO3(lipid, adduct, intensity):
-  '''[ MA - RC=O - PO3 ]\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND phosphite\n
+  '''[ MA - (R=O) - PO3 ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
     if tail.type in ['Acyl']:
       yield MA_s_FAk_PO3x(lipid, adduct, intensity, MA_s_FAk_PO3, tail)
 
 class MA_s_FAk_PO3x(MA_s_PO3):
-  '''[ MA - RC=O - PO3 ]\n
+  '''[ MA - (R=O) - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -943,13 +949,13 @@ class MA_s_FAk_PO3x(MA_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1k_PO3(MA_s_PO3):
-  '''[ MA - RC=O - PO3 ] (sn1)\n
-  Fragment for adducted molecular ion with loss of sn1 as a fatty acid ketone AND phosphite'''
+  '''[ MA - (R=O) - PO3 ] (sn1)\n
+  Fragment for adducted molecular ion with loss of sn1 as a fatty acid ketene AND phosphite'''
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[0].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -959,13 +965,13 @@ class MA_s_sn1k_PO3(MA_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2k_PO3(MA_s_PO3):
-  '''[ MA - RC=O - PO3 ] (sn2)\n
-  Fragment for adducted molecular ion with loss of sn1 as a fatty acid ketone AND phosphite'''
+  '''[ MA - (R=O) - PO3 ] (sn2)\n
+  Fragment for adducted molecular ion with loss of sn1 as a fatty acid ketene AND phosphite'''
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[1].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -975,14 +981,14 @@ class MA_s_sn2k_PO3(MA_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ # Fragments for PE / PC+Na/Li
 
 def MA_s_FA_TMA(lipid, adduct, intensity):
-  '''[ MA - RCOOH - C3H9N ]\n
+  '''[ MA - (ROOH) - C3H9N ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND trimethylamine\n
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
@@ -991,7 +997,7 @@ def MA_s_FA_TMA(lipid, adduct, intensity):
       yield MA_s_FA_TMAx(lipid, adduct, intensity, MA_s_FA_TMA, tail)
 
 class MA_s_FA_TMAx(MA_s_TMA):
-  '''[ MA - RCOOH - C3H9N ]\n
+  '''[ MA - (ROOH) - C3H9N ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1005,12 +1011,12 @@ class MA_s_FA_TMAx(MA_s_TMA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1_TMA(MA_s_TMA):
-  '''[ MA - RCOOH - C3H9N ]\n
+  '''[ MA - (ROOH) - C3H9N ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND trimethylamine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
@@ -1021,12 +1027,12 @@ class MA_s_sn1_TMA(MA_s_TMA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2_TMA(MA_s_TMA):
-  '''[ MA - RCOOH - C3H9N ]\n
+  '''[ MA - (ROOH) - C3H9N ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND trimethylamine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
@@ -1037,15 +1043,15 @@ class MA_s_sn2_TMA(MA_s_TMA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 def MA_s_FAk_TMA(lipid, adduct, intensity):
-  '''[ MA - RC=O - C3H9N ]\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND trimethylamine\n
+  '''[ MA - (R=O) - C3H9N ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND trimethylamine\n
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
   for tail in lipid.tails:
@@ -1053,7 +1059,7 @@ def MA_s_FAk_TMA(lipid, adduct, intensity):
       yield MA_s_FAk_TMAx(lipid, adduct, intensity, MA_s_FAk_TMA, tail)
 
 class MA_s_FAk_TMAx(MA_s_TMA):
-  '''[ MA - RC=O - C3H9N ]\n
+  '''[ MA - (R=O) - C3H9N ]\n
   Do not use this class, intended for use in loop''' 
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1068,13 +1074,13 @@ class MA_s_FAk_TMAx(MA_s_TMA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1k_TMA(MA_s_TMA):  # [M+-H-FAk-TMA]+-
-  '''[ MA - RC=O - C3H9N ] (sn1)\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND trimethylamine\n
+  '''[ MA - (R=O) - C3H9N ] (sn1)\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND trimethylamine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[0].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
@@ -1085,13 +1091,13 @@ class MA_s_sn1k_TMA(MA_s_TMA):  # [M+-H-FAk-TMA]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2k_TMA(MA_s_TMA):  # [M+-H-FAk-TMA]+-
-  '''[ MA - RC=O - C3H9N ] (sn2)\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND trimethylamine\n
+  '''[ MA - (R=O) - C3H9N ] (sn2)\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND trimethylamine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[1].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
@@ -1102,14 +1108,14 @@ class MA_s_sn2k_TMA(MA_s_TMA):  # [M+-H-FAk-TMA]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
     
 # ~ #
 
 def MA_s_FA_AZD(lipid, adduct, intensity):  # [M+-H-FA-AZD]+-
-  '''[ MA - RCOOH - C2H5N ]\n
+  '''[ MA - (ROOH) - C2H5N ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND aziridine\n
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
@@ -1118,7 +1124,7 @@ def MA_s_FA_AZD(lipid, adduct, intensity):  # [M+-H-FA-AZD]+-
       yield MA_s_FA_AZDx(lipid, adduct, intensity, MA_s_FA_AZD, tail)
 
 class MA_s_FA_AZDx(MA_s_AZD):  # [M+-H-FA-AZD]+-
-  '''[ MA - RCOOH - C2H5N ]\n
+  '''[ MA - (ROOH) - C2H5N ]\n
   Do not use this class, intended for use in loop''' 
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1132,12 +1138,12 @@ class MA_s_FA_AZDx(MA_s_AZD):  # [M+-H-FA-AZD]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1_AZD(MA_s_AZD):  # [M+-H-FA-AZD]+-
-  '''[ MA - RCOOH - C2H5N ]\n
+  '''[ MA - (ROOH) - C2H5N ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND aziridine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
@@ -1148,12 +1154,12 @@ class MA_s_sn1_AZD(MA_s_AZD):  # [M+-H-FA-AZD]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2_AZD(MA_s_AZD):  # [M+-H-FA-AZD]+-
-  '''[ MA - RCOOH - C2H5N ]\n
+  '''[ MA - (ROOH) - C2H5N ]\n
   Fragment for adducted molecular ion with loss of a free fatty acid AND aziridine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
@@ -1164,15 +1170,15 @@ class MA_s_sn2_AZD(MA_s_AZD):  # [M+-H-FA-AZD]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 def MA_s_FAk_AZD(lipid, adduct, intensity):  # [M+-H-FAk-AZD]+-
-  '''[ MA - RC=O - C2H5N ]\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND aziridine\n
+  '''[ MA - (R=O) - C2H5N ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND aziridine\n
   Common for Phosphatidylcholines\n
   Method used to generate multiple objects'''  
   for tail in lipid.tails:
@@ -1180,7 +1186,7 @@ def MA_s_FAk_AZD(lipid, adduct, intensity):  # [M+-H-FAk-AZD]+-
       yield MA_s_FAk_AZDx(lipid, adduct, intensity, MA_s_FAk_AZD, tail)
 
 class MA_s_FAk_AZDx(MA_s_AZD):  # [M+-H-FAk-AZD]+-
-  '''[ MA - RC=O - C2H5N ]\n
+  '''[ MA - (R=O) - C2H5N ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1195,13 +1201,13 @@ class MA_s_FAk_AZDx(MA_s_AZD):  # [M+-H-FAk-AZD]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1k_AZD(MA_s_AZD):  # [M+-H-FAk-AZD]+-
-  '''[ MA - RC=O - C2H5N ] (sn1)\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND aziridine\n
+  '''[ MA - (R=O) - C2H5N ] (sn1)\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND aziridine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[0].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
@@ -1212,13 +1218,13 @@ class MA_s_sn1k_AZD(MA_s_AZD):  # [M+-H-FAk-AZD]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2k_AZD(MA_s_AZD):  # [M+-H-FAk-AZD]+-
-  '''[ MA - RC=O - C2H5N ] (sn2)\n
-  Fragment for adducted molecular ion with loss of a fatty acid ketone AND aziridine\n
+  '''[ MA - (R=O) - C2H5N ] (sn2)\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND aziridine\n
   Common for Phosphatidylcholines'''  
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[1].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
@@ -1229,14 +1235,14 @@ class MA_s_sn2k_AZD(MA_s_AZD):  # [M+-H-FAk-AZD]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 def MA_s_FA_Gal(lipid, adduct, intensity):
-  '''[ MA - RCOOH ]\n
+  '''[ MA - (ROOH) ]\n
   Fragment for adducted molecular ion, with loss of a free-fatty acid\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
@@ -1245,7 +1251,7 @@ def MA_s_FA_Gal(lipid, adduct, intensity):
       yield MA_s_FA_Galx(lipid, adduct, intensity, MA_s_FA_Gal, tail)
 
 class MA_s_FA_Galx(MA_s_Gal):
-  '''[ MA - RCOOH ]\n
+  '''[ MA - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1266,12 +1272,12 @@ class MA_s_FA_Galx(MA_s_Gal):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1_Gal(MA_s_Gal):
-  '''[ MA - RCOOH ] (sn1)\n
+  '''[ MA - (ROOH) ] (sn1)\n
   Fragment for adducted molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1288,12 +1294,12 @@ class MA_s_sn1_Gal(MA_s_Gal):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2_Gal(MA_s_Gal):
-  '''[ MA - RCOOH ] (sn2)\n
+  '''[ MA - (ROOH) ] (sn2)\n
   Fragment for adducted molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1310,12 +1316,12 @@ class MA_s_sn2_Gal(MA_s_Gal):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 def MA_s_FA_Gal_H2O(lipid, adduct, intensity):
-  '''[ MA - RCOOH ]\n
+  '''[ MA - (ROOH) ]\n
   Fragment for adducted molecular ion, with loss of a free-fatty acid\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
@@ -1324,7 +1330,7 @@ def MA_s_FA_Gal_H2O(lipid, adduct, intensity):
       yield MA_s_FA_Gal_H2Ox(lipid, adduct, intensity, MA_s_FA_Gal_H2O, tail)
 
 class MA_s_FA_Gal_H2Ox(MA_s_Gal_H2O):
-  '''[ MA - RCOOH ]\n
+  '''[ MA - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1345,12 +1351,12 @@ class MA_s_FA_Gal_H2Ox(MA_s_Gal_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn1_Gal_H2O(MA_s_Gal_H2O):
-  '''[ MA - RCOOH ] (sn1)\n
+  '''[ MA - (ROOH) ] (sn1)\n
   Fragment for adducted molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1367,12 +1373,12 @@ class MA_s_sn1_Gal_H2O(MA_s_Gal_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_sn2_Gal_H2O(MA_s_Gal_H2O):
-  '''[ MA - RCOOH ] (sn2)\n
+  '''[ MA - (ROOH) ] (sn2)\n
   Fragment for adducted molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1389,8 +1395,8 @@ class MA_s_sn2_Gal_H2O(MA_s_Gal_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -1458,7 +1464,7 @@ class MH_s_PO3(MH):
     return super().MZ() - Masses['PO3H']
   def Formula(self):
     formula = super().Formula()
-    formula.subtract({'P':1,'O':3})
+    formula.subtract({'H':1, 'P':1,'O':3})
     return formula
   def Comment(self):
     comment = super().Comment()
@@ -1472,11 +1478,25 @@ class MH_s_PO4(MH):
     return super().MZ() - Masses['PO4H3']
   def Formula(self):
     formula = super().Formula()
-    formula.subtract({'P':1,'O':4})
+    formula.subtract({'H':3, 'P':1,'O':4})
     return formula
   def Comment(self):
     comment = super().Comment()
     comment = comment.replace(']', '-H3PO4]')
+    return comment  
+
+class MH_s_PO4_H2O(MH_s_PO4):
+  '''[ M(+/-)H - PO4 -H2O]\n
+  Fragment for (de)protonated molecular ion with loss of phosphate'''
+  def MZ(self):
+    return super().MZ() - Masses['H2O']
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'O':1, 'H':2})
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace(']', '-H2O]')
     return comment  
 
 # ~ # Fragments for DGDG
@@ -1529,7 +1549,7 @@ class MH_s_AZD(MH):
 # ~ # ~ # ~ # [M +/- H] - fatty acid
 
 def MH_s_FA(lipid, adduct, intensity):
-  '''[ M(+/-)H - RCOOH ]\n
+  '''[ M(+/-)H - (ROOH) ]\n
   Fragment for (de)protonated molecular ion, with loss of a free-fatty acid\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
@@ -1538,7 +1558,7 @@ def MH_s_FA(lipid, adduct, intensity):
       yield MH_s_FAx(lipid, adduct, intensity, MH_s_FA, tail)
 
 class MH_s_FAx(MH):
-  '''[ M(+/-)H - RCOOH ]\n
+  '''[ M(+/-)H - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1559,12 +1579,12 @@ class MH_s_FAx(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn1(MH):
-  '''[ M(+/-)H - RCOOH ] (sn1)\n
+  '''[ M(+/-)H - (ROOH) ] (sn1)\n
   Fragment for (de)protonated molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1581,12 +1601,12 @@ class MH_s_sn1(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn2(MH):
-  '''[ M(+/-)H - RCOOH ] (sn2)\n
+  '''[ M(+/-)H - (ROOH) ] (sn2)\n
   Fragment for (de)protonated molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1603,12 +1623,12 @@ class MH_s_sn2(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn3(MH):
-  '''[ M(+/-)H - RCOOH ] (sn3)\n
+  '''[ M(+/-)H - (ROOH) ] (sn3)\n
   Fragment for (de)protonated molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
     # If the tail is fully deuterated: special case
@@ -1625,14 +1645,14 @@ class MH_s_sn3(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # 
 
 def MH_s_FA_H2O(lipid, adduct, intensity):
-  '''[ M(+/-)H - RCOOH - H2O ]\n
+  '''[ M(+/-)H - (ROOH) - H2O ]\n
   Fragment for (de)protonated molecular ion with loss of a free fatty acid AND water\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -1640,7 +1660,7 @@ def MH_s_FA_H2O(lipid, adduct, intensity):
       yield MH_s_FA_H2Ox(lipid, adduct, intensity, MH_s_FA_H2O, tail)
 
 class MH_s_FA_H2Ox(MH_s_H2O):
-  '''[ M(+/-)H - RCOOH - H2O ]\n
+  '''[ M(+/-)H - (ROOH) - H2O ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1654,12 +1674,12 @@ class MH_s_FA_H2Ox(MH_s_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn1_H2O(MH_s_H2O):
-  '''[ M(+/-)H - RCOOH - H2O ] (sn1)\n
+  '''[ M(+/-)H - (ROOH) - H2O ] (sn1)\n
   Fragment for (de)protonated molecular ion with loss of sn1 as a free fatty acid AND water'''
   def MZ(self):
     return super().MZ() - self.lipid.tails[0].mass
@@ -1669,12 +1689,12 @@ class MH_s_sn1_H2O(MH_s_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn2_H2O(MH_s_H2O):
-  '''[ M(+/-)H - RCOOH - H2O ] (sn2)\n
+  '''[ M(+/-)H - (ROOH) - H2O ] (sn2)\n
   Fragment for (de)protonated molecular ion with loss of sn2 as a free fatty acid AND water'''
   def MZ(self):
     return super().MZ() - self.lipid.tails[1].mass
@@ -1684,15 +1704,15 @@ class MH_s_sn2_H2O(MH_s_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # 
 
 def MH_s_FAk(lipid, adduct, intensity):
-  '''[ M(+/-)H - RC=O ]\n
-  Fragment for (de)protonated molecular ion with loss of a fatty acid ketone\n
+  '''[ M(+/-)H - (R=O) ]\n
+  Fragment for (de)protonated molecular ion with loss of a fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -1700,7 +1720,7 @@ def MH_s_FAk(lipid, adduct, intensity):
       yield MH_s_FAkx(lipid, adduct, intensity, MH_s_FAk, tail)
 
 class MH_s_FAkx(MH):
-  '''[ M(+/-)H - RCOOH ]\n
+  '''[ M(+/-)H - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1715,13 +1735,13 @@ class MH_s_FAkx(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn1k(MH):
-  '''[ M(+/-)H - RC=O ] (sn1)\n
-  Fragment for (de)protonated molecular ion with loss of a fatty acid ketone'''
+  '''[ M(+/-)H - (R=O) ] (sn1)\n
+  Fragment for (de)protonated molecular ion with loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass-Masses['H2O'])
   def Formula(self):
@@ -1731,13 +1751,13 @@ class MH_s_sn1k(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn2k(MH):
-  '''[ M(+/-)H - RC=O ] (sn2)\n
-  Fragment for (de)protonated molecular ion with loss of a fatty acid ketone'''
+  '''[ M(+/-)H - (R=O) ] (sn2)\n
+  Fragment for (de)protonated molecular ion with loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass-Masses['H2O'])
   def Formula(self):
@@ -1747,12 +1767,12 @@ class MH_s_sn2k(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_allFAk(MH):
-  '''[ M(+/-)H - RC=O ] (ALL)\n
+  '''[ M(+/-)H - (R=O) ] (ALL)\n
   Fragment for (de)protonated molecular ion, with loss of ALL fatty acids'''
   def MZ(self):
     mass = super().MZ()
@@ -1769,13 +1789,13 @@ class MH_s_allFAk(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-RC=O-RC=O]')
+    comment = comment.replace(']', '-(R=O)-(R=O)]')
     return comment
 
 # ~ # 
 
 def MH_s_FA_PO3(lipid, adduct, intensity):
-  '''[ M(+/-)H - RCOOH - PO3 ]\n
+  '''[ M(+/-)H - (ROOH) - PO3 ]\n
   Fragment for (de)protonated molecular ion with loss of a free fatty acid AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -1783,7 +1803,7 @@ def MH_s_FA_PO3(lipid, adduct, intensity):
       yield MH_s_FA_PO3x(lipid, adduct, intensity, MH_s_FA_PO3, tail)
 
 class MH_s_FA_PO3x(MH_s_PO3):  # [M+-H-FA-PO3]+-
-  '''[ M(+/-)H - RCOOH - PO3 ]\n
+  '''[ M(+/-)H - (ROOH) - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1797,12 +1817,12 @@ class MH_s_FA_PO3x(MH_s_PO3):  # [M+-H-FA-PO3]+-
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn1_PO3(MH_s_PO3):
-  '''[ M(+/-)H - RCOOH - PO3 ] (sn1)\n
+  '''[ M(+/-)H - (ROOH) - PO3 ] (sn1)\n
   Fragment for (de)protonated molecular ion with loss of sn1 as a free fatty acid AND phosphite'''
   def MZ(self):
     return super().MZ() - self.lipid.tails[0].mass
@@ -1812,12 +1832,12 @@ class MH_s_sn1_PO3(MH_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn2_PO3(MH_s_PO3):
-  '''[ M(+/-)H - RCOOH - PO3 ] (sn2)\n
+  '''[ M(+/-)H - (ROOH) - PO3 ] (sn2)\n
   Fragment for (de)protonated molecular ion with loss of sn2 as a free fatty acid AND phosphite'''
   def MZ(self):
     return super().MZ() - self.lipid.tails[1].mass
@@ -1827,22 +1847,22 @@ class MH_s_sn2_PO3(MH_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # 
 
 def MH_s_FAk_PO3(lipid, adduct, intensity):
-  '''[ M(+/-)H - RC=O - PO3 ]\n
-  Fragment for (de)protonated molecular ion with loss of a fatty acid ketone AND phosphite\n
+  '''[ M(+/-)H - (R=O) - PO3 ]\n
+  Fragment for (de)protonated molecular ion with loss of a fatty acid ketene AND phosphite\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
     if tail.type in ['Acyl']:
       yield MH_s_FAk_PO3x(lipid, adduct, intensity, MH_s_FAk_PO3, tail)
 
 class MH_s_FAk_PO3x(MH_s_PO3):
-  '''[ M(+/-)H - RC=O - PO3 ]\n
+  '''[ M(+/-)H - (R=O) - PO3 ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1857,13 +1877,13 @@ class MH_s_FAk_PO3x(MH_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn1k_PO3(MH_s_PO3):
-  '''[ M(+/-)H - RC=O - PO3 ] (sn1)\n
-  Fragment for (de)protonated molecular ion with loss of sn1 as a fatty acid ketone AND phosphite'''
+  '''[ M(+/-)H - (R=O) - PO3 ] (sn1)\n
+  Fragment for (de)protonated molecular ion with loss of sn1 as a fatty acid ketene AND phosphite'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass-Masses['H2O'])
   def Formula(self):
@@ -1873,13 +1893,13 @@ class MH_s_sn1k_PO3(MH_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class MH_s_sn2k_PO3(MH_s_PO3):
-  '''[ M(+/-)H - RC=O - PO3 ] (sn2)\n
-  Fragment for (de)protonated molecular ion with loss of sn2 as a fatty acid ketone AND phosphite'''
+  '''[ M(+/-)H - (R=O) - PO3 ] (sn2)\n
+  Fragment for (de)protonated molecular ion with loss of sn2 as a fatty acid ketene AND phosphite'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass-Masses['H2O'])
   def Formula(self):
@@ -1889,8 +1909,8 @@ class MH_s_sn2k_PO3(MH_s_PO3):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -1954,7 +1974,7 @@ class M2H_s_2H2O(M2H):
 # ~ # ~ # ~ # [M +/- 2H] - fatty acid
 
 def M2H_s_FA(lipid, adduct, intensity):
-  '''[ M(+/-)2H - RCOOH ]\n
+  '''[ M(+/-)2H - (ROOH) ]\n
   Fragment for double (de)protonated molecular ion, with loss of a free-fatty acid\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
@@ -1963,7 +1983,7 @@ def M2H_s_FA(lipid, adduct, intensity):
       yield M2H_s_FAx(lipid, adduct, intensity, M2H_s_FA, tail)
 
 class M2H_s_FAx(M2H):
-  '''[ M(+/-)2H - RCOOH ]\n
+  '''[ M(+/-)2H - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -1977,12 +1997,12 @@ class M2H_s_FAx(M2H):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class M2H_s_sn1(M2H):
-  '''[ M(+/-)2H - RCOOH ] (sn1)\n
+  '''[ M(+/-)2H - (ROOH) ] (sn1)\n
   Fragment for double (de)protonated molecular ion, with loss of sn1 as free-fatty acid'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass/2)
@@ -1992,12 +2012,12 @@ class M2H_s_sn1(M2H):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class M2H_s_sn2(M2H):
-  '''[ M(+/-)2H - RCOOH ] (sn2)\n
+  '''[ M(+/-)2H - (ROOH) ] (sn2)\n
   Fragment for double (de)protonated molecular ion, with loss of sn2 as free-fatty acid'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass/2)
@@ -2007,15 +2027,15 @@ class M2H_s_sn2(M2H):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # 
 
 def M2H_s_FAk(lipid, adduct, intensity):
-  '''[ M(+/-)2H - RC=O ]\n
-  Fragment for double (de)protonated molecular ion with loss of a fatty acid ketone\n
+  '''[ M(+/-)2H - (R=O) ]\n
+  Fragment for double (de)protonated molecular ion with loss of a fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -2023,7 +2043,7 @@ def M2H_s_FAk(lipid, adduct, intensity):
       yield M2H_s_FAkx(lipid, adduct, intensity, M2H_s_FAk, tail)
 
 class M2H_s_FAkx(M2H):
-  '''[ M(+/-)2H - RCOOH ]\n
+  '''[ M(+/-)2H - (ROOH) ]\n
   Do not use this class, intended for use in loop'''
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail
@@ -2037,13 +2057,13 @@ class M2H_s_FAkx(M2H):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class M2H_s_sn1k(M2H):
-  '''[ M(+/-)2H - RC=O ] (sn1)\n
-  Fragment for double (de)protonated molecular ion with loss of a fatty acid ketone'''
+  '''[ M(+/-)2H - (R=O) ] (sn1)\n
+  Fragment for double (de)protonated molecular ion with loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass-Masses['H2O'])/2
   def Formula(self):
@@ -2053,13 +2073,13 @@ class M2H_s_sn1k(M2H):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class M2H_s_sn2k(M2H):
-  '''[ M(+/-)2H - RC=O ] (sn2)\n
-  Fragment for double (de)protonated molecular ion with loss of a fatty acid ketone'''
+  '''[ M(+/-)2H - (R=O) ] (sn2)\n
+  Fragment for double (de)protonated molecular ion with loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass-Masses['H2O'])/2
   def Formula(self):
@@ -2069,13 +2089,13 @@ class M2H_s_sn2k(M2H):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
-# ~ # ~ # ~ # Free fatty acids and fatty acid ketones
+# ~ # ~ # ~ # Free fatty acids and fatty acid ketenes
 
 def FAH(lipid, adduct, intensity):
   '''[ FA - H ]\n
@@ -2112,9 +2132,9 @@ class FAHx(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RCOOH+H]+'
+      return '[(ROOH)+H]+ ('+self.tail.name+')'
     else:
-      return '[RCOO]-'
+      return '[RCOO]- ('+self.tail.name+')'
 
 class sn1(Fragment):
   '''[ FA - H ] (sn1)\n
@@ -2138,9 +2158,9 @@ class sn1(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RCOOH+H]+'
+      return '[(ROOH)+H]+ ('+self.tail.name+')'
     else:
-      return '[RCOO]-'
+      return '[RCOO]- ('+self.tail.name+')'
 
 class sn2(Fragment):
   '''[ FA - H ] (sn2)\n
@@ -2164,9 +2184,9 @@ class sn2(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RCOOH+H]+'
+      return '[(ROOH)+H]+ ('+self.tail.name+')'
     else:
-      return '[RCOO]-'
+      return '[RCOO]- ('+self.tail.name+')'
 
 class sn3(Fragment):
   '''[ FA - H ] (sn3)\n
@@ -2190,9 +2210,9 @@ class sn3(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RCOOH+H]+'
+      return '[(ROOH)+H]+ ('+self.tail.name+')'
     else:
-      return '[RCOO]-'
+      return '[RCOO]- ('+self.tail.name+')'
 
 # ~ # 
 
@@ -2256,7 +2276,7 @@ class C3H7O5P_FAx(Fragment):
 
 def FAkH(lipid, adduct, intensity):
   '''[ FA - H2O +/- H ]\n
-  Fragment for a (de)protonated  fatty acid ketone\n
+  Fragment for a (de)protonated  fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -2290,9 +2310,9 @@ class FAkHx(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RC=O+H]+ ('+self.tail.name+')'
+      return '[(R=O)+H]+ ('+self.tail.name+')'
     else:
-      return '[RC=O-H]- ('+self.tail.name+')'
+      return '[(R=O)-H]- ('+self.tail.name+')'
 
 class sn1k(Fragment):
   '''[ FA - H2O +/- H ] (sn1)\n
@@ -2317,9 +2337,9 @@ class sn1k(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RC=O+H]+ ('+self.tail.name+')'
+      return '[(R=O)+H]+ ('+self.tail.name+')'
     else:
-      return '[RC=O-H]- ('+self.tail.name+')'
+      return '[(R=O)-H]- ('+self.tail.name+')'
 
 class sn2k(Fragment):
   '''[ FA - H2O +/- H ] (sn2)\n
@@ -2344,9 +2364,9 @@ class sn2k(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RC=O+H]+ ('+self.tail.name+')'
+      return '[(R=O)+H]+ ('+self.tail.name+')'
     else:
-      return '[RC=O-H]- ('+self.tail.name+')'
+      return '[(R=O)-H]- ('+self.tail.name+')'
 
 class sn3k(Fragment):
   '''[ FA - H2O +/- H ] (sn3)\n
@@ -2371,13 +2391,13 @@ class sn3k(Fragment):
       return -1
   def Comment(self):
     if Masses[self.adduct][1] == 'Positive':
-      return '[RC=O+H]+ ('+self.tail.name+')'
+      return '[(R=O)+H]+ ('+self.tail.name+')'
     else:
-      return '[RC=O-H]- ('+self.tail.name+')'
+      return '[(R=O)-H]- ('+self.tail.name+')'
 
 def FAkA(lipid, adduct, intensity):
   '''[ FA - H2O + Adduct ]\n
-  Fragment for adducted fatty acid ketone\n
+  Fragment for adducted fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -2402,13 +2422,13 @@ class FAkAx(Fragment):
     return Masses[self.adduct][2]
   def Comment(self):
     comment = self.adduct
-    comment = comment.replace('M', 'RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', '(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class sn1kA(Fragment):
   '''[ FA - H2O + Adduct ] (sn1)\n
-  Fragment for adducted fatty acid ketone'''
+  Fragment for adducted fatty acid ketene'''
   def MZ(self):
     return (self.lipid.tails[0].mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
   def Formula(self):
@@ -2420,13 +2440,13 @@ class sn1kA(Fragment):
     return Masses[self.adduct][2]
   def Comment(self):
     comment = self.adduct
-    comment = comment.replace('M', 'RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', '(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class sn2kA(Fragment):
   '''[ FA - H2O + Adduct ] (sn2)\n
-  Fragment for adducted fatty acid ketone'''
+  Fragment for adducted fatty acid ketene'''
   def MZ(self):
     return (self.lipid.tails[1].mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
   def Formula(self):
@@ -2438,13 +2458,13 @@ class sn2kA(Fragment):
     return Masses[self.adduct][2]
   def Comment(self):
     comment = self.adduct
-    comment = comment.replace('M', 'RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', '(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class sn3kA(Fragment):
   '''[ FA - H2O + Adduct ] (sn3)\n
-  Fragment for adducted fatty acid ketone'''
+  Fragment for adducted fatty acid ketene'''
   def MZ(self):
     return (self.lipid.tails[2].mass - Masses['H2O'] + Masses[self.adduct][0])/abs(Masses[self.adduct][2])
   def Formula(self):
@@ -2456,8 +2476,8 @@ class sn3kA(Fragment):
     return Masses[self.adduct][2]
   def Comment(self):
     comment = self.adduct
-    comment = comment.replace('M', 'RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', '(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # ~ # Ceramide dC fragments
@@ -2768,7 +2788,7 @@ class MA_s_HG_2H2O(MA_s_HG):
 # ~ # 
 
 def MA_s_HG_FA(lipid, adduct, intensity):
-  '''[ MA - Headgroup + H2O - RCOOH ]\n
+  '''[ MA - Headgroup + H2O - (ROOH) ]\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate from adducted molecular ion\n
   Method used to generate multiple objects'''
@@ -2790,12 +2810,12 @@ class MA_s_HG_FAx(MA_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_HG_sn1(MA_s_HG):
-  '''[ MA - Headgroup + H2O - RCOOH ] (sn1)\n
+  '''[ MA - Headgroup + H2O - (ROOH) ] (sn1)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate from adducted molecular ion'''
   def MZ(self):
@@ -2806,12 +2826,12 @@ class MA_s_HG_sn1(MA_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_HG_sn2(MA_s_HG):
-  '''[ MA - Headgroup + H2O - RCOOH ] (sn2)\n
+  '''[ MA - Headgroup + H2O - (ROOH) ] (sn2)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate from adducted molecular ion'''
   def MZ(self):
@@ -2822,14 +2842,14 @@ class MA_s_HG_sn2(MA_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ #
 
 def MA_s_HG_FA_H2O(lipid, adduct, intensity):
-  '''[ MA - Headgroup - H2O - RCOOH ]\n
+  '''[ MA - Headgroup - H2O - (ROOH) ]\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion\n
   Method used to generate multiple objects'''
@@ -2851,12 +2871,12 @@ class MA_s_HG_FA_H2Ox(MA_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_HG_sn1_H2O(MA_s_HG_H2O):
-  '''[ MA - Headgroup - RCOOH ] (sn1)\n
+  '''[ MA - Headgroup - (ROOH) ] (sn1)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -2867,12 +2887,12 @@ class MA_s_HG_sn1_H2O(MA_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_HG_sn2_H2O(MA_s_HG_H2O):
-  '''[ MA - Headgroup - RCOOH ] (sn2)\n
+  '''[ MA - Headgroup - (ROOH) ] (sn2)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -2883,15 +2903,15 @@ class MA_s_HG_sn2_H2O(MA_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ # 
 
 def MA_s_HG_FAk(lipid, adduct, intensity):
-  '''[ MA - Headgroup - RC=O ]\n
-  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketone\n
+  '''[ MA - Headgroup - (R=O) ]\n
+  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -2913,13 +2933,13 @@ class MA_s_HG_FAkx(MA_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_HG_sn1k(MA_s_HG):
-  '''[ MA - Headgroup - RC=O ] (sn1)\n
-  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketone'''
+  '''[ MA - Headgroup - (R=O) ] (sn1)\n
+  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[0].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -2929,13 +2949,13 @@ class MA_s_HG_sn1k(MA_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 class MA_s_HG_sn1k(MA_s_HG):
-  '''[ MA - Headgroup - RC=O ] (sn2)\n
-  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketone'''
+  '''[ MA - Headgroup - (R=O) ] (sn2)\n
+  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - ((self.lipid.tails[1].mass-Masses['H2O'])/abs(Masses[self.adduct][2]))
   def Formula(self):
@@ -2945,8 +2965,8 @@ class MA_s_HG_sn1k(MA_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment  
 
 # ~ # 
@@ -3086,7 +3106,7 @@ class MH_PO4_s_HG_H2O(MH_PO4_s_HG):
 # ~ # 
 
 def MH_PO4_s_HG_FA(lipid, adduct, intensity):
-  '''[ M(+/-)H - Headgroup + PO4 - RCOOH ]\n
+  '''[ M(+/-)H - Headgroup + PO4 - (ROOH) ]\n
   Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -3107,12 +3127,12 @@ class HG_FA_NL_Bx(MH_PO4_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn1_NL_B(MH_PO4_s_HG):
-  '''[ M(+/-)H - Headgroup + PO4 - RCOOH ] (sn1)\n
+  '''[ M(+/-)H - Headgroup + PO4 - (ROOH) ] (sn1)\n
   Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -3123,12 +3143,12 @@ class HG_sn1_NL_B(MH_PO4_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn2_NL_B(MH_PO4_s_HG):
-  '''[ M(+/-)H - Headgroup + PO4 - RCOOH ] (sn2)\n
+  '''[ M(+/-)H - Headgroup + PO4 - (ROOH) ] (sn2)\n
   Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -3139,15 +3159,44 @@ class HG_sn2_NL_B(MH_PO4_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
+    return comment
+
+# ~ # 
+
+def MH_PO4_s_HG_FAk(lipid, adduct, intensity):
+  '''[ M(+/-)H - Headgroup + PO4 - (ROOH) ]\n
+  Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid\n
+  Method used to generate multiple objects'''
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield MH_PO4_s_HG_FAkx(lipid, adduct, intensity, MH_PO4_s_HG_FAk, tail)
+
+class MH_PO4_s_HG_FAkx(MH_PO4_s_HG):
+  '''Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+
+  def MZ(self):
+    return super().MZ() - (self.tail.mass-Masses['H2O'])
+  def Formula(self):
+    formula = super().Formula()
+    formula.update({'H':2 ,'O':1})
+    formula.subtract(self.tail.formula)
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ #
 
 def HG_FAk_NL_B(lipid, adduct, intensity):
-  '''[ M(+/-)H - Headgroup + PO4 - RC=O ]\n
-  Fragment for headgroup neutral loss, excluding phosphate and loss of a fatty acid ketone\n
+  '''[ M(+/-)H - Headgroup + PO4 - (R=O) ]\n
+  Fragment for headgroup neutral loss, excluding phosphate and loss of a fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -3169,13 +3218,13 @@ class HG_FAk_NL_Bx(MH_PO4_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn1k_NL_B(MH_PO4_s_HG):
-  '''[ M(+/-)H - Headgroup + PO4 - RC=O ] (sn1)\n
-  Fragment for headgroup neutral loss, excluding phosphate and loss of a fatty acid ketone'''
+  '''[ M(+/-)H - Headgroup + PO4 - (R=O) ] (sn1)\n
+  Fragment for headgroup neutral loss, excluding phosphate and loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass-Masses['H2O'])
   def Formula(self):
@@ -3185,13 +3234,13 @@ class HG_sn1k_NL_B(MH_PO4_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn2k_NL_B(MH_PO4_s_HG):
-  '''[ M(+/-)H - Headgroup + PO4 - RC=O ] (sn2)\n
-  Fragment for headgroup neutral loss, excluding phosphate and loss of a fatty acid ketone'''
+  '''[ M(+/-)H - Headgroup + PO4 - (R=O) ] (sn2)\n
+  Fragment for headgroup neutral loss, excluding phosphate and loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass-Masses['H2O'])
   def Formula(self):
@@ -3201,14 +3250,14 @@ class HG_sn2k_NL_B(MH_PO4_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # 
 
 def HG_FA_NL_H2O_B(lipid, adduct, intensity):
-  '''[ M(+/-)H - Headgroup + PO4 - H2O - RCOOH ]\n
+  '''[ M(+/-)H - Headgroup + PO4 - H2O - (ROOH) ]\n
   Fragment for headgroup neutral loss, excluding phosphate and loss of free-fatty acid and water\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -3229,12 +3278,12 @@ class HG_FA_NL_H2O_Bx(MH_PO4_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn1_NL_H2O_B(MH_PO4_s_HG_H2O):
-  '''[ M(+/-)H - Headgroup + PO4 - RCOOH ] (sn1)\n
+  '''[ M(+/-)H - Headgroup + PO4 - (ROOH) ] (sn1)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -3245,12 +3294,12 @@ class HG_sn1_NL_H2O_B(MH_PO4_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn2_NL_H2O_B(MH_PO4_s_HG_H2O):
-  '''[ M(+/-)H - Headgroup + PO4 - RCOOH ] (sn2)\n
+  '''[ M(+/-)H - Headgroup + PO4 - (ROOH) ] (sn2)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -3261,8 +3310,8 @@ class HG_sn2_NL_H2O_B(MH_PO4_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ #  Sometimes the headgroup leaves with the adduct, leaving M+/-H
@@ -3314,7 +3363,7 @@ class MH_s_HG_H2O(MH_s_HG):
 # ~ #
 
 def HG_FA_NL_C(lipid, adduct, intensity):
-  '''[ MH - Headgroup + H2O - RCOOH ]\n
+  '''[ MH - Headgroup + H2O - (ROOH) ]\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate from adducted molecular ion\n
   Method used to generate multiple objects'''
@@ -3336,12 +3385,12 @@ class HG_FA_NL_Cx(MH_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn1_NL_C(MH_s_HG):
-  '''[ MH - Headgroup + H2O - RCOOH ] (sn1)\n
+  '''[ MH - Headgroup + H2O - (ROOH) ] (sn1)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate from adducted molecular ion'''
   def MZ(self):
@@ -3352,12 +3401,12 @@ class HG_sn1_NL_C(MH_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn2_NL_C(MH_s_HG):
-  '''[ MH - Headgroup + H2O - RCOOH ] (sn2)\n
+  '''[ MH - Headgroup + H2O - (ROOH) ] (sn2)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid\n
   i.e. loss of headgroup, including phospate from adducted molecular ion'''
   def MZ(self):
@@ -3368,13 +3417,13 @@ class HG_sn2_NL_C(MH_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 def HG_FAk_NL_C(lipid, adduct, intensity):
-  '''[ MH - Headgroup + H2O - RC=O ]\n
-  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketone\n
+  '''[ MH - Headgroup + H2O - (R=O) ]\n
+  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketene\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
@@ -3396,13 +3445,13 @@ class HG_FAk_NL_Cx(MH_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn1k_NL_C(MH_s_HG):
-  '''[ MH - Headgroup + H2O - RC=O ] (sn1)\n
-  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketone'''
+  '''[ MH - Headgroup + H2O - (R=O) ] (sn1)\n
+  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[0].mass-Masses['H2O'])
   def Formula(self):
@@ -3412,13 +3461,13 @@ class HG_sn1k_NL_C(MH_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn2k_NL_C(MH_s_HG):
-  '''[ MH - Headgroup + H2O - RC=O ] (sn2)\n
-  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketone'''
+  '''[ MH - Headgroup + H2O - (R=O) ] (sn2)\n
+  Fragment for a 'clean' headgroup neutral loss and loss of a fatty acid ketene'''
   def MZ(self):
     return super().MZ() - (self.lipid.tails[1].mass-Masses['H2O'])
   def Formula(self):
@@ -3428,14 +3477,14 @@ class HG_sn2k_NL_C(MH_s_HG):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RC=O')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ # 
 
 def HG_FA_NL_H2O_C(lipid, adduct, intensity):
-  '''[ MH - Headgroup - RCOOH ]\n
+  '''[ MH - Headgroup - (ROOH) ]\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion\n
   Method used to generate multiple objects'''
@@ -3457,12 +3506,12 @@ class HG_FA_NL_H2O_Cx(MH_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn1_NL_H2O_C(MH_s_HG_H2O):
-  '''[ MA - Headgroup - RCOOH ] (sn1)\n
+  '''[ MA - Headgroup - (ROOH) ] (sn1)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -3473,12 +3522,12 @@ class HG_sn1_NL_H2O_C(MH_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 class HG_sn2_NL_H2O_C(MH_s_HG_H2O):
-  '''[ MA - Headgroup - RCOOH ] (sn2)\n
+  '''[ MA - Headgroup - (ROOH) ] (sn2)\n
   Fragment for a 'clean' headgroup neutral loss and loss of free-fatty acid and water\n
   i.e. loss of headgroup, including phospate and bridging -OH from adducted molecular ion'''
   def MZ(self):
@@ -3489,8 +3538,8 @@ class HG_sn2_NL_H2O_C(MH_s_HG_H2O):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-RCOOH')
-    comment = comment.replace(']', '] ('+self.tail.name+')')
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
     return comment
 
 # ~ #  Sometimes the headgroup flies off the the adduct!
@@ -3768,6 +3817,19 @@ class C3H7NaO6P(Fragment):
   def Comment(self):
     return '[C3H7O6PNa]-'
 
+class C4H10O6P(Fragment):
+  '''X-H Fragment common to MPA under negative ESI\n
+  MZ: 185.022048'''
+  def MZ(self):
+      return 185.022048
+  def Formula(self):
+    formula = Counter({'C':4, 'H':10, 'O':6, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+  def Comment(self):
+    return '[C4H10O6P]-' 
+
 class C5H15NO4P(Fragment):
   '''X+H Headgroup fragment for PC\n
   MZ: 184.0733204'''
@@ -3782,7 +3844,7 @@ class C5H15NO4P(Fragment):
     return '[C5H15NO4P]+'
 
 class C3H8O6P(Fragment):
-  '''X+H Headgroup fragment for PG\n
+  '''X+H Headgroup fragment for PG or PA\n
   MZ: 171.006397541'''
   def MZ(self):
     return 171.006397541
@@ -3793,6 +3855,19 @@ class C3H8O6P(Fragment):
       return -1
   def Comment(self):
     return '[C3H8O6P]-'
+
+class C4H8O5P(Fragment):
+  '''X-H Fragment common to MPA under negative ESI\n
+  MZ: 167.011483'''
+  def MZ(self):
+      return 167.011483
+  def Formula(self):
+    formula = Counter({'C':4, 'H':8, 'O':5, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+  def Comment(self):
+    return '[C4H8O5P]-' 
 
 class HO6P2(Fragment):
   '''X-H Headgroup fragment for PPA\n
@@ -3871,6 +3946,19 @@ class C6H5O3(Fragment):
       return -1
   def Comment(self):
     return '[C6H5O3]-' 
+
+class CH4O4P(Fragment):
+  '''X-H Fragment common to MPA under negative ESI\n
+  MZ: 110.985268'''
+  def MZ(self):
+      return 110.985268
+  def Formula(self):
+    formula = Counter({'C':1, 'H':4, 'O':4, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+  def Comment(self):
+    return '[CH4O4P]-' 
 
 class H2O4P(Fragment):
   '''X-H Fragment common to phospholipids under negative ESI\n

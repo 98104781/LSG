@@ -6,7 +6,7 @@ import Classes_isomers
 import GenerateLipids as GL
 
 import TailEditWindow as TEW
-from PySide6.QtCore import QModelIndex
+from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QTableView, QHeaderView
 
 class NewWindow(QDialog):
@@ -50,8 +50,11 @@ class NewWindow(QDialog):
         self.tailButton = {} # Buttons for tails stored in this dict
         self.lipidClass.currentTextChanged.connect(self.updateAdducts)
         self.lipidClass.currentTextChanged.connect(self.updateTailButtons)
+        i = 0
         for cls in self.classes_to_generate:
             self.lipidClass.addItem(cls.__name__, cls)  
+            self.lipidClass.setItemData(i ,cls.tooltip, Qt.ToolTipRole)
+            i += 1
 
         if selection: # Selection exists if list item edited
             lipid = selection[0]  # Taken as list of [lipid,

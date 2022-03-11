@@ -80,7 +80,7 @@ class SpectraTableModel(QAbstractTableModel):
         Forbids editing of mz value displayed in column 0.
         Allows editing of abundance value displayed in column 1.
         '''
-        if index.column() > 0:
+        if index.column() == 1:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
         else:
             return Qt.ItemIsSelectable
@@ -103,6 +103,10 @@ class SpectraTableModel(QAbstractTableModel):
                 return str(self.tdata[row].mass)
             elif column == 1:
                 return str(self.tdata[row].intensity)
+        elif role == Qt.TextAlignmentRole:
+            return Qt.AlignCenter
+        elif role == Qt.ToolTipRole:
+            return str(self.tdata[row].Comment())
 
     def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:

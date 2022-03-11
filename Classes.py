@@ -22,6 +22,7 @@ EXAMPLE EXAMPLE EXAMPLE '''
 class MAG(GL.Glycerolipid):
 
   ##### Metabolites 2016, 6(3), 25; https://doi.org/10.3390/metabo6030025 # Needs work ?
+  tooltip = 'Monoacylglycerol'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -55,6 +56,7 @@ class MAG(GL.Glycerolipid):
 
 class DAG(GL.Glycerolipid):
 
+  tooltip = 'Diacylglycerol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -92,6 +94,7 @@ class DAG(GL.Glycerolipid):
 
 class TAG(GL.Glycerolipid):
 
+  tooltip = 'Triacylglycerol'
   No_Tails = 3
   adducts = {  # adduct:{spectra}
 
@@ -116,6 +119,7 @@ class TAG(GL.Glycerolipid):
 
 class AcylGlcADG(GL.Glycerolipid):
 
+  tooltip = 'Acylglucuronide diacylglycerol'
   No_Tails = 3
   adducts = {  # adduct:{spectra}
 
@@ -129,8 +133,11 @@ class AcylGlcADG(GL.Glycerolipid):
     smiles='O('+sn1.smiles+')C1C(O)C(O)C(C(=O)O)OC1', hgtails = [sn1])
     super().__init__(AcylGlcADG.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
 
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
 class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
 
+  tooltip = 'Monoglycosyl diacylglycerol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -155,6 +162,7 @@ class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
 
 class SQDG(GL.Glycerolipid): # Sulphoquinovosyl diacylglycerol
 
+  tooltip = 'Sulfoquinovosyl diacylglycerol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -179,6 +187,7 @@ class SQDG(GL.Glycerolipid): # Sulphoquinovosyl diacylglycerol
 
 class DGDG(GL.Glycerolipid): # Digalactosyl diacylglycerol
 
+  tooltip = 'Diglycosyl diacylglycerol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -217,6 +226,7 @@ class DGDG(GL.Glycerolipid): # Digalactosyl diacylglycerol
 
 class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
 
+  tooltip = 'N-trimethylhomoserine diacylglycerol' 
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -241,6 +251,7 @@ class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
 
 class AC2PIM1(GL.Glycerolipid):
 
+  tooltip = 'Phosphatidylinositol-mannoside diacylglycerol' 
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -257,8 +268,11 @@ class AC2PIM1(GL.Glycerolipid):
     smiles='OC1C(O)C(O)C(O)C(OC2OC(CO)C(O)C(O)C2O)C1OP(O)(=O)')
     super().__init__(AC2PIM1.adducts, sn1, sn2, headgroup)
 
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
 class AC2PIM2(GL.Glycerolipid):
 
+  tooltip = 'Phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -274,8 +288,11 @@ class AC2PIM2(GL.Glycerolipid):
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO)C(O)C(O)C2O)C1OP(O)(=O)')
     super().__init__(AC2PIM2.adducts, sn1, sn2, headgroup)
 
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
 class AC3PIM2(GL.Glycerolipid):
 
+  tooltip = 'Acyl-phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 3
   adducts = {  # adduct:{spectra}
 
@@ -293,8 +310,11 @@ class AC3PIM2(GL.Glycerolipid):
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1])
     super().__init__(AC3PIM2.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
 
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
 class AC4PIM2(GL.Glycerolipid):
 
+  tooltip = 'Diacyl-phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 4
   adducts = {  # adduct:{spectra}
 
@@ -310,8 +330,11 @@ class AC4PIM2(GL.Glycerolipid):
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O('+sn2.smiles+'))C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1, sn2])
     super().__init__(AC4PIM2.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
 
-class Cardiolipin(GL.Glycerolipid):
+# ~ # ~ # ~ # ~ # ~ # ~ #
 
+class CL(GL.Glycerolipid):
+
+  tooltip = 'Cardiolipin'
   No_Tails = 4
   adducts = {  # adduct:{spectra}
 
@@ -333,10 +356,13 @@ class Cardiolipin(GL.Glycerolipid):
   def __init__(self, sn1, sn2, sn3, sn4):
     headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
     smiles=sn1.inverseSmiles+'OCC(O'+sn2.smiles+')COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1, sn2])
-    super().__init__(Cardiolipin.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
+    super().__init__(CL.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
 
 class PA(GL.Glycerolipid):
 
+  tooltip = 'Phosphatidic acid'
   No_Tails = 2
   adducts = {  
 
@@ -372,11 +398,36 @@ class PA(GL.Glycerolipid):
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
+class MPA(GL.Glycerolipid):
+
+  tooltip = 'Methyl-phosphatidic acid'
+  No_Tails = 2
+  adducts = {  
+
+  "[M-H]-":{
+    GL.MA      :15,
+    GL.MH_s_FAk:15,
+    GL.MH_s_FA :30,
+    GL.FAH    :100,
+    GL.C4H10O6P :5,
+    GL.C4H8O5P :30,
+    GL.CH4O4P   :5,
+    GL.O3P      :5}}
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=111.992545, type='Headgroup', chnops={'C':1, 'H':5, 'O':4, 'P':1},
+    smiles='O=P(OC)(O)')
+    super().__init__(MPA.adducts, sn1, sn2, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
 class PC(GL.Glycerolipid):
 
   ##### "[M+H]+", "[M+Na]+" https://doi.org/10.1016/j.jchromb.2009.02.033
   ##### "[M+H]+", "[M+Na]+"  10.1016/S1044-0305(03)00064-3
   ##### "[M+H]+" https://doi.org/10.1039/C5AY00776C 
+  tooltip = 'Phosphatidylcholine'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -415,6 +466,7 @@ class PE(GL.Glycerolipid):
 
   ##### "[M+H]+" https://doi.org/10.1016/j.jchromb.2009.02.033
   ##### "[M+H]+", "[M-H]-" https://doi.org/10.1039/C5AY00776C
+  tooltip = 'Phosphatidylethanolamine'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -458,6 +510,7 @@ class PE(GL.Glycerolipid):
 
 class MMPE(GL.Glycerolipid):
 
+  tooltip = 'N-methyl-phosphatidylethanolamine'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -479,7 +532,7 @@ class MMPE(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=155.034744, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':4, 'P':1},
+    headgroup = GL.sn(mass=155.034744, type='Headgroup', chnops={'C':3, 'H':10, 'N':1, 'O':4, 'P':1},
     smiles='N(C)CCOP(O)(=O)')
     super().__init__(MMPE.adducts, sn1, sn2, headgroup)
 
@@ -487,6 +540,7 @@ class MMPE(GL.Glycerolipid):
 
 class DMPE(GL.Glycerolipid):
 
+  tooltip = 'N,N-dimethyl-phosphatidylethanolamine'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -507,7 +561,7 @@ class DMPE(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=169.050394, type='Headgroup', chnops={'C':4, 'H':8, 'N':1, 'O':4, 'P':1},
+    headgroup = GL.sn(mass=169.050394, type='Headgroup', chnops={'C':4, 'H':12, 'N':1, 'O':4, 'P':1},
     smiles='N(C)(C)CCOP(O)(=O)')
     super().__init__(DMPE.adducts, sn1, sn2, headgroup)
 
@@ -516,6 +570,7 @@ class DMPE(GL.Glycerolipid):
 class PG(GL.Glycerolipid):
 
   ##### "[M+H]+" https://doi.org/10.1016/j.jchromb.2009.02.033
+  tooltip = 'Phosphatidylglycerol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -555,7 +610,8 @@ class PG(GL.Glycerolipid):
 
 class PI(GL.Glycerolipid):
 
-  ##### "[M-H]-" https://doi.org/10.1039/C5AY00776C 
+  ##### "[M-H]-" https://doi.org/10.1039/C5AY00776C
+  tooltip = 'Phosphatidylinositol'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -601,7 +657,7 @@ class PI(GL.Glycerolipid):
 
 class PIP(GL.Glycerolipid):
 
-  #####  Requires reference!
+  tooltip = 'Phosphatidylinositol phosphate'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
 
@@ -621,33 +677,50 @@ class PIP(GL.Glycerolipid):
   #  GL.C6H8O7P      :20, 
   #  GL.C3H6O5P      :10},
 
-  "[M-H]-":{ # Looks Good
-    GL.MH            :1,
-    GL.MH_s_H2O      :2,
-    GL.MH_s_PO3      :2,
-    GL.MH_P2O6_s_HG  :2,
-    GL.MH_s_FA       :4,
-    GL.MH_s_FA_H2O   :1,
-    GL.MH_s_FAk_PO3  :4,
-    GL.MH_s_FA_PO3   :4,
-    GL.MH_PO4_s_HG_FA:5,
-    GL.FAH         :100,
-    GL.C6H11O11P2   :10, 
-    GL.C6H9O10P2    :15,
-    GL.C6H12O9P      :5, 
-    GL.C6H10O8P     :90,
-    GL.C6H8O7P      :90, 
-    GL.C3H6O5P      :40}}#,
+  "[M-H]-":{ # Looks Good 10.1016/S1044-0305(00)00172-0 
+    GL.MH             :20,
+    GL.MH_s_H2O       :10,
+    GL.MH_s_PO3        :2,
+    GL.MH_s_PO4       :10,
+    GL.MH_P2O6_s_HG    :2,
+    GL.MH_s_FAk        :1,
+    GL.MH_s_FA         :4,
+    GL.MH_s_FA_H2O     :1,
+    GL.MH_s_FAk_PO3    :4,
+    GL.MH_s_FA_PO3     :4,
+    GL.MH_PO4_s_HG_FA :10,
+    GL.MH_PO4_s_HG_FAk:10,
+    GL.FAH           :100,
+    GL.C6H11O11P2     :75, 
+    GL.C6H9O10P2      :15,
+    GL.C6H12O9P        :5, 
+    GL.C6H10O8P       :75,
+    GL.C6H8O7P        :75, 
+    GL.C3H6O5P        :40,
+    GL.H2O4P           :5,
+    GL.O3P             :5},
 
-  #"[M-2H]2-":{ # Looks Good
-  #  GL.MA          :5,
-  #  GL.FAH       :100,
-  #  GL.C6H11O11P2  :2, 
-  #  GL.C6H9O10P2   :1,
-  #  GL.C6H10O8P   :40,
-  #  GL.C6H8O7P     :1, 
-  #  GL.C3H6O5P    :10}
-  # }
+  "[M-2H]2-":{ # Looks Good 10.1016/S1044-0305(00)00172-0 
+    GL.MA             :50,
+    GL.MH_s_H2O        :0,
+    GL.MH_s_PO3        :8,
+    GL.MH_P2O6_s_HG    :0,
+    GL.MA_s_FAk       :20,
+    GL.MH_s_FA        :20,
+    GL.MH_s_FA_H2O     :0,
+    GL.MH_s_FAk_PO3    :2,
+    GL.MH_s_FA_PO3     :1,
+    GL.MH_PO4_s_HG_FA  :0,
+    GL.MH_PO4_s_HG_FAk:10,
+    GL.FAH           :100,
+    GL.C6H11O11P2      :5, 
+    GL.C6H9O10P2       :5,
+    GL.C6H12O9P        :5, 
+    GL.C6H10O8P       :75,
+    GL.C6H8O7P        :20, 
+    GL.C3H6O5P        :10,
+    GL.H2O4P           :5,
+    GL.O3P             :5}}
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
@@ -656,38 +729,77 @@ class PIP(GL.Glycerolipid):
     super().__init__(PIP.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
-'''
+
 class PI2P(GL.Glycerolipid):
 
-  #####  Requires reference! Needs work!
+  tooltip = 'Phosphatidylinositol diphosphate'
   No_Tails = 2
   adducts = {  # adduct:{spectra} 
 
   #"[M+Na-2H]-":{
   #},
 
-  #"[M-H]-":{
-  #},
+  "[M-H]-":{ # Looks Good 10.1016/S1044-0305(00)00172-0 
+    GL.MH             :10,
+    GL.MH_s_H2O       :10,
+    GL.MH_s_PO3       :10,
+    GL.MH_s_PO4       :75,
+    GL.MH_s_PO4_H2O   :10,
+    GL.MH_P2O6_s_HG   :10,
+    GL.MH_s_FAk        :0,
+    GL.MH_s_FA         :0,
+    GL.MH_s_FA_H2O     :1,
+    GL.MH_s_FAk_PO3    :0,
+    GL.MH_s_FA_PO3     :0,
+    GL.MH_PO4_s_HG_FA :10,
+    GL.MH_PO4_s_HG_FAk:10,
+    GL.FAH           :100,
+    GL.C6H11O11P2     :10, 
+    GL.C6H9O10P2      :15,
+    GL.C6H12O9P        :5, 
+    GL.C6H10O8P       :75,
+    GL.C6H8O7P        :75, 
+    GL.C3H6O5P        :40,
+    GL.H2O4P           :5,
+    GL.O3P             :5},
 
-  #"[M-2H]2-":{
-  #},
+  "[M-2H]2-":{ # Looks Good 10.1016/S1044-0305(00)00172-0 
+    GL.MA             :50,
+    GL.MH_s_H2O        :0,
+    GL.MH_s_PO3       :50,
+    GL.MH_P2O6_s_HG    :0,
+    GL.MA_s_FAk       :20,
+    GL.MH_s_FA        :20,
+    GL.MH_s_FA_H2O     :0,
+    GL.MH_s_FAk_PO3    :2,
+    GL.MH_s_FA_PO3     :1,
+    GL.MH_PO4_s_HG_FAk:10,
+    GL.FAH           :100,
+    GL.C6H11O11P2      :5, 
+    GL.C6H9O10P2       :5,
+    GL.C6H12O9P        :5, 
+    GL.C6H10O8P       :75,
+    GL.C6H8O7P        :20, 
+    GL.C3H6O5P        :10,
+    GL.H2O4P           :5,
+    GL.O3P             :5}}
 
   #"[M-3H]3-":{
   #}
-  } 
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=419.962378, type='Headgroup', chnops={'C':6, 'H':15, 'O':15, 'P':3},
     smiles='OC1C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C(O)C1OP(O)(=O)')
     super().__init__(PI2P.adducts, sn1, sn2, headgroup)
-'''
+
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class PS(GL.Glycerolipid):
 
   ##### "[M+H]+" https://doi.org/10.1016/j.jchromb.2009.02.033
-  ##### "[M+H]+" https://doi.org/10.1039/C5AY00776C 
+  ##### "[M+H]+" https://doi.org/10.1039/C5AY00776C
+  tooltip = 'Phosphatidylserine'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
   
@@ -730,6 +842,7 @@ class PS(GL.Glycerolipid):
 
 class PPA(GL.Glycerolipid):
 
+  tooltip = 'Pyrophosphatidic acid'
   No_Tails = 2
   adducts = {  # adduct:{spectra}
   
@@ -761,6 +874,7 @@ class lyPA(GL.Glycerolipid):
 
   ##### [M-H]- = https://doi.org/10.1002/lipd.12172, Not a fragmentation study!
   ##### [M-H]- = https://doi.org/10.1016/j.jchromb.2010.03.030, Neither...
+  tooltip = 'Lyso-phosphatidic acid'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -785,6 +899,7 @@ class lyPA(GL.Glycerolipid):
 
 class lyPC(GL.Glycerolipid):
 
+  tooltip = 'Lyso-phosphatidylcholine'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -821,6 +936,7 @@ class lyPC(GL.Glycerolipid):
 
 class lyPE(GL.Glycerolipid):
 
+  tooltip = 'Lyso-phosphatidylethanolamine'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -859,6 +975,7 @@ class lyPE(GL.Glycerolipid):
 class lyPG(GL.Glycerolipid):
 
   #####  Requires reference! Needs work!
+  tooltip = 'Lyso-phosphatidylglycerol'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -889,6 +1006,7 @@ class lyPG(GL.Glycerolipid):
 class lyPI(GL.Glycerolipid):
 
   #####  Requires reference!
+  tooltip = 'Lyso-phosphatidylinositol'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -923,6 +1041,7 @@ class lyPI(GL.Glycerolipid):
 class lyPS(GL.Glycerolipid):
 
   #####  Requires reference! Needs work!
+  tooltip = 'Lyso-phosphatidylserine'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -947,6 +1066,7 @@ class lyPS(GL.Glycerolipid):
 
 class Acylsphinganine(GL.Sphingolipid):
 
+  tooltip = 'N-Acyl-sphinganine'
   base_types = ['Sphinganine'] # 18:0;O2
   No_Tails = 1
   adducts = {  # adduct:{spectra}
@@ -979,6 +1099,7 @@ class Acylsphinganine(GL.Sphingolipid):
 
 class Acylsphingosine(GL.Sphingolipid):
 
+  tooltip = 'N-Acyl-sphingosine'
   base_types = ['Sphingosine'] # 18:1;O2
   No_Tails = 1
   adducts = {  # adduct:{spectra}
@@ -1014,6 +1135,7 @@ class Acylsphingosine(GL.Sphingolipid):
 
 class Acylphytosphingosine(GL.Sphingolipid):
 
+  tooltip = 'N-Acyl-phytosphingosine'
   base_types = ['Phytosphingosine'] # 18:0;O3
   No_Tails = 1
   adducts = {  # adduct:{spectra}
@@ -1048,6 +1170,7 @@ class Acylphytosphingosine(GL.Sphingolipid):
 
 class CerP(GL.Sphingolipid):
 
+  tooltip = 'N-Acyl-ceramide-1-phosphate'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
   adducts = {  # adduct:{spectra}
@@ -1080,6 +1203,7 @@ class CerP(GL.Sphingolipid):
 
 class CerPC(GL.Sphingolipid):
 
+  tooltip = 'N-Acyl-ceramide-1-phosphocholine'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
   adducts = {  # adduct:{spectra}
@@ -1101,6 +1225,7 @@ class CerPC(GL.Sphingolipid):
 
 class Sulfatide(GL.Sphingolipid):
 
+  tooltip = 'Sulfatide'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
   adducts = {  # adduct:{spectra}
@@ -1127,6 +1252,7 @@ class Sulfatide(GL.Sphingolipid):
 
 class Cholesteryl_Ester(GL.OtherLipid):
 
+  tooltip = 'Cholesteryl Ester'
   No_Tails = 1
   adducts = {  # adduct:{spectra}
 
@@ -1141,11 +1267,12 @@ class Cholesteryl_Ester(GL.OtherLipid):
     
   def __init__(self, sn1):
     body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1},
-    smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)OX') # smiles has an 'X' in it to
-    super().__init__(Cholesteryl_Ester.adducts, body, sn1) # indicate where tail is added
+    smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
+    super().__init__(Cholesteryl_Ester.adducts, body, sn1)
 
-class AcylCarnitine(GL.OtherLipid):
+class AC(GL.OtherLipid):
 
+  tooltip = 'Acyl-carnitine'
   No_Tails = 1
   adducts = {
     "[M+H]+":{ # Taken from LipidMatch
@@ -1158,6 +1285,6 @@ class AcylCarnitine(GL.OtherLipid):
     }}
 
   def __init__(self, sn1):
-    body = GL.Other(name='AcylCarnitine', mass=161.105193, chnops={'C':7, 'H':15, 'N':1, 'O':3},
-    smiles='C[N+](C)(C)CC(OX)CC(=O)[O-]')
-    super().__init__(AcylCarnitine.adducts, body, sn1)
+    body = GL.Other(name='AC', mass=161.105193, chnops={'C':7, 'H':15, 'N':1, 'O':3},
+    smiles='C[N+](C)(C)CC(O'+sn1.smiles+')CC(=O)[O-]')
+    super().__init__(AC.adducts, body, sn1)

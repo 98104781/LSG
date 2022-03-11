@@ -1,5 +1,7 @@
 import inspect
 
+from sklearn import tree
+
 import Classes
 import Classes_isomers
 from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
@@ -33,7 +35,7 @@ class Page(QWizardPage):
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
 
-        self.modifybutton = QPushButton("Modify fragmentation spectra for selected adduct(s)")
+        self.modifybutton = QPushButton("Modify fragmentation spectra for chosen adduct(s)")
         self.modifybutton.clicked.connect(self.open_editspectrawindow)
 
         self.vLayout.addWidget(self.treeView)
@@ -61,6 +63,8 @@ class Page(QWizardPage):
             root.setText(0, cls.__name__) # Gives name for tickbox
             root.setCheckState(0, Qt.Unchecked) #   Untick tickbox
             root.setFlags(root.flags() | Qt.ItemIsAutoTristate | Qt.ItemIsUserCheckable)
+            try: root.setToolTip(0, cls.tooltip) #  Set tooltip to 
+            except: root.setToolTip(0, cls.__name__) #  lipid name
             self.classAdductQbox[cls] = {} # Open dict for adducts
 
             for adduct in cls.adducts: # Make sub-box for treeview

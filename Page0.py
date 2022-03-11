@@ -29,7 +29,6 @@ class Page(QWizardPage):
         self.lipidRange.setChecked(True)
         self.lipidRange.toggled.connect(self.enableOptions)
         self.lipidSpecific = QRadioButton('Generate specific lipids')
-        self.registerField('lipidSpecific', self.lipidSpecific)
         self.buttonGroup1.addButton(self.lipidSpecific)
         self.lipidSpecific.toggled.connect(self.disableOptions)
         self.registerField('lipidSpecific', self.lipidSpecific)
