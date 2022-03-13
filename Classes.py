@@ -1,7 +1,5 @@
-from email import generator
-from math import prod
 import GenerateLipids as GL
-from itertools import combinations_with_replacement as cwr, product
+from itertools import combinations_with_replacement as cwr
 
 ''' EXAMPLE EXAMPLE EXAMPLE
 
@@ -26,9 +24,10 @@ class MAG(GL.Glycerolipid):
 
   ##### Metabolites 2016, 6(3), 25; https://doi.org/10.3390/metabo6030025 # Needs work ?
   tooltip = 'Monoacylglycerol'
+  tailOrganisation = ['T']
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # Needs Validation
     GL.MA      :100,
     GL.MA_s_H2O :50,
@@ -52,7 +51,6 @@ class MAG(GL.Glycerolipid):
     GL.FAkH     :50},# to be correctly predicted here.
   }
 
-  generator = [[cwr, 1]]
   def __init__(self, sn1):
     super().__init__(MAG.adducts, sn1=sn1)
 
@@ -62,8 +60,9 @@ class DAG(GL.Glycerolipid):
 
   tooltip = 'Diacylglycerol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # Needs Validation
     GL.MA       :25,
     GL.MA_s_H2O:100,
@@ -91,7 +90,6 @@ class DAG(GL.Glycerolipid):
     GL.FAkH      :1}
   }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     super().__init__(DAG.adducts, sn1=sn1, sn2=sn2)
 
@@ -101,8 +99,9 @@ class TAG(GL.Glycerolipid):
 
   tooltip = 'Triacylglycerol'
   No_Tails = 3
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TTT']
 
+  adducts = {  # adduct:{spectra}
   "[M+Na]+":{ # Approximate to LipidBlast   
     GL.MA       :25,# Molecular ion
     GL.MA_s_FA  :10,# Present in lipidBlast
@@ -117,7 +116,6 @@ class TAG(GL.Glycerolipid):
     GL.FAkH     :10}
   }
 
-  generator = [[cwr, 3]]
   def __init__(self, sn1, sn2, sn3):
     super().__init__(TAG.adducts, sn1, sn2, sn3)
 
@@ -127,8 +125,9 @@ class DGGA(GL.Glycerolipid):
 
   tooltip = 'Diacylglyceryl glucuronide'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Taken from http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.MA_s_FAk    :5,
@@ -146,7 +145,6 @@ class DGGA(GL.Glycerolipid):
     GL.FAkH        :0}
     }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=194.042653, type='Headgroup', chnops={'C':6, 'H':10, 'O':7},
     smiles='OC1C(O)C(O)C(C(=O)O)OC1')
@@ -156,8 +154,9 @@ class ADGGA(GL.Glycerolipid):
 
   tooltip = 'Acyl-diacylglyceryl glucuronide'
   No_Tails = 3
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T','TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Taken from http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA       :100,
     GL.FAH       :50},
@@ -172,7 +171,6 @@ class ADGGA(GL.Glycerolipid):
     GL.FAkH      :50}
     }
 
-  generator = [[cwr, 1], [cwr, 2]]
   def __init__(self, sn1, sn2, sn3):
     headgroup = GL.sn(mass=194.042653, type='Headgroup', chnops={'C':6, 'H':10, 'O':7},
     smiles='O('+sn1.smiles+')C1C(O)C(O)C(C(=O)O)OC1', hgtails = [sn1])
@@ -184,8 +182,9 @@ class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
 
   tooltip = 'Monoglycosyl diacylglycerol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+Na]+":{ # https://doi.org/10.1111/j.1440-1835.2010.00582.x   
     GL.MA          :5, # This spectra agrees with lipidblast and the attached
     GL.MA_s_FA   :100},# reference. Ion ratios are off, but depend on isomerism.
@@ -198,7 +197,6 @@ class MGDG(GL.Glycerolipid): # Monogalactosyl diacylglycerol
     GL.MH_s_HG_FA:100} # ignored on spectra generation.
     }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=180.063388, type='Headgroup', chnops={'C':6, 'H':12, 'O':6},
     smiles='OC1C(O)C(O)C(CO)OC1')
@@ -210,8 +208,9 @@ class SQDG(GL.Glycerolipid): # Sulphoquinovosyl diacylglycerol
 
   tooltip = 'Sulfoquinovosyl diacylglycerol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Closely matches LipidBlast  
     GL.MA         :40, # Molecular ion
     GL.MA_s_FA    :10, # Present in lipidBlast
@@ -228,7 +227,6 @@ class SQDG(GL.Glycerolipid): # Sulphoquinovosyl diacylglycerol
     GL.FAkH            :5}
     }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=244.025287, type='Headgroup', chnops={'C':6, 'H':12, 'O':8, 'S':1},
     smiles='OC1C(O)C(O)C(CS(=O)(=O)O)OC1')
@@ -240,8 +238,9 @@ class DGDG(GL.Glycerolipid): # Digalactosyl diacylglycerol
 
   tooltip = 'Diglycosyl diacylglycerol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{  
     GL.MA              :5,
     GL.C15H27O13      :15,
@@ -268,7 +267,6 @@ class DGDG(GL.Glycerolipid): # Digalactosyl diacylglycerol
     GL.MH_s_HG_FA:100}
     }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=342.116212, type='Headgroup', chnops={'C':12, 'H':22, 'O':11},
     smiles='OC1C(O)C(O)C(CO(C2OC(CO)C(O)C(O)C2(O)))OC1')
@@ -280,8 +278,9 @@ class DGCC(GL.Glycerolipid): # Diacylglyceryl-3-O-carboxyhydroxymethylcholine
 
   tooltip = 'Diacylglyceryl-3-O-carboxyhydroxymethylcholine' 
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ #  http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.MA_s_FAk   :70,
@@ -293,7 +292,6 @@ class DGCC(GL.Glycerolipid): # Diacylglyceryl-3-O-carboxyhydroxymethylcholine
   #  GL.MA          :5}
   #  }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=177.100108, type='Headgroup', chnops={'C':7, 'H':15, 'N':1, 'O':4},
     smiles='C[N+](C)(C)CCOC(C(=O)([O-]))')
@@ -306,8 +304,9 @@ class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
 
   tooltip = 'N-trimethylhomoserine diacylglycerol' 
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ #  https://doi.org/10.1002/rcm.7847
     GL.MA        :100,
     GL.MA_s_FAk   :70,
@@ -319,7 +318,6 @@ class DGTS(GL.Glycerolipid): # N-trimethylhomoserine diacylglycerol
   #  GL.MA          :5}
   #  }
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=161.105193, type='Headgroup', chnops={'C':7, 'H':15, 'N':1, 'O':3},
     smiles='[O-]C(=O)C([N+](C)(C)(C))CC')
@@ -332,8 +330,9 @@ class AC2PIM1(GL.Glycerolipid):
 
   tooltip = 'Phosphatidylinositol-mannoside diacylglycerol' 
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches LipidBlast
     GL.MA            :50, # Molecular ion
     GL.MA_H2O_s_Gal  :20, # Present in lipidBlast
@@ -342,7 +341,6 @@ class AC2PIM1(GL.Glycerolipid):
     GL.MH_PO4_s_HG_FA:40, # Present in lipidBlast
     GL.FAH           :40}}# Present in lipidBlast
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=422.082541, type='Headgroup', chnops={'C':12, 'H':23, 'O':14, 'P':1},
     smiles='OC1C(O)C(O)C(O)C(OC2OC(CO)C(O)C(O)C2O)C1OP(O)(=O)')
@@ -354,8 +352,9 @@ class AC2PIM2(GL.Glycerolipid):
 
   tooltip = 'Phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches LipidBlast
     GL.MA            :10, # Molecular ion
     GL.MA_H2O_s_Gal   :5, # Present in lipidBlast
@@ -363,7 +362,6 @@ class AC2PIM2(GL.Glycerolipid):
     GL.MA_s_allFA    :20, # Present in lipidBlast
     GL.FAH           :40}}# Present in lipidBlast
 
-  generator = [[cwr, 2]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO)C(O)C(O)C2O)C1OP(O)(=O)')
@@ -375,8 +373,9 @@ class AC3PIM2(GL.Glycerolipid):
 
   tooltip = 'Acyl-phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 3
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T','TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches LipidBlast
     GL.MA            :20, # Molecular ion
     GL.MA_H2O_s_Gal   :5, # Present in lipidBlast
@@ -386,7 +385,6 @@ class AC3PIM2(GL.Glycerolipid):
     GL.HGA_s_H2O     :40, # Present in lipidBlast
     GL.FAH           :40}}# Present in lipidBlast
 
-  generator = [[cwr, 1], [cwr, 2]]
   def __init__(self, sn1, sn2, sn3):
     headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1])
@@ -398,8 +396,9 @@ class AC4PIM2(GL.Glycerolipid):
 
   tooltip = 'Diacyl-phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 4
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT','TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches LipidBlast
     GL.MA            :20, # Molecular ion
     GL.MA_s_FA      :100, # Present in lipidBlast
@@ -407,7 +406,6 @@ class AC4PIM2(GL.Glycerolipid):
     GL.HGA_s_H2O     :30, # Present in lipidBlast
     GL.FAH           :40}}# Present in lipidBlast
 
-  generator = [[cwr, 2], [cwr, 2]]
   def __init__(self, sn1, sn2, sn3, sn4):
     headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O('+sn2.smiles+'))C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1, sn2])
@@ -419,8 +417,9 @@ class BMP(GL.Glycerolipid):
 
   tooltip = 'Bismonoacylglycerophosphate'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+NH4]+":{
     GL.MA              :5,
     GL.MH_s_C3H9O6P    :5,
@@ -428,7 +427,6 @@ class BMP(GL.Glycerolipid):
     GL.MH_s_HG_H2O   :100}
     }
 
-  generator = [[cwr, 1], [cwr, 1]]
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
     smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)', hgtails = [sn1])
@@ -440,8 +438,9 @@ class HBMP(GL.Glycerolipid):
 
   tooltip = 'Hemibismonoacylglycerophosphate'
   No_Tails = 3
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T','TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+NH4]+":{
     GL.MA              :5,
     GL.HGH_s_PO4      :20,
@@ -452,7 +451,6 @@ class HBMP(GL.Glycerolipid):
     GL.MA              :5}
     }
 
-  generator = [[cwr, 1], [cwr, 2]]
   def __init__(self, sn1, sn2, sn3):
     headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
     smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)', hgtails = [sn1])
@@ -464,6 +462,8 @@ class CL(GL.Glycerolipid):
 
   tooltip = 'Cardiolipin'
   No_Tails = 4
+  tailOrganisation = ['TTTT']
+
   adducts = {  # adduct:{spectra}
 
   "[M-H]-":{
@@ -481,7 +481,6 @@ class CL(GL.Glycerolipid):
     GL.C3H5O4P_FA    :10,
     GL.C3H6O5P       :10}}
 
-  generator = [[cwr, 2], [cwr, 2]]
   def __init__(self, sn1, sn2, sn3, sn4):
     headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
     smiles=sn1.inverseSmiles+'OCC(O'+sn2.smiles+')COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1, sn2])
@@ -493,8 +492,9 @@ class PA(GL.Glycerolipid):
 
   tooltip = 'Phosphatidic acid'
   No_Tails = 2
-  adducts = {  
+  tailOrganisation = ['TT']
 
+  adducts = {  
   "[M-H]-":{ # "[M+H]+" https://doi.org/10.1016/j.jchromb.2009.02.033
     GL.MA      :15, # Molecular ion
     GL.MH_s_FAk:15, # Present in lipidBlast
@@ -519,7 +519,6 @@ class PA(GL.Glycerolipid):
     GL.MA_s_FAk     :2, # Present in lipidblast
     GL.MA_s_FA      :2}} # Present in lipidblast
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
@@ -532,8 +531,9 @@ class MPA(GL.Glycerolipid):
 
   tooltip = 'Methyl-phosphatidic acid'
   No_Tails = 2
-  adducts = {  
+  tailOrganisation = ['TT']
 
+  adducts = {  
   "[M-H]-":{
     GL.MA      :15,
     GL.MH_s_FAk:15,
@@ -544,7 +544,6 @@ class MPA(GL.Glycerolipid):
     GL.CH4O4P   :5,
     GL.O3P      :5}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=111.992545, type='Headgroup', chnops={'C':1, 'H':5, 'O':4, 'P':1},
@@ -560,8 +559,9 @@ class PC(GL.Glycerolipid):
   ##### "[M+H]+" https://doi.org/10.1039/C5AY00776C 
   tooltip = 'Phosphatidylcholine'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # Matches literature but not lipidblast
     GL.MA          :10, # Lipidblast seems to provide a completely
     GL.MA_s_H2O     :0, # different spectra which is not consistant
@@ -584,7 +584,6 @@ class PC(GL.Glycerolipid):
     GL.FAkH         :0,
     GL.C2H5NaO4P    :0}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
@@ -600,8 +599,9 @@ class PE(GL.Glycerolipid):
   ##### "[M+H]+", "[M-H]-" https://doi.org/10.1039/C5AY00776C
   tooltip = 'Phosphatidylethanolamine'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Looks Good, Matches lipidblast
     GL.MA       :15, # Molecular ion
     GL.MH_s_FAk  :5, # Present in lipidblast
@@ -632,7 +632,6 @@ class PE(GL.Glycerolipid):
     GL.MA_s_FA      :0,
     GL.FAkH         :0}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
@@ -645,8 +644,9 @@ class MMPE(GL.Glycerolipid):
 
   tooltip = 'N-methyl-phosphatidylethanolamine'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{
     GL.MA          :15,
     GL.FAH        :100,
@@ -663,7 +663,6 @@ class MMPE(GL.Glycerolipid):
   #"[M+Na]+":{
   #  GL.MA          :10}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=155.034744, type='Headgroup', chnops={'C':3, 'H':10, 'N':1, 'O':4, 'P':1},
@@ -676,8 +675,9 @@ class DMPE(GL.Glycerolipid):
 
   tooltip = 'N,N-dimethyl-phosphatidylethanolamine'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{
     GL.MA          :15,
     GL.FAH        :100,
@@ -693,7 +693,6 @@ class DMPE(GL.Glycerolipid):
   #"[M+Na]+":{
   #  GL.MA          :10}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=169.050394, type='Headgroup', chnops={'C':4, 'H':12, 'N':1, 'O':4, 'P':1},
@@ -707,8 +706,9 @@ class PG(GL.Glycerolipid):
   ##### "[M+H]+" https://doi.org/10.1016/j.jchromb.2009.02.033
   tooltip = 'Phosphatidylglycerol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Looks Good, Matches lipidblast
     GL.MA            :15, # Molecular ion
     GL.MH_s_FAk      :20, # Present in lipidblast
@@ -735,7 +735,6 @@ class PG(GL.Glycerolipid):
   #  GL.HGA         :80}
   # }
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
@@ -749,8 +748,9 @@ class PI(GL.Glycerolipid):
   ##### "[M-H]-" https://doi.org/10.1039/C5AY00776C
   tooltip = 'Phosphatidylinositol'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   #"[M+Na-2H]-":{
   #  GL.MH        :2,
   #  GL.MH_s_FA   :4,
@@ -783,7 +783,6 @@ class PI(GL.Glycerolipid):
     GL.MH           :5,
     GL.MH_s_HG_H2O:100}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13, 'O':9, 'P':1},
@@ -796,8 +795,9 @@ class PIP(GL.Glycerolipid):
 
   tooltip = 'Phosphatidylinositol phosphate'
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra}
   #"[M+Na-2H]-":{
   #  GL.MA            :2,
   #  GL.MH_s_PO3      :2,
@@ -859,7 +859,6 @@ class PIP(GL.Glycerolipid):
     GL.H2O4P           :5,
     GL.O3P             :5}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=339.996048, type='Headgroup', chnops={'C':6, 'H':14, 'O':12, 'P':2},
@@ -872,8 +871,9 @@ class PI2P(GL.Glycerolipid):
 
   tooltip = 'Phosphatidylinositol diphosphate'
   No_Tails = 2
-  adducts = {  # adduct:{spectra} 
+  tailOrganisation = ['TT']
 
+  adducts = {  # adduct:{spectra} 
   #"[M+Na-2H]-":{
   #},
 
@@ -925,7 +925,6 @@ class PI2P(GL.Glycerolipid):
   #"[M-3H]3-":{
   #}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=419.962378, type='Headgroup', chnops={'C':6, 'H':15, 'O':15, 'P':3},
@@ -940,8 +939,9 @@ class PS(GL.Glycerolipid):
   ##### "[M+H]+" https://doi.org/10.1039/C5AY00776C
   tooltip = 'Phosphatidylserine'
   No_Tails = 2
+  tailOrganisation = ['TT']
+
   adducts = {  # adduct:{spectra}
-  
   "[M-H]-":{ # Looks Good, Matches lipidblast
     GL.MA            :15, # Molecular ion
     GL.MH_PO4_s_HG  :100, # Present in lipidblast
@@ -971,7 +971,6 @@ class PS(GL.Glycerolipid):
     GL.FAkH         :0,
     GL.HGA          :0}}
 
-  generator = [[cwr, 2]]
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1},
@@ -984,8 +983,9 @@ class PPA(GL.Glycerolipid):
 
   tooltip = 'Pyrophosphatidic acid'
   No_Tails = 2
+  tailOrganisation = ['TT']
+
   adducts = {  # adduct:{spectra}
-  
   "[M-H]-":{ # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=779&LM_ID=LMGP11010002&TRACK_ID=235
     GL.MA     :100,
     GL.MH_s_H2O:40,
@@ -1001,8 +1001,7 @@ class PPA(GL.Glycerolipid):
   #"[M-3H]3-":{
   #  GL.MA     :10}
   # }#,
-
-  generator = [[cwr, 2]]  
+ 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=177.943224, type='Headgroup', chnops={'H':4, 'O':7, 'P':2},
@@ -1015,8 +1014,9 @@ class lyDGCC(GL.Glycerolipid): # Diacylglyceryl-3-O-carboxyhydroxymethylcholine
 
   tooltip = 'Lysodiacylglyceryl-3-O-carboxyhydroxymethylcholine' 
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ #  http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.C6H14NO2   :10,
@@ -1026,7 +1026,6 @@ class lyDGCC(GL.Glycerolipid): # Diacylglyceryl-3-O-carboxyhydroxymethylcholine
   #  GL.MA          :5}
   #  }
 
-  generator = [[cwr, 1]]
   def __init__(self, sn1):
     headgroup = GL.sn(mass=177.100108, type='Headgroup', chnops={'C':7, 'H':15, 'N':1, 'O':4},
     smiles='C[N+](C)(C)CCOC(C(=O)([O-]))')
@@ -1039,8 +1038,9 @@ class lyDGTS(GL.Glycerolipid): # LysoN-trimethylhomoserine
 
   tooltip = 'Lysodiacylglyceryl-N-trimethylhomoserine' 
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ #  https://doi.org/10.1002/rcm.7847
     GL.MA          :50,
     GL.MA_s_H2O    :20,
@@ -1051,7 +1051,6 @@ class lyDGTS(GL.Glycerolipid): # LysoN-trimethylhomoserine
   #  GL.MA          :5}
   #  }
 
-  generator = [[cwr, 1]]
   def __init__(self, sn1):
     headgroup = GL.sn(mass=161.105193, type='Headgroup', chnops={'C':7, 'H':15, 'N':1, 'O':3},
     smiles='[O-]C(=O)C([N+](C)(C)(C))CC')
@@ -1066,8 +1065,9 @@ class lyPA(GL.Glycerolipid):
   ##### [M-H]- = https://doi.org/10.1016/j.jchromb.2010.03.030, Neither...
   tooltip = 'Lysodiacylglyceryl-phosphatidic acid'
   No_Tails = 1
+  tailOrganisation = ['T']
+  
   adducts = {  # adduct:{spectra}
-
   "[M-H]-":{ # Matches lipidblast
     GL.MA      :10, # Present in lipidblast
     GL.FAH     :10, 
@@ -1079,7 +1079,6 @@ class lyPA(GL.Glycerolipid):
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
-  generator = [[cwr, 1]]
   # sn3 = headgroup
   def __init__(self, sn1):
     headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
@@ -1092,8 +1091,9 @@ class lyPC(GL.Glycerolipid):
 
   tooltip = 'Lysodiacylglyceryl-phosphatidylcholine'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # Matches lipidblast
     GL.MA         :5, # Molecular ion
     GL.MA_s_H2O  :20, # Present in lipidblast
@@ -1116,7 +1116,6 @@ class lyPC(GL.Glycerolipid):
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
-  generator = [[cwr, 1]]
   # sn3 = headgroup
   def __init__(self, sn1):
     headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
@@ -1130,8 +1129,9 @@ class lyPE(GL.Glycerolipid):
 
   tooltip = 'Lysodiacylglyceryl-phosphatidylethanolamine'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches lipidblast
     GL.MA            :15, # Molecular ion
     GL.MH_PO4_s_HG_H2O:1, # Present in lipidblast
@@ -1156,7 +1156,6 @@ class lyPE(GL.Glycerolipid):
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
-  generator = [[cwr, 1]]
   # sn3 = headgroup
   def __init__(self, sn1):
     headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
@@ -1170,8 +1169,9 @@ class lyPG(GL.Glycerolipid):
   #####  Requires reference! Needs work!
   tooltip = 'Lysodiacylglyceryl-phosphatidylglycerol'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Needs Validation
     GL.MH           :100,
     GL.MH_PO4_s_HG    :1,
@@ -1188,7 +1188,6 @@ class lyPG(GL.Glycerolipid):
     GL.FAkH        :10}
     }
 
-  generator = [[cwr, 1]]
   # sn3 = headgroup
   def __init__(self, sn1):
     headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
@@ -1202,8 +1201,9 @@ class lyPI(GL.Glycerolipid):
   #####  Requires reference!
   tooltip = 'Lysodiacylglyceryl-phosphatidylinositol'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   #"[M+Na-2H]-":{
   #  GL.C9H16O10P:50, # Not confident what the mz 192.988  is,
   #  GL.C6H10O8P :10, # perhaps as a [Phosphoglycerol+Na-2H]-.
@@ -1224,7 +1224,6 @@ class lyPI(GL.Glycerolipid):
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
-  generator = [[cwr, 1]]
   # sn3 = headgroup
   def __init__(self, sn1):
     headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13,'O':9, 'P':1},
@@ -1238,8 +1237,9 @@ class lyPS(GL.Glycerolipid):
   #####  Requires reference! Needs work!
   tooltip = 'Lysodiacylglyceryl-phosphatidylserine'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # Needs Validation
     GL.MA          :10,
     GL.MA_s_HG_H2O:100,
@@ -1249,7 +1249,6 @@ class lyPS(GL.Glycerolipid):
 
   # Should Lyso GPLs have [M+H-H2O]+ ?
 
-  generator = [[cwr, 1]]
   # sn3 = headgroup
   def __init__(self, sn1):
     headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1},
@@ -1265,8 +1264,9 @@ class Acylsphinganine(GL.Sphingolipid):
   tooltip = 'N-Acyl-sphinganine'
   base_types = ['Sphinganine'] # 18:0;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # https://doi.org/10.1016/j.biochi.2016.07.012
     GL.MA           :30,
     GL.MA_s_H2O      :2,
@@ -1290,7 +1290,6 @@ class Acylsphinganine(GL.Sphingolipid):
   #  GL.MA         :100
   #  }}#,
 
-  generator = product
   def __init__(self, base, sn1):
     super().__init__(Acylsphinganine.adducts, base, sn1)
 
@@ -1299,8 +1298,9 @@ class Acylsphingosine(GL.Sphingolipid):
   tooltip = 'N-Acyl-sphingosine'
   base_types = ['Sphingosine'] # 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # https://doi.org/10.1006/abio.2001.5536, https://doi.org/10.1016/S1044-0305(02)00358-6, https://doi.org/10.1016/j.biochi.2016.07.012, https://doi.org/10.1002/rcm.878
     GL.MA           :30,
     GL.MA_s_H2O      :2,
@@ -1327,7 +1327,6 @@ class Acylsphingosine(GL.Sphingolipid):
   #  GL.MA         :100
   #  }}#,
 
-  generator = product
   def __init__(self, base, sn1):
     super().__init__(Acylsphingosine.adducts, base, sn1)
 
@@ -1336,8 +1335,9 @@ class Acylphytosphingosine(GL.Sphingolipid):
   tooltip = 'N-Acyl-phytosphingosine'
   base_types = ['Phytosphingosine'] # 18:0;O3
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # https://doi.org/10.1002/rcm.878
     GL.MA       :10,
     GL.MA_s_H2O :40,
@@ -1363,7 +1363,6 @@ class Acylphytosphingosine(GL.Sphingolipid):
   #  GL.MA         :100
   #  }}#,
 
-  generator = product
   def __init__(self, base, sn1):
     super().__init__(Acylphytosphingosine.adducts, base, sn1)
 
@@ -1372,8 +1371,9 @@ class CerP(GL.Sphingolipid):
   tooltip = 'N-Acyl-ceramide-1-phosphate'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches lipidblast, https://doi.org/10.1016/j.biochi.2016.07.012
     GL.MA         :10, # Molecular ion
     GL.MA_s_H2O   :10, # Present in lipidblast
@@ -1395,7 +1395,6 @@ class CerP(GL.Sphingolipid):
   #  GL.MA         :100
   #  }}#,
 
-  generator = product
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
     smiles='O=P(O)(O)')
@@ -1406,8 +1405,9 @@ class CerPC(GL.Sphingolipid):
   tooltip = 'N-Acyl-ceramide-1-phosphocholine'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # Looks Good, Matches lipidblast
     GL.MA          :10, # Molecular ion
     GL.MA_s_H2O   :100, # Present in lipidblast
@@ -1417,7 +1417,6 @@ class CerPC(GL.Sphingolipid):
     GL.C5H15NO4P  :100}
     }
 
-  generator = product 
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=183.066044, type='Headgroup', chnops={'C':5, 'H':14, 'N':1, 'O':4, 'P':1},
     smiles='C[N+](C)(C)CCOP([O-])(=O)')
@@ -1429,8 +1428,9 @@ class CerPE(GL.Sphingolipid):
   tooltip = 'N-Acyl-ceramide-1-phosphoethanolamine'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.MA_s_H2O    :1,
@@ -1442,7 +1442,6 @@ class CerPE(GL.Sphingolipid):
     GL.O3P        :25}
     }
 
-  generator = product
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
     smiles='NCCOP(O)(=O)')
@@ -1453,8 +1452,9 @@ class CerPI(GL.Sphingolipid):
   tooltip = 'N-Acyl-ceramide-1-phosphoinositol'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.MA_s_H2O    :1,
@@ -1468,7 +1468,6 @@ class CerPI(GL.Sphingolipid):
     GL.O3P        :25}
     }
 
-  generator = product
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=260.029718, type='Headgroup', chnops={'C':6, 'H':13, 'O':9, 'P':1},
     smiles='OC1C(O)C(O)C(O)C(O)C1OP(O)(=O)')
@@ -1479,8 +1478,9 @@ class HexCer(GL.Sphingolipid):
   tooltip = 'N-Acyl-ceramide-1-hexose'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA              :5,
     GL.MA_s_H2O       :25,
@@ -1494,19 +1494,19 @@ class HexCer(GL.Sphingolipid):
     GL.Cer_D          :10}
     }
 
-  generator = product 
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=180.063388, type='Headgroup', chnops={'C':6, 'H':12, 'O':6},
     smiles='OC1C(O)C(O)C(CO)OC1')
     super().__init__(HexCer.adducts, base, sn1, headgroup)
-'''
+
 class AHexCer(GL.Sphingolipid): # doesnt work with how generation is set up...
 
   tooltip = 'N-Acyl-ceramide-1-Acylhexose'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 2
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','TT']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA              :5,
     GL.MA_s_H2O       :25,
@@ -1522,19 +1522,19 @@ class AHexCer(GL.Sphingolipid): # doesnt work with how generation is set up...
     GL.Cer_P          :10}
     }
 
-  generator = product 
   def __init__(self, base, sn1, sn2):
     headgroup = GL.sn(mass=180.063388, type='Headgroup', chnops={'C':6, 'H':12, 'O':6},
     smiles='OC1C(O)C(O)C(CO'+sn1.smiles+')OC1', hgtails=[sn1])
     super().__init__(AHexCer.adducts, base, sn1=sn2, headgroup=headgroup)
-'''
+
 class Hex2Cer(GL.Sphingolipid):
 
   tooltip = 'N-Acyl-ceramide-1-dihexose'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA              :5,
     GL.MA_s_H2O       :25,
@@ -1550,7 +1550,6 @@ class Hex2Cer(GL.Sphingolipid):
     GL.Cer_D          :10}
     }
 
-  generator = product 
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=342.116212, type='Headgroup', chnops={'C':12, 'H':22, 'O':11},
     smiles='OC1C(O)C(O(C2OC(CO)C(O)C(O)C2(O)))C(CO)OC1')
@@ -1561,8 +1560,9 @@ class Hex3Cer(GL.Sphingolipid):
   tooltip = 'N-Acyl-ceramide-1-trihexose'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA              :5,
     GL.MA_s_H2O       :25,
@@ -1582,7 +1582,6 @@ class Hex3Cer(GL.Sphingolipid):
     GL.Cer_D          :10}
     }
 
-  generator = product 
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=504.169035, type='Headgroup', chnops={'C':18, 'H':32, 'O':16},
     smiles='OC1C(O)C(O(C2OC(CO)C(O(C3OC(CO)C(O)C(O)C3(O)))C(O)C2(O)))C(CO)OC1')
@@ -1593,8 +1592,9 @@ class Sulfatide(GL.Sphingolipid):
   tooltip = 'Sulfatide'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['B','T']
 
+  adducts = {  # adduct:{spectra}
   "[M-H]-":{ #
     GL.MA      :10, # Molecular ion
     GL.MA_s_H2O:10,
@@ -1606,7 +1606,6 @@ class Sulfatide(GL.Sphingolipid):
     GL.O4SH   :100}
     }
 
-  generator = product 
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=260.020201964, type='Headgroup', chnops={'C':6, 'H':12, 'O':9, 'S':1},
     smiles='OC1C(OS(=O)(=O)O)C(O)C(CO)OC1')
@@ -1620,13 +1619,14 @@ class FA(GL.OtherLipid):
 
   tooltip = 'Free Fatty acid'
   No_Tails = 1
+  tailOrganisation = ['T']
+
   adducts = {
     "[M-H]-":{
     GL.MH            :100,
     GL.MH_s_H2O        :0
     }}
 
-  generator = [[cwr, 1]] 
   def __init__(self, sn1):
     body = GL.Other(name='FA', smiles='O'+sn1.smiles)
     super().__init__(FA.adducts, body, sn1)
@@ -1635,8 +1635,9 @@ class Cster(GL.OtherLipid):
 
   tooltip = 'Cholesteryl Ester'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M+NH4]+":{ #
     GL.MA      :10, # Molecular ion
     GL.MA_s_FAk :0,
@@ -1651,7 +1652,6 @@ class Cster(GL.OtherLipid):
     GL.C10H15  :20} # Present in lipidblast
     }
 
-  generator = [[cwr, 1]] 
   def __init__(self, sn1):
     body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1},
     smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
@@ -1661,8 +1661,9 @@ class Lster(GL.OtherLipid):
 
   tooltip = 'Lanosteryl Ester'
   No_Tails = 1
-  adducts = {  # adduct:{spectra}
+  tailOrganisation = ['T']
 
+  adducts = {  # adduct:{spectra}
   "[M+NH4]+":{ #
     GL.MA      :10, # Molecular ion
     GL.MA_s_FAk :0,
@@ -1677,7 +1678,6 @@ class Lster(GL.OtherLipid):
     GL.C10H15  :20}
     }
 
-  generator = [[cwr, 1]] 
   def __init__(self, sn1):
     body = GL.Other(name='Lanosteryl', mass=426.386166, chnops={'C':30, 'H':50, 'O':1},
     smiles='C/C(C)=C\CCC(C)C1CCC2(C)C=3CCC4C(C)(C)C(CCC4(C)C3CCC12C)O'+sn1.smiles)
@@ -1687,6 +1687,8 @@ class AC(GL.OtherLipid):
 
   tooltip = 'Acyl-carnitine'
   No_Tails = 1
+  tailOrganisation = ['T']
+
   adducts = {
     "[M+H]+":{ # Taken from LipidMatch
     GL.MA          :10, # Molecular ion
@@ -1697,7 +1699,6 @@ class AC(GL.OtherLipid):
     GL.C3H10N      :10
     }}
 
-  generator = [[cwr, 1]] 
   def __init__(self, sn1):
     body = GL.Other(name='AC', mass=161.105193, chnops={'C':7, 'H':15, 'N':1, 'O':3},
     smiles='C[N+](C)(C)CC(O'+sn1.smiles+')CC(=O)[O-]')
@@ -1707,6 +1708,8 @@ class AcylCoA(GL.OtherLipid):
 
   tooltip = 'Acyl-CoA'
   No_Tails = 1
+  tailOrganisation = ['T']
+  
   adducts = {
     "[M+H]+":{ # https://pubs.acs.org/doi/pdf/10.1021/acs.analchem.6b03623
     GL.MA             :10,
@@ -1714,7 +1717,6 @@ class AcylCoA(GL.OtherLipid):
     GL.C10H16N5O10P2  :40
     }}
 
-  generator = [[cwr, 1]] 
   def __init__(self, sn1):
     body = GL.Other(name='AcylCoA', mass=767.115206, chnops={'C':21, 'H':36, 'N':7, 'O':16, 'P':3, 'S':1},
     smiles='OP(=O)(O)OC1C(O)C(n2cnc3c(N)ncnc32)OC1COP(=O)(O)OP(=O)(O)OC(C)(C)CC(O)C(=O)NCCC(=O)NCCS'+sn1.smiles)

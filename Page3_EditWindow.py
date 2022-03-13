@@ -1,9 +1,11 @@
 import GenerateLipids as GL
+import inspect
 import Spectra
 
 from itertools import combinations_with_replacement as cwr
-from PySide6.QtCore import QModelIndex
-from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QVBoxLayout, QHBoxLayout, QLabel
+from PySide6.QtCore import QModelIndex, Signal
+from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QMenu
+from PySide6.QtGui import QAction, QCursor
 
 class NewWindow(QDialog): # Opened from SpectraSetupPage
     '''
@@ -76,6 +78,7 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
             self.spectra.setSpectra(example.name+' '+adduct, mz, fragments)
             self.table = Spectra.SpectraTableModel(fragments)
             self.tableView.setModel(self.table)
+            #self.tableView.updateLipidAdduct(example, adduct)
             self.tableView.setItemDelegateForColumn(1, Spectra.SpinBoxDelegate(self.tableView))
             self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             self.tableView.verticalHeader().hide()
@@ -93,3 +96,38 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         fragmentList[data.fragmentType] = data.intensity
         self.comboBox.currentData()[1].fragmentList = fragmentList
         self.buildList()
+        
+'''
+class TableView(QTableView):
+
+    def __init__(self, parent=None):
+        super(TableView, self).__init__(parent)
+    
+        self.currentLipid = None
+        self.currentAdduct = None
+    
+    def updateLipidAdduct(self, lipid, adduct):
+        self.currentLipid = lipid
+        self.currentAdduct = adduct
+
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+        addFragment = QAction('Add Fragment', self)
+        addFragment.triggered.connect(self.addFragmentToList)
+        menu.addAction(addFragment)
+        menu.popup(QCursor.pos())
+
+    def addFragmentToList(self):
+        fragmentWindow = AddFragmentWindow(self.currentLipid, self.currentAdduct)
+        fragmentWindow.exec()
+
+class AddFragmentWindow(QDialog):
+
+    output = Signal(GL.Fragment)
+
+    def __init__(self, lipid, adduct):
+        super().__init__()
+        self.setWindowTitle('LSG3')
+        self.setFixedSize(600, 125)
+        self.hLayout = QHBoxLayout(self)
+'''

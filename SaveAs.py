@@ -1,7 +1,11 @@
+import sys
 import csv
+
+from matplotlib.cbook import flatten
 import GenerateLipids as GL
 from PySide6.QtCore import QObject, Signal
 from itertools import combinations_with_replacement as cwr, product
+from collections import Counter
 
 class Generator(QObject):
     
@@ -32,15 +36,19 @@ class Generator(QObject):
 
 
     def run(self):
-        self.save_file = open(self.file_name, 'x', newline='')
-        if self.lipidSpecifics:
-            self.lipid_data = self.generate_specific()
-        else: self.lipid_data = self.generate_range()
-        if self.filter == "MSP (*.msp)": self.as_msp()
-        elif self.filter == "Orbitrap Inclusion (*.csv)": self.as_orb()
-        elif self.filter =="Skyline Transition (*.csv)": self.as_sky()
-        else: self.fileError.emit()
-        self.save_file.close()
+        try:
+            self.save_file = open(self.file_name, 'x', newline='')
+            if self.lipidSpecifics:
+                self.lipid_data = self.generate_specific()
+            else: self.lipid_data = self.generate_range()
+            if self.filter == "MSP (*.msp)": self.as_msp()
+            elif self.filter == "Orbitrap Inclusion (*.csv)": self.as_orb()
+            elif self.filter =="Skyline Transition (*.csv)": self.as_sky()
+            else: self.fileError.emit()
+            self.save_file.close()
+        except: 
+            (type, value, traceback) = sys.exc_info()
+            sys.excepthook(type, value, traceback)
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -57,19 +65,27 @@ class Generator(QObject):
 
         for cls in self.classes_to_generate:                 # Remove all ions in spectra with an intensity of 0
             for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
-            if not issubclass(cls, GL.Sphingolipid):
-                if self.isomerism == True:
-                    for comb in product(self.tails, repeat = cls.No_Tails):
-                        yield cls(*comb)
-                else: 
-                    for comb in cwr(self.tails, cls.No_Tails):
-                        yield cls(*comb)
-            elif issubclass(cls, GL.Sphingolipid):
-                for type in cls.base_types:
-                    for comb in product(self.bases[type], self.tails):
-                        yield cls(*comb)
-                else: pass
 
+            constituents = cls.tailOrganisation # List of tails and organisation: ['B', 'TT', 'T'], indicates a sphingoid Base,
+            constituentList = [] # a combination of two tails, and another tail independent of the previous combination is needed.
+
+            for x in constituents: # ie, for 'B', 'TT', 'T' in ['B', 'TT', 'T']
+                group = dict(Counter(x)) # ie, {'B':1}, {'T':2}, {'T':1}
+                for key in group:
+                    if key == 'B': # In the case of 'B', it indicates a base is needed. Get base list!
+                        constituentList.append([self.bases[basetype] for basetype in cls.base_types])
+                    elif key == 'T': # In the case of 'T', it indicates a tail is needed. generate tail combination!
+                        constituentList.append(cwr(self.tails, r=group[key]))
+                    else: pass
+
+            for combination in product(*constituentList):
+                combination = flatten(combination)
+                yield cls(*combination)
+
+    def flatten(data):
+        if isinstance(data, tuple):
+            for x in data: yield from flatten(x)
+        else: yield data
 
     def generate_specific(self):
         lipidList = self.lipidList

@@ -10,7 +10,7 @@ class TailWindow(QDialog):
     '''
     output = Signal(GL.sn)
 
-    def __init__(self,):
+    def __init__(self):
         super().__init__()
 
         self.setWindowTitle('LSG3')
