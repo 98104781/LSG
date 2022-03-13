@@ -1,5 +1,4 @@
 import GenerateLipids as GL
-from itertools import combinations_with_replacement as cwr
 
 ''' EXAMPLE EXAMPLE EXAMPLE
 
@@ -462,7 +461,7 @@ class CL(GL.Glycerolipid):
 
   tooltip = 'Cardiolipin'
   No_Tails = 4
-  tailOrganisation = ['TTTT']
+  tailOrganisation = ['TT','TT']
 
   adducts = {  # adduct:{spectra}
 
@@ -527,9 +526,9 @@ class PA(GL.Glycerolipid):
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
-class MPA(GL.Glycerolipid):
+class PMe(GL.Glycerolipid):
 
-  tooltip = 'Methyl-phosphatidic acid'
+  tooltip = 'Phosphatidylmethanol'
   No_Tails = 2
   tailOrganisation = ['TT']
 
@@ -541,14 +540,39 @@ class MPA(GL.Glycerolipid):
     GL.FAH    :100,
     GL.C4H10O6P :5,
     GL.C4H8O5P :30,
-    GL.CH4O4P   :5,
+    GL.HGA      :5,
     GL.O3P      :5}}
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
     headgroup = GL.sn(mass=111.992545, type='Headgroup', chnops={'C':1, 'H':5, 'O':4, 'P':1},
     smiles='O=P(OC)(O)')
-    super().__init__(MPA.adducts, sn1, sn2, headgroup)
+    super().__init__(PMe.adducts, sn1, sn2, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
+class PEt(GL.Glycerolipid):
+
+  tooltip = 'Phosphatidylethanol'
+  No_Tails = 2
+  tailOrganisation = ['TT']
+
+  adducts = {  
+  "[M-H]-":{
+    GL.MA      :15,
+    GL.MH_s_FAk:15,
+    GL.MH_s_FA :30,
+    GL.FAH    :100,
+    GL.C4H10O6P :5,
+    GL.C4H8O5P :30,
+    GL.HGA      :5,
+    GL.O3P      :5}}
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=126.008195, type='Headgroup', chnops={'C':2, 'H':7, 'O':4, 'P':1},
+    smiles='O=P(OCC)(O)')
+    super().__init__(PEt.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -1012,7 +1036,7 @@ class PPA(GL.Glycerolipid):
 
 class lyDGCC(GL.Glycerolipid): # Diacylglyceryl-3-O-carboxyhydroxymethylcholine
 
-  tooltip = 'Lysodiacylglyceryl-3-O-carboxyhydroxymethylcholine' 
+  tooltip = 'Lyso-3-O-carboxyhydroxymethylcholine' 
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1036,7 +1060,7 @@ class lyDGCC(GL.Glycerolipid): # Diacylglyceryl-3-O-carboxyhydroxymethylcholine
 
 class lyDGTS(GL.Glycerolipid): # LysoN-trimethylhomoserine
 
-  tooltip = 'Lysodiacylglyceryl-N-trimethylhomoserine' 
+  tooltip = 'Lyso-N-trimethylhomoserine' 
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1063,7 +1087,7 @@ class lyPA(GL.Glycerolipid):
 
   ##### [M-H]- = https://doi.org/10.1002/lipd.12172, Not a fragmentation study!
   ##### [M-H]- = https://doi.org/10.1016/j.jchromb.2010.03.030, Neither...
-  tooltip = 'Lysodiacylglyceryl-phosphatidic acid'
+  tooltip = 'Lyso-phosphatidic acid'
   No_Tails = 1
   tailOrganisation = ['T']
   
@@ -1089,7 +1113,7 @@ class lyPA(GL.Glycerolipid):
 
 class lyPC(GL.Glycerolipid):
 
-  tooltip = 'Lysodiacylglyceryl-phosphatidylcholine'
+  tooltip = 'Lyso-phosphatidylcholine'
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1127,7 +1151,7 @@ class lyPC(GL.Glycerolipid):
 
 class lyPE(GL.Glycerolipid):
 
-  tooltip = 'Lysodiacylglyceryl-phosphatidylethanolamine'
+  tooltip = 'Lyso-phosphatidylethanolamine'
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1164,10 +1188,41 @@ class lyPE(GL.Glycerolipid):
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
+class lyNAPE(GL.Glycerolipid):
+
+  tooltip = 'Lyso-N-Acyl-phosphatidylethanolamine'
+  No_Tails = 2
+  tailOrganisation = ['T','T']
+
+  adducts = {  # adduct:{spectra}
+  "[M-H]-":{
+    GL.MA            :15,
+    GL.MH_PO4_s_HG_H2O:1,
+    GL.MH_s_FAk       :5,
+    GL.MH_s_FA       :15,
+    GL.FAH          :100,
+    GL.HGA            :0,
+    GL.C5H11NO5P      :0,
+    GL.C3H6O5P       :10,
+    GL.C2H7NO4P       :0,
+    GL.H2O4P          :5,
+    GL.O3P            :5}
+    }
+
+  # Should Lyso GPLs have [M+H-H2O]+ ?
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=141.019094, type='Headgroup', chnops={'C':2, 'H':8, 'N':1, 'O':4, 'P':1},
+    smiles=sn1.inverseSmiles+'NCCOP(O)(=O)', hgtails=[sn1])
+    super().__init__(lyNAPE.adducts, sn1=sn2, sn3=headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
 class lyPG(GL.Glycerolipid):
 
   #####  Requires reference! Needs work!
-  tooltip = 'Lysodiacylglyceryl-phosphatidylglycerol'
+  tooltip = 'Lyso-phosphatidylglycerol'
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1199,7 +1254,7 @@ class lyPG(GL.Glycerolipid):
 class lyPI(GL.Glycerolipid):
 
   #####  Requires reference!
-  tooltip = 'Lysodiacylglyceryl-phosphatidylinositol'
+  tooltip = 'Lyso-phosphatidylinositol'
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1235,7 +1290,7 @@ class lyPI(GL.Glycerolipid):
 class lyPS(GL.Glycerolipid):
 
   #####  Requires reference! Needs work!
-  tooltip = 'Lysodiacylglyceryl-phosphatidylserine'
+  tooltip = 'Lyso-phosphatidylserine'
   No_Tails = 1
   tailOrganisation = ['T']
 
@@ -1254,6 +1309,33 @@ class lyPS(GL.Glycerolipid):
     headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1},
     smiles='[O-]C(=O)C([NH3+])COP(O)(=O)')
     super().__init__(lyPS.adducts, sn1=sn1, sn3=headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
+class lyNAPS(GL.Glycerolipid):
+
+  #####  Requires reference! Needs work!
+  tooltip = 'Lyso-N-Acyl-phosphatidylserine'
+  No_Tails = 2
+  tailOrganisation = ['T','T']
+
+  adducts = {  # adduct:{spectra}
+  "[M-H]-":{ # Needs Validation
+    GL.MA          :10,
+    GL.MA_PO4_s_HG:100,
+    GL.MA_s_HG_H2O  :0,
+    GL.MA_s_FAk     :0,
+    GL.MA_s_FA      :0,
+    GL.C3H6O5P     :50,}
+    }#,
+
+  # Should Lyso GPLs have [M+H-H2O]+ ?
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=185.008923, type='Headgroup', chnops={'C':3, 'H':8, 'N':1, 'O':6, 'P':1},
+    smiles='OC(=O)C(N'+sn1.smiles+')COP(O)(=O)', hgtails=[sn1])
+    super().__init__(lyNAPS.adducts, sn1=sn2, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -1279,12 +1361,17 @@ class Acylsphinganine(GL.Sphingolipid):
     GL.Cer_S        :20,
     GL.Cer_T       :100,
     GL.Cer_U         :5,
-    GL.FAkH         :10}
-    }
+    GL.FAkH         :10},
     
-  #"[M+H]+":{
-  #  GL.MA         :100
-  #  }}
+  "[M+H]+":{
+    GL.MA           :5,
+    GL.MA_s_H2O     :5,
+    GL.MA_s_2H2O    :5,
+    GL.MA_s_FA     :10,
+    GL.MA_s_FA_H2O:100,
+    GL.Cer_U       :10,
+    GL.Cer_D       :10}
+    }
 
   #"[M+H-H2O]+":{ #
   #  GL.MA         :100
@@ -1504,7 +1591,7 @@ class AHexCer(GL.Sphingolipid): # doesnt work with how generation is set up...
   tooltip = 'N-Acyl-ceramide-1-Acylhexose'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 2
-  tailOrganisation = ['B','TT']
+  tailOrganisation = ['B','T','T']
 
   adducts = {  # adduct:{spectra}
   "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
@@ -1516,7 +1603,6 @@ class AHexCer(GL.Sphingolipid): # doesnt work with how generation is set up...
     GL.MA_s_HG_FA     :25,
     GL.MA_s_HG_FAk     :0,
     GL.MA_s_HG_FA_H2O:100,
-    GL.Cer_S          :10,
     GL.Cer_U           :1,
     GL.Cer_D          :10,
     GL.Cer_P          :10}
@@ -1631,7 +1717,7 @@ class FA(GL.OtherLipid):
     body = GL.Other(name='FA', smiles='O'+sn1.smiles)
     super().__init__(FA.adducts, body, sn1)
 
-class Cster(GL.OtherLipid):
+class CE(GL.OtherLipid):
 
   tooltip = 'Cholesteryl Ester'
   No_Tails = 1
@@ -1655,9 +1741,113 @@ class Cster(GL.OtherLipid):
   def __init__(self, sn1):
     body = GL.Other(name='Cholesteryl', mass=386.354866092, chnops={'C':27, 'H':46, 'O':1},
     smiles='CC(C)CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
-    super().__init__(Cster.adducts, body, sn1)
+    super().__init__(CE.adducts, body, sn1)
 
-class Lster(GL.OtherLipid):
+class BRSE(GL.OtherLipid):
+
+  tooltip = 'Brassicasterol Ester'
+  No_Tails = 1
+  tailOrganisation = ['T']
+
+  adducts = {  # adduct:{spectra}
+  "[M+NH4]+":{ #
+    GL.MA      :10, # Molecular ion
+    GL.MA_s_FAk :0,
+    GL.MA_s_FA  :0,
+    GL.MH_s_FAk :0,
+    GL.MH_s_FA:100,
+    GL.FAkA     :0,
+    GL.FAkH     :0,
+    GL.C13H19  :20,
+    GL.C12H17  :20,
+    GL.C11H15  :20,
+    GL.C10H15  :20}
+    }
+
+  def __init__(self, sn1):
+    body = GL.Other(name='Brassicasterol', mass=398.354866, chnops={'C':28, 'H':46, 'O':1},
+    smiles='CC(C)C(C)C=CC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
+    super().__init__(BRSE.adducts, body, sn1)
+
+class CASE(GL.OtherLipid):
+
+  tooltip = 'Camposterol Ester'
+  No_Tails = 1
+  tailOrganisation = ['T']
+
+  adducts = {  # adduct:{spectra}
+  "[M+NH4]+":{ #
+    GL.MA      :10, # Molecular ion
+    GL.MA_s_FAk :0,
+    GL.MA_s_FA  :0,
+    GL.MH_s_FAk :0,
+    GL.MH_s_FA:100,
+    GL.FAkA     :0,
+    GL.FAkH     :0,
+    GL.C13H19  :20,
+    GL.C12H17  :20,
+    GL.C11H15  :20,
+    GL.C10H15  :20}
+    }
+
+  def __init__(self, sn1):
+    body = GL.Other(name='Camposterol', mass=400.370516, chnops={'C':28, 'H':48, 'O':1},
+    smiles='CC(C)C(C)CCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
+    super().__init__(CASE.adducts, body, sn1)
+
+class SISE(GL.OtherLipid):
+
+  tooltip = 'Sitosterol Ester'
+  No_Tails = 1
+  tailOrganisation = ['T']
+
+  adducts = {  # adduct:{spectra}
+  "[M+NH4]+":{ #
+    GL.MA      :10, # Molecular ion
+    GL.MA_s_FAk :0,
+    GL.MA_s_FA  :0,
+    GL.MH_s_FAk :0,
+    GL.MH_s_FA:100,
+    GL.FAkA     :0,
+    GL.FAkH     :0,
+    GL.C13H19  :20,
+    GL.C12H17  :20,
+    GL.C11H15  :20,
+    GL.C10H15  :20}
+    }
+
+  def __init__(self, sn1):
+    body = GL.Other(name='Sitosterol', mass=414.386166, chnops={'C':29, 'H':50, 'O':1},
+    smiles='CC(C)C(CC)CCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
+    super().__init__(SISE.adducts, body, sn1)
+
+class STSE(GL.OtherLipid):
+
+  tooltip = 'Sigmasterol Ester'
+  No_Tails = 1
+  tailOrganisation = ['T']
+
+  adducts = {  # adduct:{spectra}
+  "[M+NH4]+":{ #
+    GL.MA      :10, # Molecular ion
+    GL.MA_s_FAk :0,
+    GL.MA_s_FA  :0,
+    GL.MH_s_FAk :0,
+    GL.MH_s_FA:100,
+    GL.FAkA     :0,
+    GL.FAkH     :0,
+    GL.C13H19  :20,
+    GL.C12H17  :20,
+    GL.C11H15  :20,
+    GL.C10H15  :20}
+    }
+
+  def __init__(self, sn1):
+    body = GL.Other(name='Sigmasterol', mass=412.370516, chnops={'C':29, 'H':48, 'O':1},
+    smiles='CC(C)C(CC)C=CC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
+    super().__init__(STSE.adducts, body, sn1)
+
+class LE(GL.OtherLipid):
 
   tooltip = 'Lanosteryl Ester'
   No_Tails = 1
@@ -1681,7 +1871,7 @@ class Lster(GL.OtherLipid):
   def __init__(self, sn1):
     body = GL.Other(name='Lanosteryl', mass=426.386166, chnops={'C':30, 'H':50, 'O':1},
     smiles='C/C(C)=C\CCC(C)C1CCC2(C)C=3CCC4C(C)(C)C(CCC4(C)C3CCC12C)O'+sn1.smiles)
-    super().__init__(Lster.adducts, body, sn1)
+    super().__init__(LE.adducts, body, sn1)
 
 class AC(GL.OtherLipid):
 

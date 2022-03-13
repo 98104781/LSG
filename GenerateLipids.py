@@ -322,16 +322,21 @@ class Sphingolipid(Lipid):
   def __init__(self, adducts, base=base(), sn1=sn(), headgroup=sn()):
     super().__init__(adducts)
 
-    self.tails = [base, sn1, headgroup] # Base and headgroup included to be consistant with fragment generation 
+    self.tails = [base]
+    if headgroup.type in ['Headgroup']:
+      self.tails.extend([tail for tail in headgroup.hgtails])
+    self.tails.extend([sn1, headgroup]) # Base and headgroup included to be consistant with fragment generation
+
     self.lipid_class = type(self).__name__ # Takes name from class which generated it
     self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
-    self.mass = round(Masses['NH3'] + sum([snx.mass-Masses['H2O'] for snx in self.tails]), 6)
+    self.mass = round(Masses['NH3'] + sum([snx.mass-Masses['H2O'] for snx in self.tails if snx.type != 'HeadTail']), 6)
     self.smiles= f'{headgroup.smiles}{base.smiles[:5]}{sn1.smiles}{base.smiles[5:]}'
 
     self.formula = Counter({'H':3,'N':1}) # Unlike GPLs, sphingoids built around the base
     for snx in self.tails: # Works out CHNOPS for lipid
-      self.formula.update(snx.formula)
-      self.formula.subtract({'H':2,'O':1}) # -H2O for bonding)
+      if snx.type != 'HeadTail': # Headtails factored into headgroup
+        self.formula.update(snx.formula)
+        self.formula.subtract({'H':2,'O':1}) # -H2O for bonding)
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 

@@ -1,11 +1,10 @@
 import GenerateLipids as GL
-import inspect
 import Spectra
+from collections import Counter
 
 from itertools import combinations_with_replacement as cwr
-from PySide6.QtCore import QModelIndex, Signal
-from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QMenu
-from PySide6.QtGui import QAction, QCursor
+from PySide6.QtCore import QModelIndex
+from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QVBoxLayout, QHBoxLayout, QLabel
 
 class NewWindow(QDialog): # Opened from SpectraSetupPage
     '''
@@ -55,10 +54,12 @@ class NewWindow(QDialog): # Opened from SpectraSetupPage
         or Sphingolipid with 18:0.
         '''
         cls = data[0].lipidClass # Example lipid with No of tails -> 1 - 3.
+        x = ''.join(cls.tailOrganisation)
+        counter = Counter(x)
+        _, comb, *_ = cwr(self.tails, counter['T']) # tails needed here.
         if issubclass(cls, GL.Sphingolipid):
-            example = cls(GL.base(18, cls.base_types[0]), self.tails[0])
+            example = cls(GL.base(18, cls.base_types[0]), *comb)
         else: # Automatically cals number of
-            _, comb, *_ = cwr(self.tails, cls.No_Tails) # tails needed here.
             example = cls(*comb) # comb will be (16:0_) 16:0_18:1
         example.resolve_spectra(data[1].text(0), data[1].fragmentList)
         return example 
