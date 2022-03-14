@@ -955,6 +955,66 @@ class PI2P(GL.Glycerolipid):
     smiles='OC1C(OP(=O)(O)O)C(O)C(OP(=O)(O)O)C(O)C1OP(O)(=O)')
     super().__init__(PI2P.adducts, sn1, sn2, headgroup)
 
+class PIPMe3(GL.Glycerolipid):
+
+  tooltip = 'Methylated Phosphatidylinositol phosphate'
+  No_Tails = 2
+  tailOrganisation = ['TT']
+
+  adducts = {  # adduct:{spectra} 
+  # https://doi.org/10.1194/jlr.D069989
+  "[M+H]+":{
+    GL.MA             :10,
+    GL.MA_s_HG_H2O   :100,
+    GL.HGH             :0,
+    GL.MA_s_HG_FA     :10},
+
+  "[M+NH4]+":{
+    GL.MA             :10,
+    GL.MH              :5,
+    GL.MH_s_HG_H2O   :100,
+    GL.HGA             :0,
+    GL.HGH             :0,
+    GL.MA_s_HG_FA      :0,
+    GL.MH_s_HG_FA     :10}
+    }
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=382.042998, type='Headgroup', chnops={'C':9, 'H':20, 'O':12, 'P':2},
+    smiles='OC1C(O)C(O)C(OP(=O)(OC)OC)C(O)C1OP(OC)(=O)')
+    super().__init__(PIPMe3.adducts, sn1, sn2, headgroup)
+
+class PI2PMe5(GL.Glycerolipid):
+
+  tooltip = 'Methylated Phosphatidylinositol diphosphate'
+  No_Tails = 2
+  tailOrganisation = ['TT']
+
+  adducts = {  # adduct:{spectra} 
+  # https://doi.org/10.1194/jlr.D069989
+  "[M+H]+":{
+    GL.MA             :10,
+    GL.MA_s_HG_H2O   :100,
+    GL.HGH             :0,
+    GL.MA_s_HG_FA     :10},
+
+  "[M+NH4]+":{
+    GL.MA             :10,
+    GL.MH              :5,
+    GL.MH_s_HG_H2O   :100,
+    GL.HGA             :0,
+    GL.HGH             :0,
+    GL.MA_s_HG_FA      :0,
+    GL.MH_s_HG_FA     :10}
+    }
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=490.040628, type='Headgroup', chnops={'C':11, 'H':25, 'O':15, 'P':3},
+    smiles='OC1C(OP(=O)(OC)OC)C(O)C(OP(=O)(OC)OC)C(O)C1OP(OC)(=O)')
+    super().__init__(PI2PMe5.adducts, sn1, sn2, headgroup)
+
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class PS(GL.Glycerolipid):
@@ -969,7 +1029,7 @@ class PS(GL.Glycerolipid):
   "[M-H]-":{ # Looks Good, Matches lipidblast
     GL.MA            :15, # Molecular ion
     GL.MH_PO4_s_HG  :100, # Present in lipidblast
-    GL.HG_FAk_NL_B   :25, # Present in lipidblast
+    GL.MH_PO4_s_HG_FAk  :25, # Present in lipidblast
     GL.MH_PO4_s_HG_FA:50, # Present in lipidblast
     GL.FAH           :50, # Present in lipidblast
     GL.C3H6O5P       :30,
@@ -1031,6 +1091,41 @@ class PPA(GL.Glycerolipid):
     headgroup = GL.sn(mass=177.943224, type='Headgroup', chnops={'H':4, 'O':7, 'P':2},
     smiles='O=P(O)(O)OP(=O)(O)')
     super().__init__(PPA.adducts, sn1, sn2, headgroup)
+
+class CDPDG(GL.Glycerolipid):
+
+  tooltip = "Cytidine-5'-diphosphate diacylglycerol"
+  No_Tails = 2
+  tailOrganisation = ['TT']
+
+  adducts = {  # adduct:{spectra}
+  "[M-H]-":{
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=952&LM_ID=LMGP13010003&TRACK_ID=265
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=952&LM_ID=LMGP13010003&TRACK_ID=267
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=952&LM_ID=LMGP13010003&TRACK_ID=266
+    GL.MA            :100,
+    GL.MH_s_H2O        :0,
+    GL.MH_s_HCNO       :2,
+    GL.MH_s_C4H7N3O    :2,
+    GL.MA_P2O6_s_HG   :50,
+    GL.MA_s_FA         :5,
+    GL.MA_PO4_s_HG     :5,
+    GL.MA_P2O6_s_HG_FAk:5,
+    GL.MA_P2O6_s_HG_FA :5,
+    GL.HGA_s_H2O      :25,
+    GL.HGH_s_PO3       :5,
+    GL.HGH_s_PO4      :10,
+    GL.C5H7O9P2       :10,
+    GL.FAH             :5,
+    GL.C3H5O7P2        :1,
+    GL.HO6P2           :1}
+    }#,
+
+  # sn3 = headgroup
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=403.01818, type='Headgroup', chnops={'C':9, 'H':15, 'N':3, 'O':11, 'P':2},
+    smiles='OC1C(O)C(N2C=CC(N)=NC2=O)OC1COP(=O)(O)OP(=O)(O)')
+    super().__init__(CDPDG.adducts, sn1, sn2, headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -1388,26 +1483,37 @@ class Acylsphingosine(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M-H]-":{ # https://doi.org/10.1006/abio.2001.5536, https://doi.org/10.1016/S1044-0305(02)00358-6, https://doi.org/10.1016/j.biochi.2016.07.012, https://doi.org/10.1002/rcm.878
+  "[M-H]-":{ 
+    # https://doi.org/10.1006/abio.2001.5536, 
+    # https://doi.org/10.1016/S1044-0305(02)00358-6, 
+    # https://doi.org/10.1016/j.biochi.2016.07.012, 
+    # https://doi.org/10.1002/rcm.878 
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=562&LM_ID=LMSP02010003&TRACK_ID=94
     GL.MA           :30,
     GL.MA_s_H2O      :2,
     GL.MA_s_CH2O    :20, # This fragment not present with sphinganine
     GL.MA_s_MeOH    :10,
     GL.MA_s_CH2O_H2O:10,
     GL.Cer_P        :10,
-    GL.Cer_R        :26,
+    GL.Cer_R        :25,
     GL.Cer_S        :20,
     GL.Cer_T       :100,
     GL.Cer_U         :5,
     GL.FAH          :25,
     GL.FAkH         :10},
     
-  "[M+H]+":{ # https://doi.org/10.1002/bmc.4790
-    GL.MA          :20,
-    GL.MA_s_H2O    :15,
-    GL.MA_s_FA     :10,
-    GL.MA_s_FA_H2O:100,
-    GL.Cer_U       :10}
+  "[M+H]+":{ 
+    # https://doi.org/10.1002/bmc.4790, 
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=482&LM_ID=LMSP02010002&TRACK_ID=326
+    GL.MA           :20,
+    GL.MA_s_H2O     :15,
+    GL.MA_s_2H2O    :15,
+    GL.MA_s_CH2O     :0,
+    GL.MA_s_CH2O_H2O :0,
+    GL.MA_s_FA      :10,
+    GL.MA_s_FA_H2O: 100,
+    GL.Cer_U        :10,
+    GL.Cer_D        :10}
     }#,
 
   #"[M+H-H2O]+":{ #
@@ -1453,7 +1559,7 @@ class Acylphytosphingosine(GL.Sphingolipid):
   def __init__(self, base, sn1):
     super().__init__(Acylphytosphingosine.adducts, base, sn1)
 
-class CerP(GL.Sphingolipid):
+class CerPA(GL.Sphingolipid):
 
   tooltip = 'N-Acyl-ceramide-1-phosphate'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
@@ -1461,7 +1567,9 @@ class CerP(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M-H]-":{ # Matches lipidblast, https://doi.org/10.1016/j.biochi.2016.07.012
+  "[M-H]-":{ # Matches lipidblast, 
+    # https://doi.org/10.1016/j.biochi.2016.07.012, 
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=560&LM_ID=LMSP02050001&TRACK_ID=335
     GL.MA         :10, # Molecular ion
     GL.MA_s_H2O   :10, # Present in lipidblast
     GL.MA_s_FAk   :20, # Present in lipidblast
@@ -1471,12 +1579,14 @@ class CerP(GL.Sphingolipid):
     GL.O3P       :100},# Present in lipidblast
     
   "[M+H]+":{
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=562&LM_ID=LMSP02050001&TRACK_ID=331
     GL.MA             :10,
     GL.MA_s_H2O       :10,
+    GL.MA_s_HG        :10,
     GL.MA_s_HG_H2O    :10,
     GL.MA_s_HG_2H2O   :10,
-    GL.MA_s_HG_FA_H2O:100
-    }}
+    GL.MA_s_HG_FA_H2O:100}
+    }
 
   #"[M+H-H2O]+":{ #
   #  GL.MA         :100
@@ -1485,8 +1595,35 @@ class CerP(GL.Sphingolipid):
   def __init__(self, base, sn1):
     headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
     smiles='O=P(O)(O)')
-    super().__init__(CerP.adducts, base, sn1, headgroup)
+    super().__init__(CerPA.adducts, base, sn1, headgroup)
+'''
+class SpPA(GL.Sphingolipid): # While this class works, disabled as ceramide varability isn't yet built in.
 
+  tooltip = 'Sphingosine-1-phosphate'
+  base_types = ['Sphingosine']  # 18:0;O2, 18:1;O2
+  No_Tails = 0
+  tailOrganisation = ['B']
+
+  adducts = {  # adduct:{spectra}
+  "[M-H]-":{
+    GL.MA         :10,
+    GL.H2O4P     :100,
+    GL.O3P       :100},
+    
+  "[M+H]+":{
+    GL.MA           :10,
+    GL.MA_s_HG_2H2O:100}
+    }
+
+  #"[M+H-H2O]+":{ #
+  #  GL.MA         :100
+  #  }}#,
+
+  def __init__(self, base):
+    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
+    smiles='O=P(O)(O)')
+    super().__init__(SpPA.adducts, base, headgroup)
+'''
 class CerPC(GL.Sphingolipid):
 
   tooltip = 'N-Acyl-ceramide-1-phosphocholine'
@@ -1495,13 +1632,16 @@ class CerPC(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M+H]+":{ # Looks Good, Matches lipidblast
-    GL.MA          :10, # Molecular ion
-    GL.MA_s_H2O   :100, # Present in lipidblast
-    GL.MA_s_TMA     :1, # Present in lipidblast
-    GL.MA_s_TMA_H2O :5, # Present in lipidblast
-    GL.MA_s_HG_H2O  :2, # Present in lipidblast
-    GL.C5H15NO4P  :100}
+  # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=647&LM_ID=LMSP03010002&TRACK_ID=320
+  # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=731&LM_ID=LMSP03010001&TRACK_ID=82
+  "[M+H]+":{ # Looks Good, Matches lipidblast, 
+    GL.MA            :10, # Molecular ion
+    GL.MA_s_H2O     :100, # Present in lipidblast
+    GL.MA_s_TMA       :1, # Present in lipidblast
+    GL.MA_s_TMA_H2O   :5, # Present in lipidblast
+    GL.MA_s_HG_H2O    :2, # Present in lipidblast
+    GL.MA_s_HG_FA_H2O:10, 
+    GL.C5H15NO4P    :100}
     }
 
   def __init__(self, base, sn1):
@@ -1518,7 +1658,8 @@ class CerPE(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M-H]-":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
+  "[M-H]-":{ 
+    # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.MA_s_H2O    :1,
     GL.MA_s_FAk    :5,
@@ -1542,7 +1683,8 @@ class CerPI(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M-H]-":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
+  "[M-H]-":{ 
+    # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
     GL.MA        :100,
     GL.MA_s_H2O    :1,
     GL.MA_PO4_s_HG :2,
@@ -1568,7 +1710,24 @@ class HexCer(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
+  "[M-H]-":{ 
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=642&LM_ID=LMSP0501AA01&TRACK_ID=330
+    GL.MA           :30,
+    GL.MA_s_H2O      :0,
+    GL.MA_s_2H2O     :0,
+    GL.MA_s_HG     :100,
+    GL.MA_s_HG_H2O   :5,
+    GL.Cer_P         :1,
+    GL.Cer_R         :1,
+    GL.Cer_S         :1,
+    GL.Cer_T         :1,
+    GL.Cer_U         :1,
+    GL.FAH           :1,
+    GL.FAkH          :1},
+
+  "[M+H]+":{ 
+    # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html 
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=644&LM_ID=LMSP0501AA01&TRACK_ID=323
     GL.MA              :5,
     GL.MA_s_H2O       :25,
     GL.MA_s_HG         :5,
@@ -1621,7 +1780,9 @@ class Hex2Cer(GL.Sphingolipid):
   tailOrganisation = ['B','T']
 
   adducts = {  # adduct:{spectra}
-  "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
+  "[M+H]+":{ 
+    # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html 
+    # https://www.lipidmaps.org/data/standards/fetch_gif_mult.php?MASS=806&LM_ID=LMSP0501AB02&TRACK_ID=322
     GL.MA              :5,
     GL.MA_s_H2O       :25,
     GL.MA_s_Gal        :5,  
@@ -1716,6 +1877,32 @@ class FA(GL.OtherLipid):
   def __init__(self, sn1):
     body = GL.Other(name='FA', smiles='O'+sn1.smiles)
     super().__init__(FA.adducts, body, sn1)
+
+class ZE(GL.OtherLipid):
+
+  tooltip = 'Zymosteryl Ester'
+  No_Tails = 1
+  tailOrganisation = ['T']
+
+  adducts = {  # adduct:{spectra}
+  "[M+NH4]+":{ #
+    GL.MA      :10, # Molecular ion
+    GL.MA_s_FAk :0,
+    GL.MA_s_FA  :0,
+    GL.MH_s_FAk :0,
+    GL.MH_s_FA:100,
+    GL.FAkA     :0,
+    GL.FAkH     :0,
+    GL.C13H19  :20, # Present in lipidblast
+    GL.C12H17  :20, # Present in lipidblast
+    GL.C11H15  :20, # Present in lipidblast
+    GL.C10H15  :20} # Present in lipidblast
+    }
+
+  def __init__(self, sn1):
+    body = GL.Other(name='Zymosteryl', mass=384.339216, chnops={'C':27, 'H':44, 'O':1},
+    smiles='CC(C)=CCCC(C)C1CCC2C3CC=C4CC(CCC4(C)C3CCC12C)O'+sn1.smiles)
+    super().__init__(ZE.adducts, body, sn1)
 
 class CE(GL.OtherLipid):
 

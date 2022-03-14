@@ -49,6 +49,8 @@ class Generator(QObject):
         except: 
             (type, value, traceback) = sys.exc_info()
             sys.excepthook(type, value, traceback)
+            self.fileError.emit()
+            self.save_file.close()
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
