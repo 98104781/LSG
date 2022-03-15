@@ -10,7 +10,7 @@ from collections import Counter
 class Generator(QObject):
     
     finished = Signal()
-    progress = Signal()
+    progress = Signal(GL.Lipid)
     fileError = Signal()
 
     progress_bar_increment = Signal()
@@ -83,6 +83,7 @@ class Generator(QObject):
             for combination in product(*constituentList):
                 combination = flatten(combination)
                 yield cls(*combination)
+            self.progress.emit(cls)
 
     def flatten(data):
         if isinstance(data, tuple):
@@ -117,7 +118,7 @@ class Generator(QObject):
                                      f"MW: {lipid.mass}\n"
                                      f"PRECURSORMZ: {GL.MA(lipid, adduct, 0).mass}\n"
                                      f"COMPOUNDCLASS: {lipid.lipid_class}\n"
-                                     f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())} \n"
+                                     f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())}\n"
                                      f"SMILES: {lipid.smiles}\n"
                                      f"RETENTIONTIME: 0.00\n" # Pointless
                                      f"PRECURSORTYPE: {adduct}\n")

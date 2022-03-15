@@ -54,6 +54,11 @@ class Page(QWizardPage):
         time.sleep(0.25) # Sometimes takes some time for thread to exit.
         self.completeChanged.emit() # Waits a bit before emitting.
 
+    def classCompleted(self, cls):
+        consoleText = self.output_console.toPlainText()
+        consoleText = consoleText.replace('- '+cls.__name__+' ', '- '+cls.__name__+' - Completed')
+        self.output_console.setPlainText(consoleText)
+
     def save_as(self):
         '''Popup 'Save as' dialogue box'''
         # Create save location
@@ -82,6 +87,7 @@ class Page(QWizardPage):
                 self.generatorObject.finished.connect(self.completionText)
                 self.generatorObject.finished.connect(self.generatorObject.deleteLater)
                 self.generatorThread.finished.connect(self.generatorThread.deleteLater)
+                self.generatorObject.progress.connect(self.classCompleted)
                 self.generatorThread.start()
                 self.generatebutton.setEnabled(False)
                 self.completeChanged.emit()
@@ -114,7 +120,7 @@ class Page(QWizardPage):
         else: # If generate lipid range is selected:
             # Print to console the range of tails to be generated
             if self.field('tailSpecific'):
-                self.output_console.appendPlainText('The following tails will be used:\n')
+                self.output_console.appendPlainText('The following tails will be used:')
                 self.output_console.appendPlainText(', '.join(tail.name for tail in self.field('tailList'))+'\n')
             else:
                 self.output_console.appendPlainText('Tails will be generated from '
@@ -127,7 +133,7 @@ class Page(QWizardPage):
             self.output_console.appendPlainText('The following classes will be generated:')
             caString = '' # Generates string, and class list
             for item, item2 in self.selected_class_adducts.items():
-                caString += '- '+item.text(0)+'\n'
+                caString += '- '+item.text(0)+' \n'
                 self.classes_to_generate.append(item.lipidClass)
                 self.adducts_to_generate = {}
                 for adduct in item2: # Update the selected adducts

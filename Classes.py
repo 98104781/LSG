@@ -447,13 +447,67 @@ class HBMP(GL.Glycerolipid):
     GL.MH_s_HG_FA     :20},
 
   "[M-H]-":{
-    GL.MA              :5}
+    GL.MA            :100,
+    GL.MA_s_FAk        :1,
+    GL.MA_s_FA         :1,
+    GL.HGA_s_H2O       :1,
+    GL.FAH            :25}
     }
 
   def __init__(self, sn1, sn2, sn3):
     headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
     smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)', hgtails = [sn1])
     super().__init__(HBMP.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
+class DLCL(GL.Glycerolipid):
+
+  tooltip = 'Dilysocardiolipin'
+  No_Tails = 2
+  tailOrganisation = ['TT']
+
+  adducts = {  # adduct:{spectra}
+  # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
+  "[M-H]-":{
+    GL.MA            :100,
+    GL.FAH            :10,
+    GL.MA_C3H8O8P2_s_HG:0,
+    GL.MA_PO4_s_HG    :20,
+    GL.C3H7O5P_FA     :10,
+    GL.C3H5O4P_FA     :10,
+    GL.C3H6O5P        :50},
+    }
+
+  def __init__(self, sn1, sn2):
+    headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
+    smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1])
+    super().__init__(DLCL.adducts, sn1=sn2, sn3=headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ #
+
+class MLCL(GL.Glycerolipid):
+
+  tooltip = 'Lysocardiolipin'
+  No_Tails = 3
+  tailOrganisation = ['T','TT']
+
+  adducts = {  # adduct:{spectra}
+  # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
+  "[M-H]-":{
+    GL.MA            :100,
+    GL.FAH            :10,
+    GL.MA_C3H8O8P2_s_HG:0,
+    GL.MA_PO4_s_HG    :20,
+    GL.C3H7O5P_FA     :10,
+    GL.C3H5O4P_FA     :10,
+    GL.C3H6O5P        :50},
+    }
+
+  def __init__(self, sn1, sn2, sn3):
+    headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
+    smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1])
+    super().__init__(MLCL.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
