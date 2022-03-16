@@ -1,9 +1,9 @@
-import GenerateLipids as GL
 import Spectra
+import GenerateLipids as GL
 from collections import Counter
 
-from itertools import combinations_with_replacement as cwr
 from PySide6.QtCore import QModelIndex
+from itertools import combinations_with_replacement as cwr
 from PySide6.QtWidgets import QComboBox, QDialog, QHeaderView, QTableView, QVBoxLayout, QHBoxLayout, QLabel
 
 class NewWindow(QDialog): # Opened from SpectraSetupPage

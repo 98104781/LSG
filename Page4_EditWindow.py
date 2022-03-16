@@ -7,7 +7,7 @@ import GenerateLipids as GL
 
 import TailEditWindow as TEW
 from PySide6.QtCore import Qt, QModelIndex
-from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QTableView, QHeaderView
+from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, QTableView, QHeaderView
 
 class NewWindow(QDialog):
     '''

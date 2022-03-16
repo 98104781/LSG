@@ -41,8 +41,6 @@ class Page(QWizardPage):
         self.progress_bar.setMaximum(1)
         self.generatebutton.setEnabled(True)
         self.output_console.appendPlainText('Unsupported file type')
-        time.sleep(0.25) # Sometimes takes some time for thread to exit.
-        self.completeChanged.emit() # Waits a bit before emitting.
 
     def completionText(self):
         self.generatorThread.exit()
@@ -51,8 +49,6 @@ class Page(QWizardPage):
         self.progress_bar.setValue(1)
         self.generatebutton.setEnabled(True)
         self.output_console.appendPlainText(f"Generated {self.generatorObject.count} {self.generatorObject.noun} in {self.t1-self.t0:.4f} seconds!")
-        time.sleep(0.25) # Sometimes takes some time for thread to exit.
-        self.completeChanged.emit() # Waits a bit before emitting.
 
     def classCompleted(self, cls):
         consoleText = self.output_console.toPlainText()
@@ -74,18 +70,23 @@ class Page(QWizardPage):
             else: self.output_console.appendPlainText('Creating {}'.format(file_name))
 
             try:
-                self.progress_bar.setValue(0)
-                self.progress_bar.setMaximum(0)
-                self.generatorThread = QThread()
+                self.progress_bar.setValue(0) # Sets loading animation
+                self.progress_bar.setMaximum(0) # for progress bar
+                consoleText = self.output_console.toPlainText()
+                consoleText = consoleText.replace(' - Completed', ' ')
+                self.output_console.setPlainText(consoleText)
+
+                self.generatorThread = QThread() # Generator on second thread so GUI doesn't lag!
                 self.generatorObject = SaveAs.Generator(file_name, filter,
                     self.classes_to_generate, self.tails_to_generate, self.bases_to_generate, 
                     self.field('isomerism'), self.field('lipidSpecific'), self.field('lipidList'),
-                    self.field('tailSpecific'), self.field('tailList'))
+                    self.field('tailSpecific'), self.field('tailList'), self.field('specificOrganisation'))
                 self.generatorObject.moveToThread(self.generatorThread)
                 self.generatorObject.fileError.connect(self.unsupported_fileType)
                 self.generatorThread.started.connect(self.generatorObject.run)
                 self.generatorObject.finished.connect(self.completionText)
                 self.generatorObject.finished.connect(self.generatorObject.deleteLater)
+                self.generatorObject.finished.connect(self.completeChanged)
                 self.generatorThread.finished.connect(self.generatorThread.deleteLater)
                 self.generatorObject.progress.connect(self.classCompleted)
                 self.generatorThread.start()

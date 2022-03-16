@@ -16,7 +16,7 @@ class Generator(QObject):
     progress_bar_increment = Signal()
 
     def __init__(self, file_name, filter, classes_to_generate, tails_to_generate, bases_to_generate, 
-                 isomerism, lipidSpecifics, lipidList, tailSpecifics, tailList):
+                 isomerism, lipidSpecifics, lipidList, tailSpecifics, tailList, specificOrganisation):
         super().__init__()
 
         self.file_name = file_name
@@ -31,6 +31,7 @@ class Generator(QObject):
         self.lipidList = lipidList
         self.tailSpecifics = tailSpecifics
         self.tailList = tailList
+        self.specificOrganisation = specificOrganisation
 
         self.count = 0
 
@@ -67,8 +68,12 @@ class Generator(QObject):
 
         for cls in self.classes_to_generate:                 # Remove all ions in spectra with an intensity of 0
             for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
-
-            constituents = cls.tailOrganisation # List of tails and organisation: ['B', 'TT', 'T'], indicates a sphingoid Base,
+            
+            if self.specificOrganisation == True:
+                try: 
+                    constituents = cls.specificTailOrganisation
+                except: constituents = cls.tailOrganisation
+            else: constituents = cls.tailOrganisation # List of tails and organisation: ['B', 'TT', 'T'], indicates a sphingoid Base,
             constituentList = [] # a combination of two tails, and another tail independent of the previous combination is needed.
 
             for x in constituents: # ie, for 'B', 'TT', 'T' in ['B', 'TT', 'T']
@@ -82,7 +87,8 @@ class Generator(QObject):
 
             for combination in product(*constituentList):
                 combination = flatten(combination)
-                yield cls(*combination)
+                try:yield cls(*combination)
+                except:pass
             self.progress.emit(cls)
 
     def flatten(data):
@@ -107,29 +113,40 @@ class Generator(QObject):
         Defines how to export data when saved as .MSP.
         Contains lipid fragmentation informaiton.
         '''
-
+        
         self.noun = 'spectra' # Noun is used in Page 3 console when generation is completed
+        string = ''
         for lipid in self.lipid_data:
+            
+            if self.specificOrganisation == True: 
+                try: lipid.name = lipid.specificname
+                except:pass
+
             for adduct in lipid.adducts:
-                
-                lipid.resolve_spectra(adduct, lipid.adducts[adduct])
-                self.save_file.write(f"NAME: {lipid.name} {adduct}\n"
-                                     f"IONMODE: {GL.Masses[adduct][1]}\n"
-                                     f"MW: {lipid.mass}\n"
-                                     f"PRECURSORMZ: {GL.MA(lipid, adduct, 0).mass}\n"
-                                     f"COMPOUNDCLASS: {lipid.lipid_class}\n"
-                                     f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())}\n"
-                                     f"SMILES: {lipid.smiles}\n"
-                                     f"RETENTIONTIME: 0.00\n" # Pointless
-                                     f"PRECURSORTYPE: {adduct}\n")
-                
-                spectrum = lipid.spectra[adduct]
-                self.save_file.write(f"Num Peaks: {len(spectrum)}\n")
-                self.save_file.writelines(f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n' for peak in spectrum)
-                self.save_file.write("\n")
-                self.count += 1
+                try: # Seems to be ever so slightly faster to batch print them, if uses a bit more memory.
+                    lipid.resolve_spectra(adduct, lipid.adducts[adduct])
+                    string += (f"NAME: {lipid.name} {adduct}\n"
+                               f"IONMODE: {GL.Masses[adduct][1]}\n"
+                               f"MW: {lipid.mass}\n"
+                               f"PRECURSORMZ: {GL.MA(lipid, adduct, 0).mass}\n"
+                               f"COMPOUNDCLASS: {lipid.lipid_class}\n"
+                               f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())}\n"
+                               f"SMILES: {lipid.smiles}\n"
+                               f"RETENTIONTIME: 0.00\n" # Pointless
+                               f"PRECURSORTYPE: {adduct}\n")
+                    spectrum = lipid.spectra[adduct]
+                    for peak in spectrum:
+                        string += f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n'
+                    string += '\n'
+                    self.count += 1
+                except: pass
             del lipid
 
+            if (self.count % 500 == 0): # Every 500, batch print to file
+                self.save_file.write(string)
+                string = ''
+        self.save_file.write(string) # Batch print remaining to file
+        string = ''
         self.finished.emit()
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -150,6 +167,11 @@ class Generator(QObject):
 
         unique_mass = []
         for lipid in self.lipid_data:
+
+            if self.specificOrganisation == True: 
+                try: lipid.name = lipid.specificname
+                except:pass
+
             for adduct in lipid.adducts:
                 prec = GL.MA(lipid, adduct, 0)
                 if prec.mass not in unique_mass: # This can take some lot of time
@@ -181,6 +203,10 @@ class Generator(QObject):
                          'Product m/z', 'Product Charge', 'Explicit Retention Time', 'Explicit Collision Energy'])
 
         for lipid in self.lipid_data:
+
+            if self.specificOrganisation == True: 
+                try: lipid.name = lipid.specificname
+                except:pass
 
             for adduct in lipid.adducts:
                 lipid.resolve_spectra(adduct, lipid.adducts[adduct])

@@ -153,7 +153,8 @@ class ADGGA(GL.Glycerolipid):
 
   tooltip = 'Acyl-diacylglyceryl glucuronide'
   No_Tails = 3
-  tailOrganisation = ['T','TT']
+  tailOrganisation = ['TTT']
+  specificTailOrganisation = ['T','TT']
 
   adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Taken from http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
@@ -174,6 +175,7 @@ class ADGGA(GL.Glycerolipid):
     headgroup = GL.sn(mass=194.042653, type='Headgroup', chnops={'C':6, 'H':10, 'O':7},
     smiles='O('+sn1.smiles+')C1C(O)C(O)C(C(=O)O)OC1', hgtails = [sn1])
     super().__init__(ADGGA.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+    self.specificname=f"{self.lipid_class} {sn1.name}/{sn2.name}_{sn3.name}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -372,7 +374,8 @@ class AC3PIM2(GL.Glycerolipid):
 
   tooltip = 'Acyl-phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 3
-  tailOrganisation = ['T','TT']
+  tailOrganisation = ['TTT']
+  specificTailOrganisation = ['T','TT']
 
   adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches LipidBlast
@@ -388,6 +391,7 @@ class AC3PIM2(GL.Glycerolipid):
     headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O)C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1])
     super().__init__(AC3PIM2.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+    self.specificname=f"{self.lipid_class} {sn1.name}/{sn2.name}_{sn3.name}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -395,7 +399,8 @@ class AC4PIM2(GL.Glycerolipid):
 
   tooltip = 'Diacyl-phosphatidylinositol-dimannoside diacylglycerol'
   No_Tails = 4
-  tailOrganisation = ['TT','TT']
+  tailOrganisation = ['TTTT']
+  specificTailOrganisation = ['TT','TT']
 
   adducts = {  # adduct:{spectra}
   "[M-H]-":{ # Matches LipidBlast
@@ -409,6 +414,7 @@ class AC4PIM2(GL.Glycerolipid):
     headgroup = GL.sn(mass=584.135365, type='Headgroup', chnops={'C':18, 'H':33, 'O':19, 'P':1},
     smiles='O(C3OC(CO)C(O)C(O)C3O)C1C(O)C(O)C(O('+sn2.smiles+'))C(OC2OC(CO('+sn1.smiles+'))C(O)C(O)C2O)C1OP(O)(=O)', hgtails = [sn1, sn2])
     super().__init__(AC4PIM2.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
+    self.specificname=f"{self.lipid_class} {sn1.name}_{sn2.name}/{sn3.name}_{sn4.name}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -437,7 +443,8 @@ class HBMP(GL.Glycerolipid):
 
   tooltip = 'Hemibismonoacylglycerophosphate'
   No_Tails = 3
-  tailOrganisation = ['T','TT']
+  tailOrganisation = ['TTT']
+  specificTailOrganisation = ['T','TT']
 
   adducts = {  # adduct:{spectra}
   "[M+NH4]+":{
@@ -458,6 +465,7 @@ class HBMP(GL.Glycerolipid):
     headgroup = GL.sn(mass=172.013674, type='Headgroup', chnops={'C':3, 'H':9, 'O':6, 'P':1},
     smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)', hgtails = [sn1])
     super().__init__(HBMP.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+    self.specificname=f"{self.lipid_class} {sn1.name}/{sn2.name}_{sn3.name}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -490,7 +498,8 @@ class MLCL(GL.Glycerolipid):
 
   tooltip = 'Lysocardiolipin'
   No_Tails = 3
-  tailOrganisation = ['T','TT']
+  tailOrganisation = ['TTT']
+  specificTailOrganisation = ['T','TT']
 
   adducts = {  # adduct:{spectra}
   # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
@@ -508,6 +517,7 @@ class MLCL(GL.Glycerolipid):
     headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
     smiles=sn1.inverseSmiles+'OCC(O)COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1])
     super().__init__(MLCL.adducts, sn1=sn2, sn2=sn3, sn3=headgroup)
+    self.specificname=f"{self.lipid_class} {sn1.name}/{sn2.name}_{sn3.name}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -515,7 +525,8 @@ class CL(GL.Glycerolipid):
 
   tooltip = 'Cardiolipin'
   No_Tails = 4
-  tailOrganisation = ['TT','TT']
+  tailOrganisation = ['TTTT']
+  specificTailOrganisation = ['TT','TT']
 
   adducts = {  # adduct:{spectra}
 
@@ -538,6 +549,7 @@ class CL(GL.Glycerolipid):
     headgroup = GL.sn(mass=326.016783, type='Headgroup', chnops={'C':6, 'H':16, 'O':11, 'P':2},
     smiles=sn1.inverseSmiles+'OCC(O'+sn2.smiles+')COP(=O)(O)OCC(O)COP(O)(=O)', hgtails = [sn1, sn2])
     super().__init__(CL.adducts, sn1=sn3, sn2=sn4, sn3=headgroup)
+    self.specificname=f"{self.lipid_class} {sn1.name}_{sn2.name}/{sn3.name}_{sn4.name}"
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -1804,7 +1816,8 @@ class AHexCer(GL.Sphingolipid): # doesnt work with how generation is set up...
   tooltip = 'N-Acyl-ceramide-1-Acylhexose'
   base_types = ['Sphinganine', 'Sphingosine']  # 18:0;O2, 18:1;O2
   No_Tails = 2
-  tailOrganisation = ['B','T','T']
+  tailOrganisation = ['B','TT']
+  specificTailOrganisation = ['B','T','T']
 
   adducts = {  # adduct:{spectra}
   "[M+H]+":{ # http://prime.psc.riken.jp/compms/msdial/lipidnomenclature.html
@@ -1825,6 +1838,7 @@ class AHexCer(GL.Sphingolipid): # doesnt work with how generation is set up...
     headgroup = GL.sn(mass=180.063388, type='Headgroup', chnops={'C':6, 'H':12, 'O':6},
     smiles='OC1C(O)C(O)C(CO'+sn1.smiles+')OC1', hgtails=[sn1])
     super().__init__(AHexCer.adducts, base, sn1=sn2, headgroup=headgroup)
+    self.specificname=f"{self.lipid_class} {base.name}_{sn1.name}/{sn2.name}"
 
 class Hex2Cer(GL.Sphingolipid):
 
@@ -1929,8 +1943,31 @@ class FA(GL.OtherLipid):
     }}
 
   def __init__(self, sn1):
-    body = GL.Other(name='FA', smiles='O'+sn1.smiles)
-    super().__init__(FA.adducts, body, sn1)
+    body = GL.Other(name='FA '+sn1.name, mass=sn1.mass, chnops=sn1.formula, smiles='O'+sn1.smiles)
+    super().__init__(FA.adducts, body)
+
+class FAHFA(GL.OtherLipid):
+
+  tooltip = 'Fatty Acid Hydroxyl Fatty Acid\nEnsure Hydroxy Fatty Acids are available'
+  No_Tails = 2
+  tailOrganisation = ['T','T']
+
+  adducts = {
+    # 10.1016/j.cell.2014.09.035
+    "[M-H]-":{
+    GL.MH             :10,
+    GL.MH_s_H2O        :0,
+    GL.MH_s_FAk       :10,
+    GL.MH_s_FA        :10,
+    GL.FAH           :100
+    }}
+
+  def __init__(self, sn1, sn2):
+    smiles = sn1.smiles
+    smiles = smiles.replace('(O)', '(O'+sn2.smiles+')', 1)
+    body = GL.Other(name='FAHFA '+sn1.name, mass=sn1.mass, chnops=sn1.formula, smiles='O'+smiles)
+    if sn1.oh > 0: super().__init__(FAHFA.adducts, body, sn1=sn2)
+    else: pass # sn1 = GL.sn(c=sn1.c, d=sn1.d, type=sn1.type, me=sn1.me, oh=sn1.oh+1, dt=sn1.dt)
 
 class ZE(GL.OtherLipid):
 

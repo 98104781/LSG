@@ -26,9 +26,6 @@ class Page(QWizardPage):
         self.addLipid = QPushButton('New Tail')
         self.addLipid.clicked.connect(self.addNewTail)
         self.hLayout.addWidget(self.addLipid)
-        self.editLipid = QPushButton('Edit Selected')
-        self.editLipid.clicked.connect(self.editSelectedTail)
-        self.hLayout.addWidget(self.editLipid)
         self.removeLipid = QPushButton('Remove Selected')
         self.removeLipid.clicked.connect(self.removeSelectedTail)
         self.hLayout.addWidget(self.removeLipid)
@@ -36,17 +33,23 @@ class Page(QWizardPage):
 
         self.registerField("tailList", self, "tableProperty")
 
-        # Common fatty acids according to LipidMatch
-        self.tailList =  [GL.sn( 8, 0, type='Acyl'), GL.sn(10, 0, type='Acyl'), GL.sn(12, 0, type='Acyl'), GL.sn(13, 0, type='Acyl'),
-                          GL.sn(14, 0, type='Acyl'), GL.sn(14, 1, type='Acyl'), GL.sn(15, 0, type='Acyl'), GL.sn(15, 1, type='Acyl'),
-                          GL.sn(16, 0, type='Acyl'), GL.sn(16, 1, type='Acyl'), GL.sn(17, 0, type='Acyl'), GL.sn(17, 1, type='Acyl'),
-                          GL.sn(17, 2, type='Acyl'), GL.sn(18, 0, type='Acyl'), GL.sn(18, 1, type='Acyl'), GL.sn(18, 2, type='Acyl'),
-                          GL.sn(18, 3, type='Acyl'), GL.sn(18, 4, type='Acyl'), GL.sn(19, 0, type='Acyl'), GL.sn(19, 1, type='Acyl'),
-                          GL.sn(20, 1, type='Acyl'), GL.sn(20, 2, type='Acyl'), GL.sn(20, 3, type='Acyl'), GL.sn(20, 4, type='Acyl'),
-                          GL.sn(20, 5, type='Acyl'), GL.sn(21, 0, type='Acyl'), GL.sn(22, 0, type='Acyl'), GL.sn(22, 1, type='Acyl'),
-                          GL.sn(22, 2, type='Acyl'), GL.sn(22, 3, type='Acyl'), GL.sn(22, 4, type='Acyl'), GL.sn(22, 5, type='Acyl'),
-                          GL.sn(22, 6, type='Acyl'), GL.sn(23, 0, type='Acyl'), GL.sn(24, 0, type='Acyl'), GL.sn(24, 1, type='Acyl'),
-                          GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl')]                        
+        # Common fatty acids from various sources
+        # https://doi.org/10.1016/B978-0-12-809521-8.00002-7
+        # https://doi.org/10.1016/j.pharmthera.2021.107972
+        self.tailList = [GL.sn( 4, 0, type='Acyl'), GL.sn( 6, 0, type='Acyl'), GL.sn( 8, 0, type='Acyl'), GL.sn(10, 0, type='Acyl'), 
+                         GL.sn(12, 0, type='Acyl'), GL.sn(12, 1, type='Acyl'), GL.sn(13, 0, type='Acyl'), GL.sn(14, 0, type='Acyl'), 
+                         GL.sn(14, 1, type='Acyl'), GL.sn(15, 0, type='Acyl'), GL.sn(15, 1, type='Acyl'), GL.sn(16, 0, type='Acyl'), 
+                         GL.sn(16, 1, type='Acyl'), GL.sn(17, 0, type='Acyl'), GL.sn(17, 1, type='Acyl'), GL.sn(17, 2, type='Acyl'), 
+                         GL.sn(18, 0, type='Acyl'), GL.sn(18, 1, type='Acyl'), GL.sn(18, 2, type='Acyl'), GL.sn(18, 3, type='Acyl'), 
+                         GL.sn(18, 4, type='Acyl'), GL.sn(19, 0, type='Acyl'), GL.sn(19, 1, type='Acyl'), GL.sn(20, 0, type='Acyl'), 
+                         GL.sn(20, 1, type='Acyl'), GL.sn(20, 2, type='Acyl'), GL.sn(20, 3, type='Acyl'), GL.sn(20, 4, type='Acyl'), 
+                         GL.sn(20, 5, type='Acyl'), GL.sn(21, 0, type='Acyl'), GL.sn(22, 0, type='Acyl'), GL.sn(22, 1, type='Acyl'), 
+                         GL.sn(22, 2, type='Acyl'), GL.sn(22, 3, type='Acyl'), GL.sn(22, 4, type='Acyl'), GL.sn(22, 5, type='Acyl'), 
+                         GL.sn(22, 6, type='Acyl'), GL.sn(23, 0, type='Acyl'), GL.sn(24, 0, type='Acyl'), GL.sn(24, 1, type='Acyl'), 
+                         GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl')]        
+        self.tailList.extend([GL.sn( 12, 0, type='Acyl', oh=1), GL.sn( 14, 0, type='Acyl', oh=1), GL.sn( 16, 0, type='Acyl', oh=1),
+                              GL.sn( 17, 0, type='Acyl', oh=1), GL.sn( 18, 0, type='Acyl', oh=1), GL.sn( 18, 1, type='Acyl', oh=1),
+                              GL.sn( 18, 2, type='Acyl', oh=1), GL.sn( 20, 1, type='Acyl', oh=1), GL.sn( 20, 2, type='Acyl', oh=1)])                
         self.buildList()
 
     def buildList(self):
@@ -70,14 +73,6 @@ class Page(QWizardPage):
         tailWindow = TEW.TailWindow()
         tailWindow.output.connect(self.getTail)
         tailWindow.exec()
-
-    def editSelectedTail(self):
-        try: 
-            row = self.tableView.selectedIndexes()[0].row()
-            tail = self.openTailEditor(self.lipidList[row])
-            if tail: self.lipidList[row] = tail
-        except: pass
-        self.buildList()
 
     def removeSelectedTail(self): # Reverse list of indexes so ones towards the end are deleted first
         indexesToDelete = sorted([row.row() for row in self.tableView.selectedIndexes()], reverse=True)

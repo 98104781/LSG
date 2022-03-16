@@ -1,15 +1,14 @@
 import inspect
 
-from sklearn import tree
-
 import Classes
 import Classes_isomers
-from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
 import Page3_EditWindow as P2EW
+from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
 
-from PySide6.QtCore import Property, Qt, Signal
+
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
+from PySide6.QtCore import Property, Qt, Signal
+from PySide6.QtWidgets import QPushButton, QCheckBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
 
 class Page(QWizardPage):
     '''
@@ -31,6 +30,15 @@ class Page(QWizardPage):
         self.classQbox = {} # GPL QCheckBoxes        
         self.classAdductQbox = {} # Adduct QCheckBoxes
 
+        self.specificOrganisation = QCheckBox('Respect headgroup-acyl isomerism')
+        self.specificOrganisation.setToolTip('Some lipids contain fatty-acyls on headgroup, e.g. AC3PIM2. Duplicate fatty-acyl'
+                                             '\ncombinations are required to generate all species e.g. 16:0/18:0_18:1 and 18:1/16:0_18:1.'
+                                             '\nHowever this can lead to excessively large libraries. If unticked, only unique'
+                                             '\nand location-unspecific combinations generated e.g. 16:0_18:0_18:1. However, ensure'
+                                             '\nfatty-acyl location-specific fragments are excluded in the spectra selected below!')
+        self.specificOrganisation.setChecked(True)
+        self.registerField('specificOrganisation', self.specificOrganisation)
+
         self.treeView = QTreeWidget()
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
@@ -38,6 +46,7 @@ class Page(QWizardPage):
         self.modifybutton = QPushButton("Modify fragmentation spectra for chosen adduct(s)")
         self.modifybutton.clicked.connect(self.open_editspectrawindow)
 
+        self.vLayout.addWidget(self.specificOrganisation)
         self.vLayout.addWidget(self.treeView)
         self.vLayout.addWidget(self.modifybutton)
      
