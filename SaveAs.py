@@ -1,7 +1,6 @@
 import sys
 import csv
 
-from matplotlib.cbook import flatten
 import GenerateLipids as GL
 from PySide6.QtCore import QObject, Signal
 from itertools import combinations_with_replacement as cwr, product
@@ -86,14 +85,14 @@ class Generator(QObject):
                     else: pass
 
             for combination in product(*constituentList):
-                combination = flatten(combination)
+                combination = self.flatten(combination)
                 try:yield cls(*combination)
                 except:pass
             self.progress.emit(cls)
 
-    def flatten(data):
+    def flatten(self, data):
         if isinstance(data, tuple):
-            for x in data: yield from flatten(x)
+            for x in data: yield from self.flatten(x)
         else: yield data
 
     def generate_specific(self):
