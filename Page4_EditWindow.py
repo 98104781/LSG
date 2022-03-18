@@ -7,7 +7,7 @@ import GenerateLipids as GL
 
 import TailEditWindow as TEW
 from PySide6.QtCore import Qt, QModelIndex
-from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, QTableView, QHeaderView
+from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, QTableView, QHeaderView, QLabel
 
 class NewWindow(QDialog):
     '''
@@ -45,6 +45,13 @@ class NewWindow(QDialog):
         self.hLayout2.addWidget(self.lipidAdduct)
         self.vLayout.addLayout(self.hLayout2)
         self.vLayout.addLayout(self.hLayout3)
+
+        self.label = QLabel("Select the buttons above to specify tails for the selected lipid.\n\n"
+                            "Generated spectra don't respect sn isomerism. All isomer dependent\n"
+                            "fragments will be equal in intensity.\n\nIf the observed fragment intensities"
+                            " differ from the default provided, they may\nbe manually updated on the left.\n\n"
+                            "Any fragment with '0' intensity will be removed when lipids are generated. ")
+        self.vLayout.addWidget(self.label)
         self.vLayout.addStretch()
 
         self.tailButton = {} # Buttons for tails stored in this dict
@@ -139,6 +146,10 @@ class NewWindow(QDialog):
                 self.tails.append(button.tail)
             lipidClass = self.lipidClass.currentData()
             self.lipid = lipidClass(*self.tails)
+
+            try: self.lipid.name = self.lipid.specificname
+            except: pass # For lipids with acyl in headgroup
+
             self.updateSpectra(self.lipid)
         except: self.updateSpectra()
 
