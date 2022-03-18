@@ -1,9 +1,10 @@
+import os
 import TailEditWindow as TEW
 import GenerateLipids as GL
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QAbstractTableModel, Property, Signal
-from PySide6.QtWidgets import QPushButton, QTableView, QVBoxLayout, QHBoxLayout, QWizard, QWizardPage, QHeaderView
+from PySide6.QtWidgets import QPushButton, QTableView, QVBoxLayout, QHBoxLayout, QWizard, QWizardPage, QHeaderView, QFileDialog
 
 class Page(QWizardPage):
     '''
@@ -18,6 +19,15 @@ class Page(QWizardPage):
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\FAs.png'))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
+        self.hLayout2 = QHBoxLayout(self)
+
+        self.importButton = QPushButton('Import Tail List')
+        self.hLayout.addWidget(self.importButton)
+        self.importButton.clicked.connect(self.importTailList)
+        self.exportButton = QPushButton('Export Tail List')
+        self.exportButton.clicked.connect(self.exportTailList)
+        self.hLayout.addWidget(self.exportButton)
+        self.vLayout.addLayout(self.hLayout)
 
         self.tableView = QTableView()
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -25,11 +35,11 @@ class Page(QWizardPage):
 
         self.addLipid = QPushButton('New Tail')
         self.addLipid.clicked.connect(self.addNewTail)
-        self.hLayout.addWidget(self.addLipid)
+        self.hLayout2.addWidget(self.addLipid)
         self.removeLipid = QPushButton('Remove Selected')
         self.removeLipid.clicked.connect(self.removeSelectedTail)
-        self.hLayout.addWidget(self.removeLipid)
-        self.vLayout.addLayout(self.hLayout)
+        self.hLayout2.addWidget(self.removeLipid)
+        self.vLayout.addLayout(self.hLayout2)
 
         self.registerField("tailList", self, "tableProperty")
 
@@ -51,6 +61,35 @@ class Page(QWizardPage):
                               GL.sn( 17, 0, type='Acyl', oh=1), GL.sn( 18, 0, type='Acyl', oh=1), GL.sn( 18, 1, type='Acyl', oh=1),
                               GL.sn( 18, 2, type='Acyl', oh=1), GL.sn( 20, 1, type='Acyl', oh=1), GL.sn( 20, 2, type='Acyl', oh=1)])                
         self.buildList()
+
+    def importTailList(self):
+        file_name, filter = QFileDialog.getOpenFileName(filter="Tail List (*.txt)", selectedFilter='')
+
+        if file_name and os.path.exists(file_name):
+            open_file = open(file_name, 'r')
+            lines = [line.strip() for line in open_file.readlines()]
+            lines = [line.split(' ') for line in lines]
+            for line in lines:
+                    try:
+                        tail = GL.sn(c=int(line[0]), d=int(line[1]),
+                                      type=line[2], me=int(line[3]),
+                                    oh=int(line[4]),dt=int(line[5]))
+                        self.getTail(tail)
+                    except: continue
+            open_file.close()
+
+    def exportTailList(self):
+        file_name, filter = QFileDialog.getSaveFileName(filter="Tail List (*.txt)", selectedFilter='')
+
+        if file_name:
+            if os.path.exists(file_name):
+                try:os.remove(file_name) # Removes if exists
+                except PermissionError:
+                    pass
+            save_file = open(file_name, 'x', newline='')
+            outputStr = '\n'.join(f"{sn.c} {sn.d} {sn.type} {sn.me} {sn.oh} {sn.dt}" for sn in self.tailList)
+            save_file.write(outputStr)
+            save_file.close()
 
     def buildList(self):
         self.tailList = sorted(self.tailList)
