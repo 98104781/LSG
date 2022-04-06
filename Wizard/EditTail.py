@@ -1,7 +1,7 @@
+import Lipids.GenerateLipids as GL
 
-import GenerateLipids as GL
-from PySide6.QtGui import QIntValidator
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QIntValidator
 from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox
 
 class TailWindow(QDialog):
@@ -10,7 +10,7 @@ class TailWindow(QDialog):
     '''
     output = Signal(GL.sn)
 
-    def __init__(self):
+    def __init__(self, type='A'):
         super().__init__()
 
         self.setWindowTitle('LSG3')
@@ -19,9 +19,13 @@ class TailWindow(QDialog):
         self.hLayout = QHBoxLayout(self)
     
         self.ty = QComboBox()
-        self.ty.addItem('Acyl')
-        self.ty.addItem('Ether')
-        self.ty.addItem('Vinyl')
+        if type == 'A': self.ty.addItem('Acyl')
+        elif type == 'O': self.ty.addItem('Ether')
+        elif type == 'P': self.ty.addItem('Vinyl')
+        elif type == 'X':
+            self.ty.addItem('Acyl')
+            self.ty.addItem('Ether')
+            self.ty.addItem('Vinyl')
         self.hLayout.addWidget(self.ty)
 
         self.c = QLineEdit()

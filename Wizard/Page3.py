@@ -1,14 +1,8 @@
-import inspect
+import Wizard.EditLipidAdduct as LAEW
 
-import Classes
-import Classes_isomers
-import Page3_EditWindow as P2EW
-from GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
-
-
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QCursor
 from PySide6.QtCore import Property, Qt, Signal
-from PySide6.QtWidgets import QPushButton, QCheckBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage
+from PySide6.QtWidgets import QPushButton, QCheckBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage, QMenu
 
 class Page(QWizardPage):
     '''
@@ -19,6 +13,8 @@ class Page(QWizardPage):
 
     def __init__(self, parent=None):
         super(Page, self).__init__(parent)
+
+        self.wiz = parent
 
         self.setTitle("Select lipid classes to generate")
         self.setSubTitle("Select from the list of available lipid classes below.\n"
@@ -40,32 +36,45 @@ class Page(QWizardPage):
         self.registerField('specificOrganisation', self.specificOrganisation)
 
         self.treeView = QTreeWidget()
+        self.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.treeView.customContextMenuRequested.connect(self.editLipidContextMenu)
+        self.treeView.doubleClicked.connect(self.editLipid)
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
+        
 
-        self.modifybutton = QPushButton("Modify fragmentation spectra for chosen adduct(s)")
-        self.modifybutton.clicked.connect(self.open_editspectrawindow)
+        self.modifybutton = QPushButton("Modify selected lipid")
+        self.modifybutton.clicked.connect(self.editLipid)
 
         self.vLayout.addWidget(self.specificOrganisation)
         self.vLayout.addWidget(self.treeView)
         self.vLayout.addWidget(self.modifybutton)
-     
+
+    def editLipidContextMenu(self):
+        menu = QMenu()
+        menu.addAction("Edit Lipid")
+        selection = menu.exec(QCursor.pos())
+        if selection:
+            self.editLipid()
+
+    def editLipid(self):
+        try:
+            cls = self.treeView.selectedItems()[0]
+            if cls.parent():
+                cls = cls.parent().lipidClass
+            else: cls = cls.lipidClass
+            clsWindow = LAEW.LipidWindow(self, [cls])
+            clsWindow.exec()
+            self.initializePage()
+        except: pass
 
     def initializePage(self) -> None:
 
         self.treeView.clear()
 
-        if self.field('isomerism') == False:
-            # Glycerolipids
-            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
-            # Sphingolipids
-            classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
-            # ETC Lipids, Cholesterol ester
-            classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__() if inspect.getmodule(cls) == Classes])
-        else:
-            classes_to_generate = [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes_isomers]
+        self.classList = self.wiz.classes_to_generate
 
-        for cls in classes_to_generate: #  Make boxes for Treeview
+        for cls in self.classList: #  Make boxes for Treeview
             self.classQbox[cls]  =  QTreeWidgetItem(self.treeView)
             root = self.classQbox[cls] # Creates tickbox for class
             root.lipidClass = cls # Custom variable to store class
@@ -85,15 +94,6 @@ class Page(QWizardPage):
                 child.setFlags(child.flags() | Qt.ItemIsUserCheckable) 
 
         return super().initializePage()
-
-    def open_editspectrawindow(self):
-        '''
-        Opens external window to modify selected spectra.
-        Should display an example lipid spectra of GPL
-        16:0_18:1 with appropriate masses and intensity.
-        '''
-        editspectrawindow = P2EW.NewWindow(self.field('tree'))
-        editspectrawindow.exec()
             
     def treeData(self):
         '''

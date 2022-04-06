@@ -1,13 +1,11 @@
 import os
 import time
-
-import GenerateLipids as GL
 import SaveAs
+import Lipids.GenerateLipids as GL
 
-from PySide6.QtWidgets import QFileDialog
-
-from PySide6.QtCore import QThread
 from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QThread
+from PySide6.QtWidgets import QFileDialog
 from PySide6.QtWidgets import QProgressBar
 from PySide6.QtWidgets import QPlainTextEdit, QPushButton, QVBoxLayout, QWizard, QWizardPage
 

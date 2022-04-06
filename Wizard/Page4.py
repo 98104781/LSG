@@ -1,4 +1,4 @@
-import Page4_EditWindow as P2BEW
+import Wizard.EditLipidAdduct as LAEW
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QAbstractTableModel, Property, Signal
@@ -13,17 +13,17 @@ class Page(QWizardPage):
     def __init__(self, parent=None):
         super(Page, self).__init__(parent)
 
+        self.parent = parent
+
         self.setTitle("Create specific lipids")
-        self.setSubTitle(" ")
+        self.setSubTitle("Define a list of specific lipids to generate")
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
         self.setCommitPage(True)
-
-        self.lipidList = []
         self.tableView = QTableView()
+        self.tableView.doubleClicked.connect(self.editSelectedLipid)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.buildList()
         self.vLayout.addWidget(self.tableView)
 
         self.addLipid = QPushButton('New Lipid')
@@ -37,6 +37,8 @@ class Page(QWizardPage):
         self.hLayout.addWidget(self.removeLipid)
         self.vLayout.addLayout(self.hLayout)
 
+        self.lipidList = []
+        self.buildList()
         self.registerField("lipidList", self, "tableProperty")
 
     def buildList(self):
@@ -45,10 +47,15 @@ class Page(QWizardPage):
         self.completeChanged.emit()
 
     def openLipidEditor(self, selection=None):
-        editspectrawindow = P2BEW.NewWindow(self, selection)
+
+        if selection is None: # ie not editing a lipid
+            lipidClass = self.parent.classes_to_generate
+        else: lipidClass = [type(selection[0])] # else edit selection
+
+        editspectrawindow = LAEW.LipidWindow(self, lipidClass, classEdit=False, selection=selection)
         if editspectrawindow.exec() > 0:
             lipid = editspectrawindow.lipid
-            adduct = editspectrawindow.lipidAdduct.currentData()
+            adduct = editspectrawindow.adductBox.currentText()
             return lipid, adduct
 
     def addNewLipid(self):
@@ -69,7 +76,7 @@ class Page(QWizardPage):
     def removeSelectedLipid(self): # Reverse list of indexes so ones towards the end are deleted first
         indexesToDelete = sorted([row.row() for row in self.tableView.selectedIndexes()], reverse=True)
         for index in indexesToDelete:
-            self.tailList.pop(index)
+            self.lipidList.pop(index)
         self.buildList()
 
     def isComplete(self):
@@ -89,6 +96,9 @@ class Page(QWizardPage):
     tableProperty = Property(list, getLipidList, setLipidList)
     lipidListChanged = Signal()
 
+    def initializePage(self):
+        self.lipidList = self.tableModel.tdata
+        return super().initializePage()
 
 class LipidTableModel(QAbstractTableModel):
     '''

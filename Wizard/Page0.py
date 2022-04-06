@@ -1,5 +1,7 @@
-from PySide6.QtGui import QIntValidator, QPixmap
-from PySide6.QtWidgets import QRadioButton, QButtonGroup, QVBoxLayout, QHBoxLayout, QLabel, QWizard, QWizardPage
+import Wizard.EditLipidAdduct as LAEW
+
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QRadioButton, QButtonGroup, QVBoxLayout, QHBoxLayout, QLabel, QWizard, QWizardPage, QPushButton
 
 class Page(QWizardPage):
     '''
@@ -48,6 +50,9 @@ class Page(QWizardPage):
         self.tailSpecific.clicked.connect(self.completeChanged)
         self.buttonGroup2.addButton(self.tailSpecific)
 
+        self.editLipids = QPushButton('Edit Lipid Classes')
+        self.editLipids.clicked.connect(self.editLipidClasses)
+
         self.vLayout.addWidget(self.textBox1)
         self.hLayout.addWidget(self.lipidRange)
         self.hLayout.addWidget(self.lipidSpecific)
@@ -57,6 +62,8 @@ class Page(QWizardPage):
         self.hLayout2.addWidget(self.tailSpecific)
         self.vLayout.addLayout(self.hLayout2)
         self.vLayout.addWidget(self.textBox3)
+        self.vLayout.addStretch()
+        self.vLayout.addWidget(self.editLipids)
 
     def enableOptions(self):
         self.tailSpecific.setDisabled(False)
@@ -86,4 +93,7 @@ class Page(QWizardPage):
         elif self.tailSpecific.isChecked():
             return 2
 
-    
+    def editLipidClasses(self):
+        classes_to_generate = self.parent.classes_to_generate
+        editLipidWindow = LAEW.NewWindow(self, classes_to_generate)
+        editLipidWindow.exec()

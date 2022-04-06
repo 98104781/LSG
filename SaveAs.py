@@ -1,7 +1,7 @@
 import sys
 import csv
 
-import GenerateLipids as GL
+import Lipids.GenerateLipids as GL
 from PySide6.QtCore import QObject, Signal
 from itertools import combinations_with_replacement as cwr, product
 from collections import Counter
@@ -37,6 +37,7 @@ class Generator(QObject):
 
     def run(self):
         try:
+            #import pydevd;pydevd.settrace(suspend=False)
             self.save_file = open(self.file_name, 'x', newline='')
             if self.lipidSpecifics:
                 self.lipid_data = self.generate_specific()
@@ -58,12 +59,29 @@ class Generator(QObject):
 
     def generate_range(self):
 
+        self.acyls = []
+        self.ethers = []
+        self.vinyls = []
+        self.bases = []
+
         if self.tailSpecifics:
-            self.tails = self.tailList
+
+            for tail in self.tailList:
+                if tail.type == 'Acyl':
+                    self.acyls.append(tail)
+                elif tail.type == 'Ether':
+                    self.ethers.append(tail)
+                elif tail.type == 'Vinyl':
+                    self.vinyls.append(tail)
             self.bases = GL.generate_base_tails(self.bases_to_generate)
+
         else:
-            self.tails = GL.generate_tails(self.tails_to_generate, 'Acyl')
+
+            self.acyls = GL.generate_tails(self.tails_to_generate, 'Acyl')
+            self.ethers = GL.generate_tails(self.tails_to_generate, 'Ether')
+            self.vinyls = GL.generate_tails(self.tails_to_generate, 'Vinyl')
             self.bases = GL.generate_base_tails(self.bases_to_generate)
+
 
         for cls in self.classes_to_generate:                 # Remove all ions in spectra with an intensity of 0
             for adduct in cls.adducts: cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
@@ -72,16 +90,20 @@ class Generator(QObject):
                 try: 
                     constituents = cls.specificTailOrganisation
                 except: constituents = cls.tailOrganisation
-            else: constituents = cls.tailOrganisation # List of tails and organisation: ['B', 'TT', 'T'], indicates a sphingoid Base,
+            else: constituents = cls.tailOrganisation # List of tails and organisation: ['B', 'AA', 'A'], indicates a sphingoid Base,
             constituentList = [] # a combination of two tails, and another tail independent of the previous combination is needed.
 
-            for x in constituents: # ie, for 'B', 'TT', 'T' in ['B', 'TT', 'T']
-                group = dict(Counter(x)) # ie, {'B':1}, {'T':2}, {'T':1}
+            for x in constituents: # ie, for 'B', 'AA', 'A' in ['B', 'AA', 'A']
+                group = dict(Counter(x)) # ie, {'B':1}, {'A':2}, {'A':1}
                 for key in group:
                     if key == 'B': # In the case of 'B', it indicates a base is needed. Get base list!
                         constituentList.append([self.bases[basetype] for basetype in cls.base_types])
-                    elif key == 'T': # In the case of 'T', it indicates a tail is needed. generate tail combination!
-                        constituentList.append(cwr(self.tails, r=group[key]))
+                    elif key == 'A': # In the case of 'A', it indicates an acyl tail is needed. generate tail combination!
+                        constituentList.append(cwr(self.acyls, r=group[key]))
+                    elif key == 'O': # In the case of 'O', it indicates an ether tail is needed. generate tail combination!
+                        constituentList.append(cwr(self.ethers, r=group[key]))
+                    elif key == 'P': # In the case of 'P', it indicates a vinyl tail is needed. generate tail combination!
+                        constituentList.append(cwr(self.vinyls, r=group[key]))
                     else: pass
 
             for combination in product(*constituentList):
@@ -125,12 +147,13 @@ class Generator(QObject):
                 try: # Seems to be ever so slightly faster to batch print them, if uses a bit more memory.
                     lipid.resolve_spectra(adduct, lipid.adducts[adduct])
                     string += (f"NAME: {lipid.name} {adduct}\n"
-                               f"IONMODE: {GL.Masses[adduct][1]}\n"
+                               f"IONMODE: {GL.adducts[adduct][1]}\n"
                                f"MW: {lipid.mass}\n"
                                f"PRECURSORMZ: {GL.MA(lipid, adduct, 0).mass}\n"
                                f"COMPOUNDCLASS: {lipid.lipid_class}\n"
                                f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in lipid.formula.items())}\n"
                                f"SMILES: {lipid.smiles}\n"
+                               f"COMMENT: LSG in-silico\n" 
                                f"RETENTIONTIME: 0.00\n" # Pointless
                                f"PRECURSORTYPE: {adduct}\n")
                     spectrum = lipid.spectra[adduct]
@@ -177,7 +200,7 @@ class Generator(QObject):
                     unique_mass.append(prec.mass) # Removes all the duplicate precursor masses
 
                     writer.writerow([prec.mass,'','',
-                                     type(lipid).__name__ ,GL.Masses[adduct][2],GL.Masses[adduct][1],'',
+                                     type(lipid).__name__ ,GL.adducts[adduct][2],GL.adducts[adduct][1],'',
                                      '','','','',adduct])
                     self.count +=1
                 else: continue
@@ -219,7 +242,7 @@ class Generator(QObject):
                     if prod.mass not in written_masses and prod.intensity > 0 and prod.mass != prec_mz:
 
                         writer.writerow([lipid.lipid_class, lipid.name, prec_formula,
-                                         adduct, prec_mz, GL.Masses[adduct][2], prod_formula,
+                                         adduct, prec_mz, GL.adducts[adduct][2], prod_formula,
                                          prod.mass, prod.Charge(), '', ''])
 
                         written_masses.append(prod.mass)

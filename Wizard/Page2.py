@@ -1,6 +1,6 @@
 import os
-import TailEditWindow as TEW
-import GenerateLipids as GL
+import Wizard.EditTail as ET
+import Lipids.GenerateLipids as GL
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QAbstractTableModel, Property, Signal
@@ -105,13 +105,13 @@ class Page(QWizardPage):
             self.buildList()
 
     def openTailEditor(self, selection=None):
-        tailWindow = TEW.TailWindow()
+        tailWindow = ET.TailWindow()
         if tailWindow.exec() > 0:
             tail = ''
             return tail
 
     def addNewTail(self):
-        tailWindow = TEW.TailWindow()
+        tailWindow = ET.TailWindow('X')
         tailWindow.output.connect(self.getTail)
         tailWindow.exec()
 

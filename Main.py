@@ -1,12 +1,17 @@
 import sys
+
+import inspect
+import Lipids.Classes as Classes
+from Lipids.GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
+
 from PySide6.QtWidgets import QApplication, QWizard
 
-import Page0
-import Page1
-import Page2
-import Page3
-import Page4
-import Page5
+import Wizard.Page0 as Page0
+import Wizard.Page1 as Page1
+import Wizard.Page2 as Page2
+import Wizard.Page3 as Page3
+import Wizard.Page4 as Page4
+import Wizard.Page5 as Page5
 
 class CreateWindow(QWizard):
     '''
@@ -18,6 +23,13 @@ class CreateWindow(QWizard):
         self.setWizardStyle(QWizard.ModernStyle)
         self.setWindowTitle('LSG3')
         self.setFixedSize(600, 510)
+
+        # Glycerolipids
+        self.classes_to_generate =      [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
+        # Sphingolipids
+        self.classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
+        # ETC Lipids, Cholesterol ester
+        self.classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__()   if inspect.getmodule(cls) == Classes])
 
         # Add Wizard Pages
         self.setPage(0, Page0.Page(self)) # Define range for lipid tails   or   choose to generate specific lipids.

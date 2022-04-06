@@ -1,7 +1,7 @@
-from PySide6.QtCharts import QChart, QChartView, QScatterSeries, QValueAxis
+from PySide6.QtWidgets import  QStyledItemDelegate, QSpinBox
 from PySide6.QtCore import QAbstractTableModel, QMargins, Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import  QStyledItemDelegate, QSpinBox
+from PySide6.QtCharts import QChart, QChartView, QScatterSeries, QValueAxis
 
 class SpectraScatter(QChartView):
     '''
@@ -23,7 +23,7 @@ class SpectraScatter(QChartView):
         self.yaxis.setLabelsVisible(False)    
 
         self.spectra = QScatterSeries()
-        self.spectra.setMarkerSize(10000)
+        self.spectra.setMarkerSize(10000) # Big marker to look like peak
         self.spectra.setMarkerShape(self.spectra.MarkerShapeRectangle)
         self.chart().setMargins(QMargins(-20, 0, -10, -10))
         self.chart().addSeries(self.spectra)
@@ -42,9 +42,9 @@ class SpectraScatter(QChartView):
         self.spectra.clear()
 
         linePath = QPainterPath()
-        linePath.moveTo(5000, 5001)
-        linePath.lineTo(5001, 10000)
-        linePath.closeSubpath()
+        linePath.moveTo(5000, 5001) #  Makes a big square
+        linePath.lineTo(5001, 10000) #  draws a line from
+        linePath.closeSubpath() # middle to bottom. 'peak'
         image = QImage(10000, 10000, QImage.Format_ARGB32)
         painter = QPainter(image)
         pen = QPen(QColor(0, 0, 0), 1, Qt.SolidLine)
