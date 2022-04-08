@@ -1,27 +1,21 @@
-import inspect
-from collections import Counter
-import Wizard.Spectra as Spectra
 import Lipids.GenerateLipids as GL
-import Wizard.EditTail as ET
-from itertools import combinations_with_replacement as cwr, product
 
-from PySide6.QtCore import Signal, QModelIndex, QAbstractTableModel, QSize
-from PySide6.QtGui import Qt, QCursor, QDoubleValidator, QIntValidator
-from PySide6.QtWidgets import  QDialog, QPushButton, QLineEdit, QComboBox, QTableView, QVBoxLayout, QHBoxLayout, QHeaderView, QMenu
+from PySide6.QtGui import Qt
+from PySide6.QtCore import QAbstractTableModel
+from PySide6.QtWidgets import  QDialog, QTableView, QVBoxLayout, QHBoxLayout, QHeaderView
 
-class NewWindow(QDialog):
+class PredefinedFragment(QDialog):
     '''
     Window showing lipid classes, permits editing
     '''
 
-    def __init__(self, lipid, adduct, fragtype):
+    def __init__(self, lipid, adduct):
         super().__init__()
 
         self.lipid = lipid
         self.adduct = adduct
-        self.fragtype = fragtype 
 
-        self.setWindowTitle('LSG3')
+        self.setWindowTitle('LSG3 - Predefined Fragments')
         self.setFixedSize(400, 510)
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
@@ -47,18 +41,31 @@ class NewWindow(QDialog):
         totalfragList = list(self.find_subclasses(GL, GL.Fragment))
 
         fragList = []
+
         for frag in totalfragList:
             if frag[0][-1] == 'x':
                 f = getattr(GL, frag[0][0:-1])
             else: f = frag[1]
-            if f not in list(self.lipid.adducts[self.adduct].keys()):
+            if f not in [key for key in self.lipid.adducts[self.adduct]]:
 
-                try: fgmt = f(self.lipid, self.adduct, 0)
-                except: continue
-                
-                try: fragList.extend(fgmt)
-                except AttributeError: pass # May be trying to make a headgroup fragment on lipid without headgroup
-                except: fragList.append(fgmt)
+                try: 
+                    # First try if fragment can be made
+                    fgmt = f(self.lipid, self.adduct, 0)
+
+                    try:
+                        fgmt = list(fgmt) # If it's a generator, turn to a list and assert for
+                        for x in fgmt:    # every fragment in the list
+                            assert ((x.charge > 0) - (x.charge < 0) # Check correct polarity
+                            == (GL.adducts[self.adduct][2] > 0) - (GL.adducts[self.adduct][2] < 0))   
+                            fragList.append(x) # If it's all fine, add to the list.
+
+                    except: # If it can't be turned to a list, probably a single fragment
+                        assert ((fgmt.charge > 0) - (fgmt.charge < 0) # Check correct polarity
+                        == (GL.adducts[self.adduct][2] > 0) - (GL.adducts[self.adduct][2] < 0)) 
+                        fragList.append(fgmt) # If it's all fine, add to the list. 
+
+                except AttributeError: pass # Failed to make fragment due to missing part. E.G. no headgroup.
+                except AssertionError: pass # Assertion failed. E.G. Lipid formula lacks atom from fragment.
                 
         self.finalFragList = sorted(set(fragList), reverse=True)
 
@@ -72,6 +79,28 @@ class NewWindow(QDialog):
         self.close()
 
 
+
+
+class CustomisedFragment(QDialog):
+    '''
+    Window showing lipid classes, permits editing
+    '''
+
+    def __init__(self, lipid, adduct):
+        super().__init__()
+
+        self.lipid = lipid
+        self.adduct = adduct
+
+        self.setWindowTitle('LSG3 - Custom Fragments')
+        self.setFixedSize(400, 510)
+        self.vLayout = QVBoxLayout(self)
+        self.hLayout = QHBoxLayout(self)
+        self.hLayout2 = QHBoxLayout(self)
+
+        self.tableView = QTableView()
+        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.vLayout.addWidget(self.tableView)
 
 
 

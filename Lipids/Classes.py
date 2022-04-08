@@ -570,7 +570,7 @@ class PA(GL.Glycerolipid):
 
   # sn3 = headgroup
   def __init__(self, sn1, sn2):
-    headgroup = GL.sn(mass=97.976895, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
+    headgroup = GL.sn(mass=97.976894576, type='Headgroup', chnops={'H':3, 'O':4, 'P':1},
     smiles='O=P(O)(O)')
     super().__init__(PA.adducts, sn1, sn2, headgroup)
 

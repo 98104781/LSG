@@ -48,10 +48,12 @@ class NewWindow(QDialog):
             self.buildList()
 
     def editClass(self):
-        selection = self.tableView.selectedIndexes()[0].row()
-        clsWindow = LipidWindow(self, [self.classList[selection]])
-        clsWindow.output.connect(self.getClass)
-        clsWindow.exec()
+        try:
+            selection = self.tableView.selectedIndexes()[0].row()
+            clsWindow = LipidWindow(self, [self.classList[selection]])
+            clsWindow.output.connect(self.getClass)
+            clsWindow.exec()
+        except: pass # Invalid selection
 
     def removeSelectedClass(self):
         indexesToDelete = [row.row() for row in self.tableView.selectedIndexes()]
@@ -207,6 +209,11 @@ class LipidWindow(QDialog):
         self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableView.customContextMenuRequested.connect(self.editAdducts)
 
+        self.addFragmentButton = QPushButton('Add Fragment')
+        self.addFragmentButton.clicked.connect(self.editAdducts)
+        self.hLayout6 = QHBoxLayout(self)
+        self.hLayout6.addWidget(self.addFragmentButton)
+
         for cls in self.lipidClasses:
             self.lipidBox.addItem(cls.__name__, cls)
         if self.classEdit: # If the page is set up to modify the lipid class
@@ -215,8 +222,9 @@ class LipidWindow(QDialog):
         else: # If the page is set up to create / modify an individual lipid
             self.acceptButton = QPushButton('Accept')
             self.acceptButton.clicked.connect(self.acceptCreatedLipid)
-            self.vLayout.addWidget(self.acceptButton)
+            self.hLayout6.addWidget(self.acceptButton)
 
+        self.vLayout.addLayout(self.hLayout6)
 
     def updateSelectedClass(self):
 
@@ -395,14 +403,22 @@ class LipidWindow(QDialog):
 
     def editAdducts(self):
         menu = QMenu()
-        menu.addAction('Add Fragment')
+        menu.addAction('Add Predefined Fragment')
         menu.addSeparator()
-        #menu.addAction('Custom Fragment')
+        menu.addAction('Add Customised Fragment')
         selection = menu.exec(QCursor.pos())
-        fragment = EF.NewWindow(self.lipid, self.adductBox.currentText(), selection)
-        if fragment.exec() > 0:
-            self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
-            self.updateSpectra(self.lipid)
+        try:
+
+            if selection.text() == 'Add Predefined Fragment':
+                fragment = EF.PredefinedFragment(self.lipid, self.adductBox.currentText())
+                if fragment.exec() > 0:
+                    self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
+                    self.updateSpectra(self.lipid)
+            elif selection.text() == 'Add Customised Fragment':
+                fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
+                if fragment.exec() > 0:
+                    pass
+        except: pass # Invalid selection
 
 
 
@@ -437,7 +453,7 @@ class LipidWindow(QDialog):
 
     def customSpectra(self):
         self.lipidBox.currentData().adducts['[M]'] = {}
-        GL.adducts['[M]'] = [0,'Neutral',0,{},'']
+        GL.adducts['[M]'] = [0,'Positive',1,{},'']
 
         self.refreshAdductList()
         self.adductBox.setCurrentText('[M]')
@@ -493,7 +509,8 @@ class LipidWindow(QDialog):
             elif GL.adducts[selectedAdduct][2] < 0:
                 GL.adducts[selectedAdduct][1] = 'Negative'
             elif GL.adducts[selectedAdduct][2] == 0:
-                GL.adducts[selectedAdduct][1] = 'Neutral'
+                GL.adducts[selectedAdduct][1] = 'Positive'
+                GL.adducts[selectedAdduct][2] = 1
 
             temp = {}
             formula = self.adductFormula.text()

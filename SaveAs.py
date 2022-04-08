@@ -243,7 +243,7 @@ class Generator(QObject):
 
                         writer.writerow([lipid.lipid_class, lipid.name, prec_formula,
                                          adduct, prec_mz, GL.adducts[adduct][2], prod_formula,
-                                         prod.mass, prod.Charge(), '', ''])
+                                         prod.mass, prod.charge, '', ''])
 
                         written_masses.append(prod.mass)
                         self.count +=1            

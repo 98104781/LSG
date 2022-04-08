@@ -21,7 +21,7 @@ class CreateWindow(QWizard):
         super().__init__()
 
         self.setWizardStyle(QWizard.ModernStyle)
-        self.setWindowTitle('LSG3')
+        self.setWindowTitle('Lipid Spectrum Generator')
         self.setFixedSize(600, 510)
 
         # Glycerolipids

@@ -76,6 +76,17 @@ masses = {
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
+class Counter(Counter):
+
+    def __le__(self, other):
+        return all( v <= other[k] for k,v in self.items())
+
+    def __lt__(self, other):
+        return all( v < other[k] for k,v in self.items())
+
+    def __gt__(self, other):
+        return any( v > other[k] for k,v in self.items())
+
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class sn:
@@ -370,7 +381,11 @@ class Fragment:
     self.lipid = lipid
     self.adduct = adduct
     self.intensity = intensity
+
     self.mass = round(self.MZ(), 6)
+    assert self.mass > 0
+
+    self.charge = self.Charge()
 
     if fragmentType is not None:
       self.fragmentType = fragmentType
@@ -422,7 +437,7 @@ class MA_s_H2O(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-H2O]')
+    comment = comment.replace('M', 'M-H2O')
     return comment
 
 class MA_s_2H2O(MA):
@@ -436,12 +451,15 @@ class MA_s_2H2O(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-2H2O]')
+    comment = comment.replace('M', 'M-2H2O')
     return comment
 
 class MA_s_PO3(MA):
   '''[ MA - PO3 ]\n
   Fragment for adducted molecular ion, with loss of phosphite'''
+  def __init__(self, lipid, adduct, intensity):
+      assert Counter({'P':1,'O':3, 'H':1}) <= lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return super().MZ() - (masses['PO3H']/abs(adducts[self.adduct][2]))
   def Formula(self):
@@ -450,12 +468,15 @@ class MA_s_PO3(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-HPO3]')
+    comment = comment.replace('M', 'M-HPO3')
     return comment
 
 class MA_s_PO4(MA):
   '''[ MA - PO4 ]\n
   Fragment for adducted molecular ion, with loss of phosphate'''
+  def __init__(self, lipid, adduct, intensity):
+      assert Counter({'P':1, 'O':4, 'H':3}) <= lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return super().MZ() - (masses['PO4H3']/abs(adducts[self.adduct][2]))
   def Formula(self):
@@ -464,7 +485,7 @@ class MA_s_PO4(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-H3PO4]')
+    comment = comment.replace('M', 'M-H3PO4')
     return comment
 
 # ~ # Fragments for DGDG, AcPIMs
@@ -473,6 +494,9 @@ class MA_s_Gal(MA):
   '''[ MA - Galactose - H2O ]\n
   Fragment for adducted molecular ion, with loss of galactose, leaving -OH\n
   galactose NL common to DGDG lipids'''
+  def __init__(self, lipid, adduct, intensity):
+      assert Counter({'C':6, 'H':12,'O':6}) <= lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return super().MZ() - (180.063388/abs(adducts[self.adduct][2]))
   def Formula(self):
@@ -481,7 +505,7 @@ class MA_s_Gal(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C6H12O6]')
+    comment = comment.replace('M', 'M-C6H12O6')
     return comment
 
 class MA_s_Gal_H2O(MA):
@@ -496,7 +520,7 @@ class MA_s_Gal_H2O(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C6H14O7]')
+    comment = comment.replace('M', 'M-C6H14O7')
     return comment
 
 class MA_H2O_s_Gal(MA):
@@ -511,7 +535,7 @@ class MA_H2O_s_Gal(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C6H10O5]')
+    comment = comment.replace('M', 'M-C6H10O5')
     return comment
 
 class MA_s_2Gal(MA_s_Gal):
@@ -526,7 +550,7 @@ class MA_s_2Gal(MA_s_Gal):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C6H12O6]')
+    comment = comment.replace('M', 'M-C6H12O6')
     return comment
 
 class MA_H2O_s_2Gal(MA_s_Gal):
@@ -541,7 +565,7 @@ class MA_H2O_s_2Gal(MA_s_Gal):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C6H10O5]')
+    comment = comment.replace('M', 'M-C6H10O5')
     return comment
 
 class MA_2H2O_s_2Gal(MA_H2O_s_Gal):
@@ -556,7 +580,7 @@ class MA_2H2O_s_2Gal(MA_H2O_s_Gal):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C6H10O5]')
+    comment = comment.replace('M', 'M-C6H10O5')
     return comment
 
 # ~ # Fragments for PC+Na/Li
@@ -573,7 +597,7 @@ class MA_s_TMA(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C3H9N]')
+    comment = comment.replace('M', 'M-C3H9N')
     return comment
 
 class MA_s_AZD(MA):
@@ -588,7 +612,7 @@ class MA_s_AZD(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-C2H5N]')
+    comment = comment.replace('M', 'M-C2H5N')
     return comment
 
 class MA_s_TMA_H2O(MA_s_TMA):
@@ -603,7 +627,7 @@ class MA_s_TMA_H2O(MA_s_TMA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-H2O]')
+    comment = comment.replace('M', 'M-H2O')
     return comment
 
 class MA_s_AZD_H2O(MA_s_AZD):
@@ -618,7 +642,7 @@ class MA_s_AZD_H2O(MA_s_AZD):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-H2O]')
+    comment = comment.replace('M', 'M-H2O')
     return comment
 
 # ~ # Fragments for Ceramides
@@ -635,7 +659,7 @@ class MA_s_MeOH(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-CH4O]')
+    comment = comment.replace('M', 'M-CH4O')
     return comment
 
 class MA_s_MeOH_H2O(MA_s_MeOH):
@@ -650,7 +674,7 @@ class MA_s_MeOH_H2O(MA_s_MeOH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-H2O]')
+    comment = comment.replace('M', 'M-H2O')
     return comment
 
 class MA_s_CH2O(MA):
@@ -665,7 +689,7 @@ class MA_s_CH2O(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-CH2O]')
+    comment = comment.replace('M', 'M-CH2O')
     return comment
 
 class MA_s_CH2O_H2O(MA_s_CH2O):
@@ -680,7 +704,7 @@ class MA_s_CH2O_H2O(MA_s_CH2O):
     return formula  
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-H2O]')
+    comment = comment.replace('M', 'M-H2O')
     return comment  
 
 # ~ # ~ # ~ # [M +/- adduct] - fatty acid
@@ -739,7 +763,8 @@ class MA_s_allFA(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-(ROOH)-(ROOH)')
+    string = len(self.lipid.tails)*'-(ROOH)'
+    comment = comment.replace('M', 'M'+string)
     comment += ' ('
     comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
     comment += ')'
@@ -830,9 +855,12 @@ class MA_s_allFAk(MA):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace('M', 'M-(R=O)-(R=O)')
-    comment += ' ('+', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])+')'
-    return comment
+    string = len(self.lipid.tails)*'-(R=O)'
+    comment = comment.replace('M', 'M'+string)
+    comment += ' ('
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ')'
+    return comment  
 
 # ~ #
 
@@ -1377,6 +1405,30 @@ class MH_s_FAkx(MH):
     comment += ' ('+self.tail.name+')'
     return comment
 
+class MH_s_allFA(MH):
+  '''[ M(+/-)H - (ROOH) ] (ALL)\n
+  Fragment for (de)protonated molecular ion, with loss of ALL fatty acids'''
+  def MZ(self):
+    mass = super().MZ()
+    for tail in self.lipid.tails:
+      if tail.type not in ['Headgroup', 'HeadTail']:
+        mass -= (tail.mass/abs(adducts[self.adduct][2]))
+    return mass
+  def Formula(self):
+    formula = super().Formula()
+    for tail in self.lipid.tails:
+      if tail.type not in ['Headgroup', 'HeadTail']:
+        formula.subtract(tail.formula)
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    string = len(self.lipid.tails)*'-(ROOH)'
+    comment = comment.replace('M', 'M'+string)
+    comment += ' ('
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ')'
+    return comment  
+
 class MH_s_allFAk(MH):
   '''[ M(+/-)H - (R=O) ] (ALL)\n
   Fragment for (de)protonated molecular ion, with loss of ALL fatty acids'''
@@ -1395,8 +1447,12 @@ class MH_s_allFAk(MH):
     return formula
   def Comment(self):
     comment = super().Comment()
-    comment = comment.replace(']', '-(R=O)-(R=O)]')
-    return comment
+    string = len(self.lipid.tails)*'-(R=O)'
+    comment = comment.replace('M', 'M'+string)
+    comment += ' ('
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ')'
+    return comment  
 
 # ~ # 
 
@@ -1679,6 +1735,9 @@ class C3H7O5P_FAx(Fragment):
 class C11H19N2O2S_FA(Fragment):
   '''[ C11H18N2O2S + FA + H ]\n
   AcylCoA FattyAcid Fragment'''
+  def __init__(self, lipid, adduct, intensity):
+      assert Counter({'C':11, 'H':19, 'N':2, 'O':2, 'S':1}) <= lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return self.lipid.tails[0].mass + 243.116175
   def Formula(self):
@@ -1768,6 +1827,9 @@ class FAkAx(Fragment):
 class Cer_B(Fragment):
   '''Base fragment\n
   [ Base (+/-) H+ ](+/-)'''
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     if adducts[self.adduct][1] == 'Positive': # Base is created without the ammonia, so needs to be added here
       return (self.lipid.tails[0].mass - masses['H2O'] + masses['NH3'] + masses['H+'])
@@ -1791,6 +1853,9 @@ class Cer_B(Fragment):
 class Cer_Bb(Cer_B):
   '''Base fragment\n
   [ Base -H2O (+/-) H+ ](+/-)'''
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return super().MZ() - masses['H2O']
   def Formula(self):
@@ -1808,6 +1873,9 @@ class Cer_Bb(Cer_B):
 class Cer_C(Fragment):
   '''Base fragment\n
   [ Base - MeOH (+/-) H+ ](+/-)'''
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     if adducts[self.adduct][1] == 'Positive': # Base is created without the ammonia, so needs to be added here
       return (self.lipid.tails[0].mass - 32.026214784 - masses['H2O'] + masses['NH3'] + masses['H+'])
@@ -1831,6 +1899,9 @@ class Cer_C(Fragment):
 class Cer_D(Fragment):
   '''Base fragment\n
   [ Base - Me(OH)2 (+/-) H+ ](+/-)'''
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     if adducts[self.adduct][1] == 'Positive': # Base is created without the ammonia, so needs to be added here
       return (self.lipid.tails[0].mass - 48.021129 - masses['H2O'] + masses['NH3'] + masses['H+'])
@@ -1854,6 +1925,9 @@ class Cer_D(Fragment):
 class Cer_P(Fragment):
   '''[ Base - C2H6O2 - H+ ]-'''
   # Fragment 'P' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     if adducts[self.adduct][1] == 'Positive':
       return (self.lipid.tails[0].mass - 62.036779432 + masses['H+'])
@@ -1877,6 +1951,9 @@ class Cer_P(Fragment):
 class Cer_Q(Fragment):
   '''[ Base - C3H8O3 - H+ ]-'''
   # Fragment 'Q' https://doi.org/10.1002/rcm.878
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[0].mass - 92.047344116 - masses['H+'])
   def Formula(self):
@@ -1893,6 +1970,9 @@ class Cer_R(Fragment):
   [ Base - 2H2O + H+ ]+\n or
   [ Base - NH3 - H2O - H+ ]-'''
   # Fragment 'R' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     if adducts[self.adduct][1] == 'Positive': # Base is created without the ammonia, so needs to be added here
       return (self.lipid.tails[0].mass - 3*masses['H2O'] + masses['NH3'] + masses['H+'])
@@ -1917,6 +1997,9 @@ class Cer_Rb(Fragment):
   '''[ Base - CH6O2 - H+ ]-\n
   Fragment 'R' variant for Phytosphingosine'''
   # Fragment 'R' but for Phytosphingosine
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[0].mass - 50.036779432 - masses['H+'])
   def Formula(self):
@@ -1932,6 +2015,9 @@ class Cer_S(Fragment):
   '''[ FA + C2H5NO - H2O - H+ ]-'''
   # Fragment 'S' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
   #              https://doi.org/10.1002/rcm.878
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[1].mass + (59.037113785-masses['H2O']-masses['H+']))
   def Formula(self):
@@ -1947,6 +2033,9 @@ class Cer_T(Fragment):
   '''[ FA + C2H5N - H2O - H+ ]-'''
   # Fragment 'T' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
   #              https://doi.org/10.1002/rcm.878
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[1].mass + (43.042199165-masses['H2O']-masses['H+']))
   def Formula(self):
@@ -1962,6 +2051,9 @@ class Cer_T(Fragment):
 
 class FA_C2H3N(Fragment):
   '''[ FA + C2H3N - HO- ]+'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() >= lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[1].mass + 41.026549101 - masses['OH-'])
   def Formula(self):
@@ -1982,6 +2074,9 @@ class Cer_U(Fragment):
   '''[ FA + NH3 - H2O (+/-) H+ ]-\n
   Free fatty acid RCONH2, i.e. R-C(-OH)=NH'''
   # Fragment 'U' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     if adducts[self.adduct][1] == 'Positive':
       return (self.lipid.tails[1].mass + (masses['NH3']-masses['H2O']+masses['H+']))
@@ -2009,6 +2104,9 @@ class Cer_W(Fragment):
   '''[ FA + C2H5N - H+ ]-\n
   Appears in tCers'''
   # Fragment 'W' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[1].mass + 43.042199165 - masses['H+'])
   def Formula(self):
@@ -2024,6 +2122,9 @@ class Cer_X(Fragment):
   '''[ FA + C3H5N - H+ ]-\n
   Appears in tCers'''
   # Fragment 'X' https://pubs.acs.org/doi/abs/10.1021/ac00049a004
+  def __init__(self, lipid, adduct, intensity):
+      assert issubclass(type(lipid), Sphingolipid)
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return (self.lipid.tails[1].mass + 55.042199165 - masses['H+'])
   def Formula(self):
@@ -2208,6 +2309,7 @@ class MA_P2O6_s_HG(MA):
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert Counter({'P':2, 'O':6, 'H':2}) <= self.headgroup.formula
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
@@ -2289,6 +2391,7 @@ class MH_P2O6_s_HG(MH):  # Headgroup neutral loss
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert Counter({'P':2, 'O':6, 'H':2}) <= self.headgroup.formula
       super().__init__(lipid, adduct, intensity, fragmentType)
   
   def MZ(self):
@@ -2317,6 +2420,8 @@ class MA_PO4_s_HG(MA):
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert Counter({'P':1, 'O':4, 'H':3}) <= self.headgroup.formula
+          assert self.headgroup.mass > masses['PO4H3']
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
@@ -2342,6 +2447,7 @@ class MA_C3H8O8P2_s_HG(MA):
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert Counter({'C':3, 'H':8, 'O':8, 'P':2}) <= self.headgroup.formula
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
@@ -2499,6 +2605,7 @@ class MH_s_HG(MH):
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert self.headgroup
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
@@ -2629,6 +2736,7 @@ class HGA(Fragment):  # Headgroup + Adduct
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert self.headgroup
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
@@ -2664,6 +2772,7 @@ class HGH(Fragment):  # Headgroup + Adduct
       for sn in lipid.tails: # ie, sn1, sn2, or sn3
         if sn.type == 'Headgroup':
           self.headgroup = sn
+          assert self.headgroup
       super().__init__(lipid, adduct, intensity, fragmentType)
 
   def MZ(self):
@@ -2708,6 +2817,9 @@ class HGH_s_H2O(HGH):  # Headgroup + Adduct - H2O
     return comment
 
 class HGH_s_PO3(HGH):  # Headgroup + Adduct - H2O
+  def __init__(self, lipid, adduct, intensity):
+      assert Counter({'H':1, 'P':1, 'O':3}) <= super().Formula()
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return super().MZ() - (masses['PO3H'])
   def Formula(self):
@@ -2729,6 +2841,9 @@ class HGH_s_PO3(HGH):  # Headgroup + Adduct - H2O
     return comment
 
 class HGH_s_PO4(HGH):  # Headgroup + Adduct - H2O
+  def __init__(self, lipid, adduct, intensity):
+      assert Counter({'H':3, 'P':1, 'O':4}) <= super().Formula()
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return super().MZ() - (masses['PO4H3'])
   def Formula(self):
@@ -2777,6 +2892,9 @@ class HGH_s_PO4_H2O(HGH_s_PO4):  # Headgroup + Adduct - H2O
 class C10H16N5O10P2(Fragment):
   '''X+H Fragment common to AcylCoA under Positive ESI\n
   MZ: 428.03669'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 428.03669
   def Formula(self):
@@ -2790,6 +2908,9 @@ class C10H16N5O10P2(Fragment):
 class C15H27O13(Fragment):
   '''X-H Fragment common to DGDG under negative ESI\n
   MZ: 415.145715'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 415.145715
   def Formula(self):
@@ -2803,6 +2924,9 @@ class C15H27O13(Fragment):
 class C15H25O12(Fragment):
   '''X-H Fragment common to DGDG under negative ESI\n
   MZ: 397.13515'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 397.13515
   def Formula(self):
@@ -2816,6 +2940,9 @@ class C15H25O12(Fragment):
 class C15H23O11(Fragment):
   '''X-H Fragment common to DGDG under negative ESI\n
   MZ: 379.124585'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 379.124585
   def Formula(self):
@@ -2829,6 +2956,9 @@ class C15H23O11(Fragment):
 class C6H10NaO11P2(Fragment):
   '''X+Na-2H Fragment for sodiated PIP\n
   MZ: 342.960152'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 342.960152
   def Formula(self):
@@ -2842,6 +2972,9 @@ class C6H10NaO11P2(Fragment):
 class C6H8NaO10P2(Fragment):
   '''X+Na-2H Fragment for sodiated PIP\n
   MZ: 324.949587'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 324.949587
   def Formula(self):
@@ -2855,6 +2988,9 @@ class C6H8NaO10P2(Fragment):
 class C6H11O11P2(Fragment):
   '''X-H Fragment common for PIP\n
   MZ: 320.978207'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 320.978207
   def Formula(self):
@@ -2868,6 +3004,9 @@ class C6H11O11P2(Fragment):
 class C9H16O10P(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 315.048656'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 315.048656
   def Formula(self):
@@ -2881,6 +3020,9 @@ class C9H16O10P(Fragment):
 class C6H9O10P2(Fragment):
   '''X-H Fragment common for PIP\n
   MZ: 302.967642'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 302.967642
   def Formula(self):
@@ -2894,6 +3036,9 @@ class C6H9O10P2(Fragment):
 class C9H14O9P(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 297.038092'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 297.038092
   def Formula(self):
@@ -2907,6 +3052,9 @@ class C9H14O9P(Fragment):
 class C5H7O9P2(Fragment):
   '''X-H Fragment common for CDPDG\n
   MZ: 272.957077'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 272.957077
   def Formula(self):
@@ -2920,6 +3068,9 @@ class C5H7O9P2(Fragment):
 class C6H12O9P(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 259.022442'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 259.022442
   def Formula(self):
@@ -2933,6 +3084,9 @@ class C6H12O9P(Fragment):
 class C9H13O8(Fragment):
   '''X-H Fragment common for DGGA\n
   MZ: 249.061591'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 249.061591
   def Formula(self):
@@ -2946,6 +3100,9 @@ class C9H13O8(Fragment):
 class C6H10O8P(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 241.011876845'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 241.011876845
   def Formula(self):
@@ -2959,6 +3116,9 @@ class C6H10O8P(Fragment):
 class C6H9O8S(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 241.002360812'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 241.002360812
   def Formula(self):
@@ -2972,6 +3132,9 @@ class C6H9O8S(Fragment):
 class C9H15O7(Fragment):
   '''X-H Fragment common to DGDG under negative ESI\n
   MZ: 235.082326'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 235.082326
   def Formula(self):
@@ -2985,6 +3148,9 @@ class C9H15O7(Fragment):
 class C6H12O7P(Fragment):
   '''X-H Headgroup fragment for PG\n
   MZ: 227.032612'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 227.032612
   def Formula(self):
@@ -2998,6 +3164,9 @@ class C6H12O7P(Fragment):
 class C6H9O7S(Fragment):
   '''X-H Fragment common to Sulphoquinovosyl diacylglycerol under negative ESI\n
   MZ: 225.007446'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 225.007446
   def Formula(self):
@@ -3011,6 +3180,9 @@ class C6H9O7S(Fragment):
 class C6H8O7P(Fragment):
   '''X-H Fragment common for PI\n
   MZ: 223.001312'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 223.001312
   def Formula(self):
@@ -3024,6 +3196,9 @@ class C6H8O7P(Fragment):
 class C3H5O7P2(Fragment):
   '''X-H Fragment, dehydrated diphosphoglycerol\n
   MZ: 214.951598'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 214.951598
   def Formula(self):
@@ -3037,6 +3212,9 @@ class C3H5O7P2(Fragment):
 class C5H11NO5P(Fragment):
   '''X-H Headgroup fragment for PE\n
   MZ: 196.038032'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 196.038032
   def Formula(self):
@@ -3050,6 +3228,9 @@ class C5H11NO5P(Fragment):
 class C3H7NaO6P(Fragment):
   '''X+Na-2H Fragment common to sodiated Glycerophospholipids under negative ESI\n
   MZ: 192.988343'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 192.988343
   def Formula(self):
@@ -3063,6 +3244,9 @@ class C3H7NaO6P(Fragment):
 class C4H10O6P(Fragment):
   '''X-H Fragment common to MPA under negative ESI\n
   MZ: 185.022048'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 185.022048
   def Formula(self):
@@ -3076,6 +3260,9 @@ class C4H10O6P(Fragment):
 class C5H15NO4P(Fragment):
   '''X+H Headgroup fragment for PC\n
   MZ: 184.0733204'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 184.0733204
   def Formula(self):
@@ -3089,6 +3276,9 @@ class C5H15NO4P(Fragment):
 class C3H8O6P(Fragment):
   '''X+H Headgroup fragment for PG or PA\n
   MZ: 171.006397541'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 171.006397541
   def Formula(self):
@@ -3102,6 +3292,9 @@ class C3H8O6P(Fragment):
 class C4H8O5P(Fragment):
   '''X-H Fragment common to MPA under negative ESI\n
   MZ: 167.011483'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 167.011483
   def Formula(self):
@@ -3115,6 +3308,9 @@ class C4H8O5P(Fragment):
 class HO6P2(Fragment):
   '''X-H Headgroup fragment for PPA\n
   MZ: 158.925383317'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 158.925383317
   def Formula(self):
@@ -3128,6 +3324,9 @@ class HO6P2(Fragment):
 class C3H6O5P(Fragment):
   '''X-H Fragment common to Glycerophospholipids under negative ESI\n
   MZ: 152.995832857'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 152.995832857
   def Formula(self):
@@ -3141,6 +3340,9 @@ class C3H6O5P(Fragment):
 class C2H5NaO4P(Fragment):
   '''X+Na Fragment common to PC under positive ESI\n
   MZ: 146.981766'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 146.981766
   def Formula(self):
@@ -3154,6 +3356,9 @@ class C2H5NaO4P(Fragment):
 class C7H14N1O2(Fragment):
   '''X+H Fragment common to N-trimethylhomoserine diacylglycerol under positive ESI\n
   MZ: 144.101905128'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 144.101905128
   def Formula(self):
@@ -3167,6 +3372,9 @@ class C7H14N1O2(Fragment):
 class C2H7NO4P(Fragment):
   '''X-H Headgroup fragment for PE\n
   MZ: 140.011817274'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 140.011817274
   def Formula(self):
@@ -3180,6 +3388,9 @@ class C2H7NO4P(Fragment):
 class C6H14NO2(Fragment):
   '''X+H Fragment common to DGCC under positive ESI\n
   MZ: 132.101905'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 132.101905
   def Formula(self):
@@ -3193,6 +3404,9 @@ class C6H14NO2(Fragment):
 class C6H5O3(Fragment):
   '''X-H Fragment common to DGDG under negative ESI\n
   MZ: 125.024418'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 125.024418
   def Formula(self):
@@ -3206,6 +3420,9 @@ class C6H5O3(Fragment):
 class CH4O4P(Fragment):
   '''X-H Fragment common to MPA under negative ESI\n
   MZ: 110.985268'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 110.985268
   def Formula(self):
@@ -3219,6 +3436,9 @@ class CH4O4P(Fragment):
 class C5H14NO(Fragment):
   '''X+H Fragment common to DGCC under positive ESI\n
   MZ: 104.10699'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
     return 104.10699
   def Formula(self):
@@ -3232,6 +3452,9 @@ class C5H14NO(Fragment):
 class H2O4P(Fragment):
   '''X-H Fragment common to phospholipids under negative ESI\n
   MZ: 96.969618109'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 96.969618109
   def Formula(self):
@@ -3245,6 +3468,9 @@ class H2O4P(Fragment):
 class O4SH(Fragment):
   '''X-H Fragment common to sulfatide under negative ESI\n
   MZ: 96.960102077'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 96.960102077
   def Formula(self):
@@ -3258,6 +3484,9 @@ class O4SH(Fragment):
 class O3SH(Fragment):
   '''X-H Fragment common to Sulphoquinovosyl diacylglycerol under negative ESI\n
   MZ: 80.965187457'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 80.965187457
   def Formula(self):
@@ -3271,6 +3500,9 @@ class O3SH(Fragment):
 class O3P(Fragment):
   '''X-H Fragment common to phospholipids under negative ESI\n
   MZ: 78.959053425'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 78.959053425
   def Formula(self):
@@ -3285,6 +3517,9 @@ class H2O2P(Fragment):
   '''X-H Fragment common to CerP under negative ESI\n
   According to LipiDex\n
   MZ: 64.979789'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 64.979789
   def Formula(self):
@@ -3298,6 +3533,9 @@ class H2O2P(Fragment):
 class C3H10N(Fragment):
   '''X-H Fragment common to phospholipids under negative ESI\n
   MZ: 60.080776'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 60.080776
   def Formula(self):
@@ -3313,6 +3551,9 @@ class C3H10N(Fragment):
 class C13H19(Fragment):
   '''X+H Fragment common to cholesteryl under positive ESI\n
   MZ: 175.148127043'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 175.148127043
   def Formula(self):
@@ -3326,6 +3567,9 @@ class C13H19(Fragment):
 class C12H17(Fragment):
   '''X+H Fragment common to cholesteryl under positive ESI\n
   MZ: 161.132476979'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 161.132476979
   def Formula(self):
@@ -3339,6 +3583,9 @@ class C12H17(Fragment):
 class C11H15(Fragment):
   '''X+H Fragment common to cholesteryl under positive ESI\n
   MZ: 147.116826915'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 147.116826915
   def Formula(self):
@@ -3352,6 +3599,9 @@ class C11H15(Fragment):
 class C10H15(Fragment):
   '''X+H Fragment common to cholesteryl under positive ESI\n
   MZ: 135.116826915'''
+  def __init__(self, lipid, adduct, intensity):
+      assert not self.Formula() > lipid.formula
+      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 135.116826915
   def Formula(self):
