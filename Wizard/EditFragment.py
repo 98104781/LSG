@@ -41,7 +41,6 @@ class PredefinedFragment(QDialog):
         totalfragList = list(self.find_subclasses(GL, GL.Fragment))
 
         fragList = []
-
         for frag in totalfragList:
             if frag[0][-1] == 'x':
                 f = getattr(GL, frag[0][0:-1])
@@ -55,12 +54,14 @@ class PredefinedFragment(QDialog):
                     try:
                         fgmt = list(fgmt) # If it's a generator, turn to a list and assert for
                         for x in fgmt:    # every fragment in the list
-                            assert ((x.charge > 0) - (x.charge < 0) # Check correct polarity
+                            x.Validate()
+                            assert ((x.Charge() > 0) - (x.Charge() < 0) # Check correct polarity
                             == (GL.adducts[self.adduct][2] > 0) - (GL.adducts[self.adduct][2] < 0))   
                             fragList.append(x) # If it's all fine, add to the list.
 
                     except: # If it can't be turned to a list, probably a single fragment
-                        assert ((fgmt.charge > 0) - (fgmt.charge < 0) # Check correct polarity
+                        fgmt.Validate()
+                        assert ((fgmt.Charge() > 0) - (fgmt.Charge() < 0) # Check correct polarity
                         == (GL.adducts[self.adduct][2] > 0) - (GL.adducts[self.adduct][2] < 0)) 
                         fragList.append(fgmt) # If it's all fine, add to the list. 
 

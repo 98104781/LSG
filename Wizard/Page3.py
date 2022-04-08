@@ -42,8 +42,7 @@ class Page(QWizardPage):
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
         
-
-        self.modifybutton = QPushButton("Modify selected lipid")
+        self.modifybutton = QPushButton("Modify Lipid")
         self.modifybutton.clicked.connect(self.editLipid)
 
         self.vLayout.addWidget(self.specificOrganisation)
@@ -66,7 +65,13 @@ class Page(QWizardPage):
             clsWindow = LAEW.LipidWindow(self, [cls])
             clsWindow.exec()
             self.initializePage()
-        except: pass
+        except: 
+            try:
+                classes_to_generate = self.wiz.classes_to_generate
+                editLipidWindow = LAEW.NewWindow(self, classes_to_generate)
+                editLipidWindow.exec()
+                self.initializePage()
+            except: pass
 
     def initializePage(self) -> None:
 
