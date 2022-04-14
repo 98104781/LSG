@@ -6,7 +6,7 @@ import Wizard.EditTail as ET
 import Wizard.EditFragment as EF
 from itertools import combinations_with_replacement as cwr, product
 
-from PySide6.QtCore import Signal, QModelIndex, QAbstractTableModel, QSize
+from PySide6.QtCore import Signal, QModelIndex, QAbstractTableModel
 from PySide6.QtGui import Qt, QCursor, QDoubleValidator, QIntValidator
 from PySide6.QtWidgets import  QDialog, QPushButton, QLineEdit, QComboBox, QTableView, QVBoxLayout, QHBoxLayout, QHeaderView, QMenu
 
@@ -52,6 +52,7 @@ class NewWindow(QDialog):
             selection = self.tableView.selectedIndexes()[0].row()
             clsWindow = LipidWindow(self, [self.classList[selection]])
             clsWindow.output.connect(self.getClass)
+            self.close()
             clsWindow.exec()
         except: pass # Invalid selection
 
@@ -104,15 +105,6 @@ class ClassTableModel(QAbstractTableModel):
             return True
 
         return QAbstractTableModel.setData(self, index, value, role)
-
-    def resizeEvent(self, event):
-        pass
-
-    def insertRow(self):
-        pass
-
-    def removeRow(self, position):
-        pass
 
 
 
@@ -405,7 +397,7 @@ class LipidWindow(QDialog):
         menu = QMenu()
         menu.addAction('Add Predefined Fragment')
         menu.addSeparator()
-        menu.addAction('Add Customised Fragment')
+        menu.addAction('Add Customised Fragment') # Incomplete
         selection = menu.exec(QCursor.pos())
         try:
 
@@ -417,7 +409,7 @@ class LipidWindow(QDialog):
             elif selection.text() == 'Add Customised Fragment':
                 fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
                 if fragment.exec() > 0:
-                    pass
+                    self.updateSpectra(self.lipid)
         except: pass # Invalid selection
 
 

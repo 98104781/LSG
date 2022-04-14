@@ -1,3 +1,4 @@
+import re
 import copy
 from itertools import combinations
 from collections import Counter
@@ -22,7 +23,7 @@ adducts = {
 
 
   "[M+Hac-H]-":   
-   [ 59.013853,    'Negative',  1, {'C':2, 'H':3, 'O':2}, ''],
+   [ 59.013853,    'Negative',  -1, {'C':2, 'H':3, 'O':2}, ''],
 
 
 
@@ -416,11 +417,30 @@ class Fragment:
     if fragmentType is not None:
       self.fragmentType = fragmentType
     else: self.fragmentType = type(self)
+  
+  def __call__(self, lipid, adduct, intensity, fragmentType = None):
+    # This is a conglomerate of several failed ideas that somehow worked.
+    # Needs work...
+    self.lipid = lipid
+    self.adduct = adduct
+    self.intensity = intensity
+    self.fragTerms = TermList([defineFragmentTerm(self, s) for s in self.fragUnits])
+    self.fragTerms.charge = self.charge
+    self.fragTerms.comment = self.comment
+    self.fragmentType.MZ = self.fragTerms.returnMass
+    self.fragmentType.Formula = self.fragTerms.returnFormula
+    self.fragmentType.Charge = self.fragTerms.returnCharge
+    self.fragmentType.Comment = self.fragTerms.returnComment
+    self.mass = round(self.MZ(), 6)
+    if fragmentType is not None:
+      self.fragmentType = fragmentType
+    else: self.fragmentType = self
+    return self
 
   def MZ(self):
-    return None
+    return 0
   def Formula(self):
-    return None
+    return Counter({})
   def Charge(self):
     return (adducts[self.adduct][2]/
     abs(adducts[self.adduct][2]))
@@ -437,6 +457,76 @@ class Fragment:
     return self.mass == other.mass
   def __lt__(self, other):
     return self.mass < other.mass
+
+# ~ # ~ # ~ # Custom Fragment Terms
+
+def defineFragmentTerm(inst, string):
+    sign = -1 if string[0] == '-' else 1 # -ve if sign = '-', else +ve.
+    string = string[1:] if string[0] in ['+', '-'] else string # Strip sign.
+
+    massTerms = {
+    'C':12,
+    'H':1.007825032,
+    'N':14.003074005,
+    'O':15.99491462,
+    'P':30.973761,
+    'S':31.97207,
+    'e':0.000548580,
+    'Li':7.016004,
+    'F':18.9984032,
+    'Na':22.98977,
+    'Mg':23.985042,
+    'Si':27.976926,
+    'Cl':34.9688527,
+    'K':38.963707,
+    'Ca':39.962591}
+
+    specialTerms = {'M':  inst.lipid, # Special terms
+                    'A':  FragmentTerm(adducts[inst.adduct][0],adducts[inst.adduct][3]),
+                    'sn1':inst.lipid.tails[0],
+                    'sn2':inst.lipid.tails[1],
+                    'sn3':inst.lipid.tails[2]}
+    if string in specialTerms: fragTerm = specialTerms[string]
+
+    else:
+        terms = re.findall('([A-Z][a-z]?)(\d*)', string) # NaHSO4 -> [(Na, ''), (H, ''), (S, ''), (O, '4')]
+        mass, formula = 0, {}
+        for a in terms: # e.g. (Na, '')
+            try: # Some characters can be invalid
+                mass += massTerms[a[0]]*int(a[1] or 1)
+                formula[a[0]] = int(a[1] or 1)
+            except: pass # Invalid character
+        fragTerm = FragmentTerm(mass, Counter(formula))
+
+    return [sign, fragTerm]
+
+class TermList:
+    def __init__(self, children=[]):
+
+        self.children=children
+        self.charge = 1
+        self.comment = ''
+
+    def returnMass(self):
+        mass = sum(child[0]*child[1].mass for child in self.children)
+        mass -= self.charge*0.000548580 # Electron mass
+        return mass/abs(self.charge)
+    def returnFormula(self):
+        formula = Counter()
+        for child in self.children:
+            if child[0] == -1:
+                formula.subtract(child[1].formula)
+            else: formula.update(child[1].formula)
+        return formula
+    def returnCharge(self):
+        return self.charge
+    def returnComment(self):
+        return self.comment
+
+class FragmentTerm:
+    def __init__(self, mass, formula):
+        self.mass = mass
+        self.formula = formula
 
 # ~ # ~ # ~ # [M +/- adduct]
 
@@ -3082,12 +3172,79 @@ class HGA_s_H2O(HGA):  # Headgroup + Adduct - H2O
   def Charge(self):
     return adducts[self.adduct][2]
   def Comment(self):
-    comment = super().Comment()
-    comment = comment.replace('M', 'M-H2O')
+    comment = self.adduct
+    chnops = Counter(self.headgroup.formula)
+    chnops.subtract({'H':2, 'O':1})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', headgroup)
     return comment
   def Validate(self):
     super().Validate()
     assert Counter({'H':2, 'O':1}) <= super().Formula()
+
+class HGA_s_PO3(HGA):  # Headgroup + Adduct - H2O
+  def MZ(self):
+    return super().MZ() - (masses['PO3H'])/abs(adducts[self.adduct][2])
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'H':1, 'P':1, 'O':3})
+    return formula
+  def Charge(self):
+    return super().Charge()
+  def Comment(self):
+    comment = self.adduct
+    chnops = Counter(self.headgroup.formula)
+    chnops.subtract({'H':2, 'P':1, 'O':3})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', headgroup)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert Counter({'H':1, 'P':1, 'O':3}) <= super().Formula()
+
+class HGA_s_PO4(HGA):  # Headgroup + Adduct - H2O
+  def MZ(self):
+    return super().MZ() - (masses['PO4H3'])/abs(adducts[self.adduct][2])
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'H':3, 'P':1, 'O':4})
+    return formula
+  def Charge(self):
+    return super().Charge()
+  def Comment(self):
+    comment = self.adduct
+    chnops = Counter(self.headgroup.formula)
+    chnops.subtract({'H':3, 'P':1, 'O':4})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', headgroup)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert Counter({'H':3, 'P':1, 'O':4}) <= super().Formula()
+
+class HGA_s_PO4_H2O(HGA_s_PO4):  # Headgroup + Adduct - H2O
+  def MZ(self):
+    return super().MZ() - ((masses['PO4H3']) - masses['H2O'])/abs(adducts[self.adduct][2])
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'H':5, 'P':1, 'O':5})
+    return formula
+  def Charge(self):
+    return super().Charge()
+  def Comment(self):
+    comment = self.adduct
+    chnops = Counter(self.headgroup.formula)
+    chnops.subtract({'H':5, 'P':1, 'O':5})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', headgroup)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert Counter({'H':5, 'P':1, 'O':5}) <= self.headgroup.formula
 
 class HGH(Fragment):  # Headgroup + Adduct
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -3134,9 +3291,15 @@ class HGH_s_H2O(HGH):  # Headgroup + Adduct - H2O
   def Charge(self):
     return adducts[self.adduct][2]
   def Comment(self):
-    comment = super().Comment()
-    headgroup = ''.join(''.join((key, str(val))) for (key, val) in self.headgroup.formula.items())
-    comment = comment.replace('M', headgroup+'-H2O')
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    chnops = Counter(self.headgroup.formula)
+    chnops.subtract({'H':2, 'O':1})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', headgroup)
     return comment
   def Validate(self):
     super().Validate()
@@ -3179,7 +3342,7 @@ class HGH_s_PO4(HGH):  # Headgroup + Adduct - H2O
     if adducts[self.adduct][1] == 'Positive':
       comment = '[M+H]+'
     else:
-     comment = '[M-H]-'
+      comment = '[M-H]-'
     chnops = Counter(self.headgroup.formula)
     chnops.subtract({'H':3, 'P':1, 'O':4})
     new_chnops = {k: v for k, v in chnops.items() if v != 0}
@@ -3813,9 +3976,6 @@ class O4SH(Fragment):
 class O3SH(Fragment):
   '''X-H Fragment common to Sulphoquinovosyl diacylglycerol under negative ESI\n
   MZ: 80.965187457'''
-  def __init__(self, lipid, adduct, intensity):
-      assert not self.Formula() > lipid.formula
-      super().__init__(lipid, adduct, intensity)
   def MZ(self):
       return 80.965187457
   def Formula(self):
