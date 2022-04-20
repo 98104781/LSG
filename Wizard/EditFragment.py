@@ -50,7 +50,8 @@ class PredefinedFragment(QDialog):
             # methods share name of class with suffix x. If method, remove x, call class.
             f = getattr(GL, frag[0][0:-1]) if frag[0][-1] == 'x' else frag[1]
             
-            if f not in [key for key in self.lipid.adducts[self.adduct]]:
+            # check if unique fragment, isinstance excludes custom fragments from the list
+            if f not in [key for key  in self.lipid.adducts[self.adduct] if not isinstance(key, GL.Fragment)]:
                 try: 
 
                     # First try if fragment can be made
@@ -73,6 +74,7 @@ class PredefinedFragment(QDialog):
                 except IndexError: pass # Might be missing a tail
                 except AttributeError: pass # Failed to make fragment due to missing part. E.G. no headgroup.
                 except AssertionError: pass # Assertion failed. E.G. Lipid formula lacks atom from fragment.
+            else: continue
                 
         self.finalFragList = sorted(set(fragList), reverse=True)
         self.tableModel = ClassTableModel(self.finalFragList)
