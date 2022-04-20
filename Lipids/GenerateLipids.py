@@ -420,18 +420,38 @@ class Fragment:
   
   def __call__(self, lipid, adduct, intensity, fragmentType = None):
     # This is a conglomerate of several failed ideas that somehow worked.
-    # Needs work...
+ 
     self.lipid = lipid
     self.adduct = adduct
     self.intensity = intensity
-    self.fragTerms = TermList([defineFragmentTerm(self, s) for s in self.fragUnits])
-    self.fragTerms.charge = self.charge
-    self.fragTerms.comment = self.comment
-    self.fragmentType.MZ = self.fragTerms.returnMass
-    self.fragmentType.Formula = self.fragTerms.returnFormula
-    self.fragmentType.Charge = self.fragTerms.returnCharge
-    self.fragmentType.Comment = self.fragTerms.returnComment
+
+    self.fragTerms = [defineFragmentTerm(self, s) for s in self.fragUnits]
+
+    def returnMass():
+      mass = sum(child[0]*child[1].mass for child in self.fragTerms)
+      mass -= self.charge*0.000548580 # Electron mass
+      mass = mass/abs(self.charge)
+      return mass
+    self.MZ = returnMass
     self.mass = round(self.MZ(), 6)
+
+    def returnFormula():
+        formula = Counter()
+        for child in self.fragTerms:
+            if child[0] == -1:
+                formula.subtract(child[1].formula)
+            else: formula.update(child[1].formula)
+        return formula
+    self.Formula = returnFormula
+
+    def returnCharge():
+        return self.charge
+    self.Charge = returnCharge
+
+    def returnComment():
+        return self.comment
+    self.Comment = returnComment
+
     if fragmentType is not None:
       self.fragmentType = fragmentType
     else: self.fragmentType = self
@@ -482,10 +502,9 @@ def defineFragmentTerm(inst, string):
     'Ca':39.962591}
 
     specialTerms = {'M':  inst.lipid, # Special terms
-                    'A':  FragmentTerm(adducts[inst.adduct][0],adducts[inst.adduct][3]),
-                    'sn1':inst.lipid.tails[0],
-                    'sn2':inst.lipid.tails[1],
-                    'sn3':inst.lipid.tails[2]}
+                    'A':  FragmentTerm(adducts[inst.adduct][0],adducts[inst.adduct][3])}
+    for i in range(0, len(inst.lipid.tails)):
+      specialTerms['sn'+str(i+1)] = inst.lipid.tails[i]
     if string in specialTerms: fragTerm = specialTerms[string]
 
     else:
@@ -499,29 +518,6 @@ def defineFragmentTerm(inst, string):
         fragTerm = FragmentTerm(mass, Counter(formula))
 
     return [sign, fragTerm]
-
-class TermList:
-    def __init__(self, children=[]):
-
-        self.children=children
-        self.charge = 1
-        self.comment = ''
-
-    def returnMass(self):
-        mass = sum(child[0]*child[1].mass for child in self.children)
-        mass -= self.charge*0.000548580 # Electron mass
-        return mass/abs(self.charge)
-    def returnFormula(self):
-        formula = Counter()
-        for child in self.children:
-            if child[0] == -1:
-                formula.subtract(child[1].formula)
-            else: formula.update(child[1].formula)
-        return formula
-    def returnCharge(self):
-        return self.charge
-    def returnComment(self):
-        return self.comment
 
 class FragmentTerm:
     def __init__(self, mass, formula):

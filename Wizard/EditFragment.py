@@ -1,7 +1,5 @@
 import re
 import copy
-from types import MethodType
-from collections import Counter
 import Lipids.GenerateLipids as GL
 
 from PySide6.QtGui import Qt, QRegularExpressionValidator
@@ -167,7 +165,6 @@ class CustomisedFragment(QDialog):
 
         self.acceptButton = QPushButton('Accept Fragment')
         self.acceptButton.clicked.connect(self.acceptFragment)
-        #self.acceptButton.setDisabled(True)
         self.vLayout.addWidget(self.acceptButton)
 
     def acceptFragment(self):
@@ -181,30 +178,20 @@ class CustomisedFragment(QDialog):
     def updateBoxes(self):
         self.massBox.setText(str(self.fragment.MZ()))
         self.formulaBox.setText(''.join(''.join((key, str(val))) for (key, val ) in self.fragment.Formula().items() if val !=0))
-        #if self.fragment.Formula() <= self.lipid.formula:
-        #    self.acceptButton.setDisabled(False)
-        #else:self.acceptButton.setDisabled(True)
 
     def updateFragmentString(self):
         
         self.charge = int(self.chargeString.text() or 1)*int(GL.adducts[self.adduct][2]/abs(GL.adducts[self.adduct][2]))
-        self.comment = self.fragmentString.text()
+        self.comment = self.fragmentString.text() # Get charge and comment from the input boxes
 
         # 'M+H-H2SO4' -> ['M', '-H', '+H2SO4']
         fragUnits = re.findall('(.[^+-]*)', self.fragmentString.text())
+        # Update fragment details
         self.fragment.fragUnits = fragUnits
         self.fragment.charge = self.charge
         self.fragment.comment = f"[{self.comment}] {self.charge}"
-
-        fragTerms = GL.TermList([GL.defineFragmentTerm(self, s) for s in fragUnits])
-        fragTerms.charge = self.charge
-        fragTerms.comment = f"[{self.comment}] ({self.charge})"
-
-        self.fragment.MZ = fragTerms.returnMass
-        self.fragment.Formula = fragTerms.returnFormula
-        self.fragment.Charge = fragTerms.returnCharge
-        self.fragment.Comment = fragTerms.returnComment
-
+        # Regenerate fragment with updated details (call it)
+        self.fragment(self.lipid, self.adduct, 0)
         self.updateBoxes()
 
 

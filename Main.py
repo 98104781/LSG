@@ -1,5 +1,4 @@
 import sys
-
 import inspect
 import Lipids.Classes as Classes
 from Lipids.GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
@@ -30,6 +29,8 @@ class CreateWindow(QWizard):
         self.classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
         # ETC Lipids, Cholesterol ester
         self.classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__()   if inspect.getmodule(cls) == Classes])
+
+        #print(len(self.classes_to_generate)) # Used to check number of classes available in console
 
         # Add Wizard Pages
         self.setPage(0, Page0.Page(self)) # Define range for lipid tails   or   choose to generate specific lipids.
