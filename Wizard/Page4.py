@@ -1,3 +1,4 @@
+import Wizard.ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
 
 from PySide6.QtGui import QPixmap
@@ -17,7 +18,8 @@ class Page(QWizardPage):
 
         self.setTitle("Create specific lipids")
         self.setSubTitle("Define a list of specific lipids to generate")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
+        image_Path = RP.resource_path('Images\GPLs.png')
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
         self.setCommitPage(True)

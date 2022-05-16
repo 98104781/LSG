@@ -1,3 +1,4 @@
+import Wizard.ResourcePath as RP
 from PySide6.QtGui import QIntValidator, QPixmap
 from PySide6.QtWidgets import QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, QWizard, QWizardPage
 
@@ -15,7 +16,8 @@ class Page(QWizardPage):
         self.setSubTitle("Please define the limits of the range to use.   Be aware, large ranges can produce large libraries!\n"
                          "C min and C max determine chain lengths.   "
                          "D min and D max determine the range of desaturation.")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\FAs.png'))
+        image_Path = RP.resource_path('Images\FAs.png')
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
 

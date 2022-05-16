@@ -1,3 +1,4 @@
+import Wizard.ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
 
 from PySide6.QtGui import QPixmap, QCursor
@@ -19,7 +20,8 @@ class Page(QWizardPage):
         self.setTitle("Select lipid classes to generate")
         self.setSubTitle("Select from the list of available lipid classes below.\n"
                          "Spectra will be generated for the selected classes using the tails previously defined.")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\GPLs.png'))
+        image_Path = RP.resource_path('Images\GPLs.png')
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.setCommitPage(True)
         self.vLayout = QVBoxLayout(self)
 
@@ -57,6 +59,13 @@ class Page(QWizardPage):
             self.editLipid()
 
     def editLipid(self):
+
+        self.aBoxStatus={} # If edit lipid is called, recall all tickstates for adduct boxes
+        for cls in self.classList:
+            self.aBoxStatus[cls] = {}
+            for adduct in cls.adducts:
+                self.aBoxStatus[cls][adduct] = self.classAdductQbox[cls][adduct].checkState(0)
+
         try:
             cls = self.treeView.selectedItems()[0]
             if cls.parent():
@@ -95,7 +104,8 @@ class Page(QWizardPage):
                 child = self.classAdductQbox[cls][adduct] # Assign
                 child.fragmentList = cls.adducts[adduct] # Adducts
                 child.setText(0, adduct) #  Gives name for tickbox
-                child.setCheckState(0, Qt.Unchecked) #  Untick box
+                try:child.setCheckState(0, self.aBoxStatus[cls][adduct])
+                except:child.setCheckState(0, Qt.Unchecked) # Tickstate
                 child.setFlags(child.flags() | Qt.ItemIsUserCheckable) 
 
         return super().initializePage()

@@ -1,3 +1,4 @@
+import Wizard.ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
 
 from PySide6.QtGui import QPixmap
@@ -17,7 +18,8 @@ class Page(QWizardPage):
         self.setSubTitle(" "
                          " "
                          " ")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\LSG.png'))
+        image_Path = RP.resource_path('Images\LSG.png')
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.vLayout =  QVBoxLayout(self)
         self.hLayout =  QHBoxLayout(self)
         self.hLayout2 = QHBoxLayout(self)

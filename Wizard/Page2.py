@@ -1,5 +1,6 @@
 import os
 import Wizard.EditTail as ET
+import Wizard.ResourcePath as RP
 import Lipids.GenerateLipids as GL
 
 from PySide6.QtGui import QPixmap
@@ -16,7 +17,8 @@ class Page(QWizardPage):
 
         self.setTitle("Generate a range of lipids using specific tails")
         self.setSubTitle("Please define a list of tails to use.\nSome common tails are preset.")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\FAs.png'))
+        image_Path = RP.resource_path('Images\FAs.png')
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
         self.hLayout2 = QHBoxLayout(self)

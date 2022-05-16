@@ -1,6 +1,7 @@
 import os
 import time
 import SaveAs
+import Wizard.ResourcePath as RP
 import Lipids.GenerateLipids as GL
 
 from PySide6.QtGui import QPixmap
@@ -19,7 +20,8 @@ class Page(QWizardPage):
         self.setTitle("Select filetype to generate")
         self.setSubTitle("Press 'Generate' to create and export file \n"
                          ".msp spectral libraries, .csv QE+ inclusion list and .csv skyline transition lists supported")
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap('Images\ADs.png'))
+        image_Path = RP.resource_path('Images\ADs.png')
+        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.vLayout = QVBoxLayout(self)
 
         self.generatebutton = QPushButton("Generate")
