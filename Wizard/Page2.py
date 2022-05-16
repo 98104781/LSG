@@ -58,7 +58,9 @@ class Page(QWizardPage):
                          GL.sn(21, 0, type='Acyl'), GL.sn(22, 0, type='Acyl'), GL.sn(22, 1, type='Acyl'), GL.sn(22, 2, type='Acyl'), 
                          GL.sn(22, 3, type='Acyl'), GL.sn(22, 4, type='Acyl'), GL.sn(22, 5, type='Acyl'), GL.sn(22, 6, type='Acyl'), 
                          GL.sn(23, 0, type='Acyl'), GL.sn(24, 0, type='Acyl'), GL.sn(24, 1, type='Acyl'), GL.sn(24, 4, type='Acyl'), 
-                         GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl'), GL.sn(26, 1, type='Acyl'), GL.sn(26, 2, type='Acyl')]        
+                         GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl'), GL.sn(26, 1, type='Acyl'), GL.sn(26, 2, type='Acyl')]
+        self.tailList.extend([GL.sn( 16, 0, type='Ether'),      GL.sn( 18, 0, type='Ether'),      GL.sn( 20, 0, type='Ether')])   
+        self.tailList.extend([GL.sn( 16, 0, type='Vinyl'),      GL.sn( 18, 0, type='Vinyl'),      GL.sn( 20, 0, type='Vinyl')])      
         self.tailList.extend([GL.sn( 12, 0, type='Acyl', oh=1), GL.sn( 14, 0, type='Acyl', oh=1), GL.sn( 16, 0, type='Acyl', oh=1),
                               GL.sn( 17, 0, type='Acyl', oh=1), GL.sn( 18, 0, type='Acyl', oh=1), GL.sn( 18, 1, type='Acyl', oh=1),
                               GL.sn( 18, 2, type='Acyl', oh=1), GL.sn( 20, 1, type='Acyl', oh=1), GL.sn( 20, 2, type='Acyl', oh=1)])                

@@ -113,7 +113,7 @@ class Generator(QObject):
             self.progress.emit(cls)
 
     def flatten(self, data):
-        if isinstance(data, tuple):
+        if isinstance(data, tuple) or isinstance(data, list):
             for x in data: yield from self.flatten(x)
         else: yield data
 
@@ -146,6 +146,7 @@ class Generator(QObject):
             for adduct in lipid.adducts:
                 try: # Seems to be ever so slightly faster to batch print them, if uses a bit more memory.
                     lipid.resolve_spectra(adduct, lipid.adducts[adduct])
+                    spectrum = lipid.spectra[adduct]
                     string += (f"NAME: {lipid.name} {adduct}\n"
                                f"IONMODE: {GL.adducts[adduct][1]}\n"
                                f"MW: {lipid.mass}\n"
@@ -155,8 +156,8 @@ class Generator(QObject):
                                f"SMILES: {lipid.smiles}\n"
                                f"COMMENT: LSG in-silico\n" 
                                f"RETENTIONTIME: 0.00\n" # Pointless
-                               f"PRECURSORTYPE: {adduct}\n")
-                    spectrum = lipid.spectra[adduct]
+                               f"PRECURSORTYPE: {adduct}\n"
+                               f"Num Peaks: {len(spectrum)}\n")
                     for peak in spectrum:
                         string += f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n'
                     string += '\n'

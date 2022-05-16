@@ -39,6 +39,8 @@ class Page(QWizardPage):
         self.progress_bar.setMaximum(1)
         self.generatebutton.setEnabled(True)
         self.output_console.appendPlainText('Unsupported file type')
+        try :self.generatorThread.exit()
+        except: pass
 
     def completionText(self):
         self.generatorThread.exit()
@@ -47,6 +49,8 @@ class Page(QWizardPage):
         self.progress_bar.setValue(1)
         self.generatebutton.setEnabled(True)
         self.output_console.appendPlainText(f"Generated {self.generatorObject.count} {self.generatorObject.noun} in {self.t1-self.t0:.4f} seconds!")
+        try :self.generatorThread.exit()
+        except: pass
 
     def classCompleted(self, cls):
         consoleText = self.output_console.toPlainText()
