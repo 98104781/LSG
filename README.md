@@ -12,7 +12,5 @@ Though there are some repositories available online which enable analysis of som
 
 Fragmentation patterns used to generate the spectra are based on peer-reviewed studies.
 
-User-interface is nearing completion.
-
 The spectral library can be exported with the file extension '.MSP' selected.
 Otherwise, an Excalibur compatible DDA precursor list (for DDA analysis via orbitrap) may be exported by selecting '.CSV'.
