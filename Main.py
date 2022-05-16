@@ -30,12 +30,12 @@ class CreateWindow(QWizard):
         # ETC Lipids, Cholesterol ester
         self.classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__()   if inspect.getmodule(cls) == Classes])
 
-        print('Classes: ', len(self.classes_to_generate)) # Used to check number of classes available in console
+        #print('Classes: ', len(self.classes_to_generate)) # Used to check number of classes available in console
 
-        x = 0
-        for cls in self.classes_to_generate: # Used to check number of adducts available in console
-            x += len(cls.adducts)
-        print('Adducts: ', x)
+        #x = 0
+        #for cls in self.classes_to_generate: # Used to check number of adducts available in console
+        #    x += len(cls.adducts)
+        #print('Adducts: ', x)
 
         # Add Wizard Pages
         self.setPage(0, Page0.Page(self)) # Define range for lipid tails   or   choose to generate specific lipids.
