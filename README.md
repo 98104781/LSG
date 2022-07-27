@@ -1,18 +1,12 @@
 # LSG
-Work in progress
 
 This program is intended to enable the user to generate on-demand (mass)spectral libraries for the identification of lipid species.
-Lipids are generated with respect to class and fatty acid composition, spectra are then generated with respect to their adducts with the help of a simple script.
+Lipids are generated with respect to class and fatty acid composition, spectra are then generated with respect to their adducts.
 
-Though there are some repositories available online which enable analysis of some common lipid species, such repositories are limited in various aspects:
-* They offer a limited number of spectra/species
-* Files are often large, including many species which are not of interest
-* Spectra can be incomplete, lowering the confidence of identifications
-* Others (eg, lipidmaps) may provide only structure files and requiring the user to generate, limiting their applicability
+The fragmentation patterns used to generate the spectra are based on peer-reviewed studies.
 
-Fragmentation patterns used to generate the spectra are based on peer-reviewed studies.
+Spectral libraries can be exported with the file extension '.MSP' selected.
+Otherwise, an Excalibur compatible precursor list (for DDA analysis via orbitrap) or Skylike compatible transition list may be exported by selecting '.CSV'.
 
-User-interface is nearing completion.
-
-The spectral library can be exported with the file extension '.MSP' selected.
-Otherwise, an Excalibur compatible DDA precursor list (for DDA analysis via orbitrap) may be exported by selecting '.CSV'.
+An overview of the features along with a brief how-to guide is available on the current release page:
+https://github.com/98104781/LSG/releases/tag/v1.0.0
