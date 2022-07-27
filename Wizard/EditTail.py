@@ -37,7 +37,7 @@ class TailWindow(QDialog):
         self.d.setValidator(QIntValidator(1, 100))
         self.hLayout.addWidget(self.d)
         self.oh = QLineEdit()
-        self.oh.setPlaceholderText('# of -OH groups')
+        self.oh.setPlaceholderText('# Oxidation')
         self.oh.setValidator(QIntValidator(1, 100))
         self.hLayout.addWidget(self.oh)
         self.dt = QLineEdit()

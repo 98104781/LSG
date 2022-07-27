@@ -64,17 +64,17 @@ class Page(QWizardPage):
 
         # Optional input box for O max value, which determines maximum number of hydroxy groups
         # to add to the fatty acid. By default 0.
-        self.hydroxytickbox = QCheckBox('Include hydroxy-functionalised tails', self)
-        self.registerField('hydroxytickbox', self.hydroxytickbox)
-        self.vLayout.addWidget(self.hydroxytickbox)
+        self.oxytickbox = QCheckBox('Include oxidised tails', self)
+        self.registerField('hydroxytickbox', self.oxytickbox)
+        self.vLayout.addWidget(self.oxytickbox)
         self.omax = QLineEdit()
         self.omax.setPlaceholderText(' O max:'+85*' '+'(1 -> 5)')
         self.omax.setDisabled(True)
         self.omax.setValidator(QIntValidator(1, 8))
         self.registerField('omax', self.omax)
-        self.hydroxytickbox.toggled.connect(self.omax.setEnabled)
-        self.hydroxytickbox.toggled.connect(self.omax.clear)
-        self.hydroxytickbox.toggled.connect(self.completeChanged)
+        self.oxytickbox.toggled.connect(self.omax.setEnabled)
+        self.oxytickbox.toggled.connect(self.omax.clear)
+        self.oxytickbox.toggled.connect(self.completeChanged)
         self.omax.textEdited.connect(self.completeChanged)
         self.vLayout.addWidget(self.omax)
 
@@ -98,7 +98,7 @@ class Page(QWizardPage):
             return False
         elif int(self.dmax.text() or 0) > int(self.cmax.text() or 0)-1:
             return False
-        elif self.hydroxytickbox.isChecked() and int(self.omax.text() or 0) not in range(1, 6):
+        elif self.oxytickbox.isChecked() and int(self.omax.text() or 0) not in range(1, 6):
             return False  
         return super().isComplete()
 

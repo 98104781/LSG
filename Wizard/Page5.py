@@ -132,7 +132,7 @@ class Page(QWizardPage):
                                         +self.field('cmin')+':'+self.field('dmin')+
                                 ' -> '+self.field('cmax')+':'+self.field('dmax'))
                 if self.field('hydroxytickbox'): # Include any hydroxy tails in console too!
-                    self.output_console.appendPlainText('Hydroxy-functionalised tails included.\n')
+                    self.output_console.appendPlainText('Oxidised tails included.\n')
 
             self.selected_class_adducts = self.field('tree')
             self.output_console.appendPlainText('The following classes will be generated:')

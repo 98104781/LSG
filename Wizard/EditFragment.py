@@ -18,7 +18,8 @@ class PredefinedFragment(QDialog):
         self.adduct = adduct
 
         self.setWindowTitle('LSG3 - Predefined Fragments')
-        self.setFixedSize(400, 510)
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(510)
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
         self.hLayout2 = QHBoxLayout(self)
