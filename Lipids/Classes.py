@@ -2113,6 +2113,7 @@ class CerPC(GL.Sphingolipid):
     GL.M_s_CH3     :100,
     GL.M_s_CH3_FAk   :2,    
     GL.C4H11NO4P    :25,
+    GL.C2H4O4P       :2,
     GL.H2O4P         :5,
     GL.O3P           :5},
     }

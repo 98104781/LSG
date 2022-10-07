@@ -4325,6 +4325,22 @@ class C6H5O3(Fragment):
     super().Validate()
     assert self.Formula() <= self.lipid.formula
 
+class C2H4O4P(Fragment):
+  '''X-H Fragment appears in CerPC in negative ESI\n
+  MZ: 122.985268'''
+  def MZ(self):
+      return 122.985268
+  def Formula(self):
+    formula = Counter({'C':2, 'H':4, 'O':4, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+  def Comment(self):
+    return '[C2H4O4P]-'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
 class CH4O4P(Fragment):
   '''X-H Fragment common to MPA under negative ESI\n
   MZ: 110.985268'''
