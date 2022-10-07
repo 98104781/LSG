@@ -2106,7 +2106,15 @@ class CerPC(GL.Sphingolipid):
     GL.MA_s_TMA_H2O   :5, # Present in lipidblast
     GL.MA_s_HG_H2O    :2, # Present in lipidblast
     GL.MA_s_HG_FA_H2O:10, 
-    GL.C5H15NO4P    :100}
+    GL.C5H15NO4P    :100},
+
+    "[M+Hac-H]-":{ # http://prime.psc.riken.jp/compms/static/images/figure/lipid/SM_[M+CH3COO]-.png
+    GL.MA           :10,
+    GL.M_s_CH3     :100,
+    GL.M_s_CH3_FAk   :2,    
+    GL.C4H11NO4P    :25,
+    GL.H2O4P         :5,
+    GL.O3P           :5},
     }
 
   def __init__(self, base, sn1):

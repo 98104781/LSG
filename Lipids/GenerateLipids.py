@@ -4165,6 +4165,22 @@ class C4H13NO4P(Fragment):
     super().Validate()
     assert self.Formula() <= self.lipid.formula
 
+class C4H11NO4P(Fragment):
+  '''X-H Fragment common to SM/PC under negative ESI\n
+  MZ: 168.043117'''
+  def MZ(self):
+      return 168.043117
+  def Formula(self):
+    formula = Counter({'C':4, 'H':11, 'N':1, 'O':4, 'P':1})
+    return formula
+  def Charge(self):
+      return -1
+  def Comment(self):
+    return '[C4H11NO4P]-'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
 class C4H8O5P(Fragment):
   '''X-H Fragment common to MPA under negative ESI\n
   MZ: 167.011483'''
