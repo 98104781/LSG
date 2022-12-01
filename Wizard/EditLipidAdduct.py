@@ -92,10 +92,13 @@ class ClassTableModel(QAbstractTableModel):
         row = index.row()
         cls = self.tdata[row]
         if role == Qt.DisplayRole:
-            return str(cls.__name__)
+            try: return str(cls.givenName)
+            except: return str(cls.__name__)
         if role == Qt.ToolTipRole:
             try: toolTip = cls.tooltip
-            except: toolTip = cls.__name__
+            except: 
+                try: return str(cls.givenName)
+                except: return str(cls.__name__)
             return toolTip
 
     def setData(self, index, value, role=Qt.EditRole):
@@ -207,7 +210,8 @@ class LipidWindow(QDialog):
         self.hLayout6.addWidget(self.addFragmentButton)
 
         for cls in self.lipidClasses:
-            self.lipidBox.addItem(cls.__name__, cls)
+            try: self.lipidBox.addItem(cls.givenName, cls)
+            except: self.lipidBox.addItem(cls.__name__, cls)
         if self.classEdit: # If the page is set up to modify the lipid class
             self.lipid = self.buildExampleLipid()
             self.updateSpectra(self.lipid)

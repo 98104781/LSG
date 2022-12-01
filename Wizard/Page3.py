@@ -92,7 +92,8 @@ class Page(QWizardPage):
             self.classQbox[cls]  =  QTreeWidgetItem(self.treeView)
             root = self.classQbox[cls] # Creates tickbox for class
             root.lipidClass = cls # Custom variable to store class
-            root.setText(0, cls.__name__) # Gives name for tickbox
+            try: root.setText(0, cls.givenName) # Checks for names 
+            except: root.setText(0, cls.__name__) # Else make name 
             root.setCheckState(0, Qt.Unchecked) #   Untick tickbox
             root.setFlags(root.flags() | Qt.ItemIsAutoTristate | Qt.ItemIsUserCheckable)
             try: root.setToolTip(0, cls.tooltip) #  Set tooltip to 
