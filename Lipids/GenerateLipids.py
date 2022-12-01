@@ -21,7 +21,8 @@ adducts = {
    # Calculated by Mass of CL[35] - Mass of e-
   
 
-
+  "[M-CH3]-": # In source fragment for PC based lipids   
+   [ -15.021829401,'Negative',  -1, {'C':-1, 'H':-3}, ''],
   "[M+Hac-H]-":   
    [ 59.013853,    'Negative',  -1, {'C':2, 'H':3, 'O':2}, ''],
 
@@ -281,6 +282,7 @@ class base:
     # generate a range) because the fragmentation patterns change depending on
     # the positioning of functional groups.
     if self.type == 'Sphinganine':
+      self.lipidSuffix = '[NDS]'
       self.name = f"{c}:0;O2"
       #           H2O mass      + c*CH2 mass    + 2* O mass
       self.mass = masses['H2O'] + c*14.01565007 + 2*15.99491462
@@ -289,6 +291,7 @@ class base:
       self.smiles += (c-3)*'C'
 
     elif self.type == 'Sphingosine':
+      self.lipidSuffix = '[NS]'
       self.name = f"{c}:1;O2"
       #           H2O mass      + c*CH2 mass    - H2 mass    + 2* O mass
       self.mass = masses['H2O'] + c*14.01565007 - 2.01565007 + 2*15.99491462
@@ -297,6 +300,7 @@ class base:
       self.smiles += (c-5)*'C'
 
     elif self.type == 'Phytosphingosine':
+      self.lipidSuffix = '[NP]'
       self.name = f"{c}:0;O3"
       #           H2O mass      + c*CH2 mass    + 3* O mass
       self.mass = masses['H2O'] + c*14.01565007 + 3*15.99491462
@@ -311,6 +315,7 @@ class base:
       # consistant with the headgroups which are attached via an ether /
       # ester on the base backbone and not the ammonia group.
     else: # If nothing, just give it values for water
+      self.lipidSuffix = ''
       self.name = '0:0'
       self.mass = masses['H2O']
       self.formula = Counter({'H':2,'O':1})
@@ -358,6 +363,10 @@ class Lipid:
     self.spectra = {}
     self.smiles = ''
 
+    try:
+      self.lipid_class = type(self).givenName
+    except: self.lipid_class = type(self).__name__  # Takes name from class which generated it
+
   def resolve_spectra(self, adduct, spectra={}):
     x = []
     for fragment, intensity in spectra.items():
@@ -387,7 +396,6 @@ class Glycerolipid(Lipid):
       self.tails.extend([tail for tail in sn3.hgtails])
     self.tails.extend([sn1, sn2, sn3])
 
-    self.lipid_class = type(self).__name__  # Takes name from class which generated it
     self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.type != 'Headgroup')}" # Headtail mass factored into headgroup
     self.mass = round(masses['Glycerol'] + sum([snx.mass-masses['H2O'] for snx in self.tails if snx.type != 'HeadTail']), 6)
 
@@ -414,8 +422,7 @@ class Sphingolipid(Lipid):
       self.tails.extend([tail for tail in headgroup.hgtails])
     self.tails.extend([sn1, headgroup]) # Base and headgroup included to be consistant with fragment generation
 
-    self.lipid_class = type(self).__name__ # Takes name from class which generated it
-    self.name = f"{self.lipid_class} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
+    self.name = f"{self.lipid_class}{base.lipidSuffix} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
     self.mass = round(masses['NH3'] + sum([snx.mass-masses['H2O'] for snx in self.tails if snx.type != 'HeadTail']), 6)
     self.smiles= f'{headgroup.smiles}{base.smiles[:5]}{sn1.smiles}{base.smiles[5:]}'
 
