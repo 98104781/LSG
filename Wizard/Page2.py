@@ -1,4 +1,5 @@
 import os
+import re
 import Wizard.EditTail as ET
 import Wizard.ResourcePath as RP
 import Lipids.GenerateLipids as GL
@@ -57,15 +58,24 @@ class Page(QWizardPage):
                          GL.sn(18, 1, type='Acyl'), GL.sn(18, 2, type='Acyl'), GL.sn(18, 3, type='Acyl'), GL.sn(18, 4, type='Acyl'), 
                          GL.sn(19, 0, type='Acyl'), GL.sn(19, 1, type='Acyl'), GL.sn(20, 0, type='Acyl'), GL.sn(20, 1, type='Acyl'), 
                          GL.sn(20, 2, type='Acyl'), GL.sn(20, 3, type='Acyl'), GL.sn(20, 4, type='Acyl'), GL.sn(20, 5, type='Acyl'), 
-                         GL.sn(21, 0, type='Acyl'), GL.sn(22, 0, type='Acyl'), GL.sn(22, 1, type='Acyl'), GL.sn(22, 2, type='Acyl'), 
-                         GL.sn(22, 3, type='Acyl'), GL.sn(22, 4, type='Acyl'), GL.sn(22, 5, type='Acyl'), GL.sn(22, 6, type='Acyl'), 
-                         GL.sn(23, 0, type='Acyl'), GL.sn(24, 0, type='Acyl'), GL.sn(24, 1, type='Acyl'), GL.sn(24, 4, type='Acyl'), 
-                         GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl'), GL.sn(26, 1, type='Acyl'), GL.sn(26, 2, type='Acyl')]
+                         GL.sn(21, 0, type='Acyl'), GL.sn(21, 1, type='Acyl'), GL.sn(21, 2, type='Acyl'), GL.sn(22, 0, type='Acyl'), 
+                         GL.sn(22, 1, type='Acyl'), GL.sn(22, 2, type='Acyl'), GL.sn(22, 3, type='Acyl'), GL.sn(22, 4, type='Acyl'),
+                         GL.sn(22, 5, type='Acyl'), GL.sn(22, 6, type='Acyl'), GL.sn(23, 0, type='Acyl'), GL.sn(24, 0, type='Acyl'), 
+                         GL.sn(24, 1, type='Acyl'), GL.sn(24, 4, type='Acyl'), GL.sn(25, 0, type='Acyl'), GL.sn(26, 0, type='Acyl'),
+                         GL.sn(26, 1, type='Acyl'), GL.sn(26, 2, type='Acyl')]
         self.tailList.extend([GL.sn( 16, 0, type='Ether'),      GL.sn( 18, 0, type='Ether'),      GL.sn( 20, 0, type='Ether')])   
         self.tailList.extend([GL.sn( 16, 0, type='Vinyl'),      GL.sn( 18, 0, type='Vinyl'),      GL.sn( 20, 0, type='Vinyl')])      
         self.tailList.extend([GL.sn( 12, 0, type='Acyl', oh=1), GL.sn( 14, 0, type='Acyl', oh=1), GL.sn( 16, 0, type='Acyl', oh=1),
                               GL.sn( 17, 0, type='Acyl', oh=1), GL.sn( 18, 0, type='Acyl', oh=1), GL.sn( 18, 1, type='Acyl', oh=1),
-                              GL.sn( 18, 2, type='Acyl', oh=1), GL.sn( 20, 1, type='Acyl', oh=1), GL.sn( 20, 2, type='Acyl', oh=1)])                
+                              GL.sn( 18, 2, type='Acyl', oh=1), GL.sn( 20, 1, type='Acyl', oh=1), GL.sn( 20, 2, type='Acyl', oh=1)]) 
+
+        self.tailList.extend([GL.base( 16, type='Sphingosine'), GL.base( 17, type='Sphingosine'), GL.base( 18, type='Sphingosine'), GL.base( 19, type='Sphingosine'), GL.base( 20, type='Sphingosine')])
+        self.tailList.extend([GL.base( 17, type='Dihydrodeoxysphinganine'), GL.base( 18, type='Dihydrodeoxysphinganine'), GL.base( 19, type='Dihydrodeoxysphinganine')])
+        self.tailList.extend([GL.base( 18, type='Sphinganine')])
+        self.tailList.extend([GL.base( 18, type='Phytosphingosine'), GL.base( 20, type='Phytosphingosine')])
+        self.tailList.extend([GL.base( 18, type='Deoxysphinganine')])
+        self.tailList.extend([GL.base( 18, type='Sphingadiene')])
+
         self.buildList()
 
     def importTailList(self):
@@ -74,14 +84,23 @@ class Page(QWizardPage):
         if file_name and os.path.exists(file_name):
             open_file = open(file_name, 'r')
             lines = [line.strip() for line in open_file.readlines()]
-            lines = [line.split(' ') for line in lines]
+            lines = [re.split(r'\s{1,}', line) for line in lines]
             for line in lines:
+                type=line[2]
+                if type in ['Acyl', 'Ether', 'Vinyl']:
                     try:
                         tail = GL.sn(c=int(line[0]), d=int(line[1]),
-                                      type=line[2], me=int(line[3]),
-                                    oh=int(line[4]),dt=int(line[5]))
+                                     type=line[2],   me=int(line[3]),
+                                     oh=int(line[4]),dt=int(line[5]))
                         self.getTail(tail)
                     except: continue
+                elif type in GL.baseTypes:
+                    try:
+                        base = GL.base(c=int(line[0]),
+                                       type=line[2],
+                                       dt=int(line[5]))
+                        self.getTail(base)
+                    except: continue        
             open_file.close()
 
     def exportTailList(self):
@@ -173,7 +192,9 @@ class TailTableModel(QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         row = index.row()
         if role == Qt.DisplayRole:
-                return str(self.tdata[row].name)
+            if self.tdata[row].type in GL.baseTypes:
+                return f"{self.tdata[row].name} {self.tdata[row].type}"
+            return str(self.tdata[row].name)
  
     def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
