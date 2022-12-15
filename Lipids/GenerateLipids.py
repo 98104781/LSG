@@ -248,7 +248,7 @@ class sn:
   def __hash__(self):
     return hash(('name', self.name))
   def __eq__(self, other):
-    return self.name == other.name
+    return ((self.name == other.name) and (self.type == other.type))
   def __lt__(self, other):
     if self.c  < other.c: return True
     elif self.c == other.c and self.d < other.d: return True
@@ -271,42 +271,85 @@ def generate_tails(n, type):
 class base:
   '''Moiety to use as backbone for sphingoids\n
   c = carbon number of base\n
-  type = determines oh groups and desaturation [Sphinganine, Sphingosine, Phytosphingosine]\n
+  type = determines oh groups and desaturation [Deoxysphinganine, Sphinganine, Sphingosine, Phytosphingosine]\n
   providing no parameters also returns a water (-OH), which does not modify backbone.
   '''
-  def __init__(self, c=3, type=None, dt=0):
+  def __init__(self, c=5, type=None, dt=0):
 
     self.type = type
+    self.c  = c
+    self.me = 0
+    self.dt = dt
+
     # The bases, (ceramide bodies) can fall into one of several categories.
     # The categories are listed here (instead of just allowing the loop to
     # generate a range) because the fragmentation patterns change depending on
     # the positioning of functional groups.
-    if self.type == 'Sphinganine':
+    if self.type == 'Dihydrodeoxysphinganine':
+      self.lipidSuffix = '[NMS]'
+      self.d = 0
+      self.oh = 1
+      self.name = f"{self.c}:0;O"
+      #           H2O mass      + c*CH2 mass         + O mass
+      self.mass = masses['H2O'] + self.c*14.01565007 + 15.99491462
+      self.formula = Counter({'C':self.c, 'H':(2+2*self.c),'O':2})
+      self.smiles = 'CC(N)C(O)'
+      self.smiles += (self.c-3)*'C'
+
+    elif self.type == 'Deoxysphinganine':
+      self.lipidSuffix = '[NMS]'
+      self.d = 1
+      self.oh = 1
+      self.name = f"{self.c}:1;O"
+      #           H2O mass      + c*CH2 mass         - H2 mass    + O mass
+      self.mass = masses['H2O'] + self.c*14.01565007 - 2.01565007 + 15.99491462
+      self.formula = Counter({'C':self.c, 'H':(2*self.c),'O':2})
+      self.smiles = 'CC(N)C(O)/C=C/'
+      self.smiles += (self.c-5)*'C'
+
+    elif self.type == 'Sphinganine':
       self.lipidSuffix = '[NDS]'
-      self.name = f"{c}:0;O2"
-      #           H2O mass      + c*CH2 mass    + 2* O mass
-      self.mass = masses['H2O'] + c*14.01565007 + 2*15.99491462
-      self.formula = Counter({'C':c, 'H':(2+2*c),'O':3})
+      self.d = 0
+      self.oh = 2
+      self.name = f"{self.c}:0;O2"
+      #           H2O mass      + c*CH2 mass         + 2* O mass
+      self.mass = masses['H2O'] + self.c*14.01565007 + 2*15.99491462
+      self.formula = Counter({'C':self.c, 'H':(2+2*self.c),'O':3})
       self.smiles = 'OCC(N)C(O)'
-      self.smiles += (c-3)*'C'
+      self.smiles += (self.c-3)*'C'
 
     elif self.type == 'Sphingosine':
       self.lipidSuffix = '[NS]'
-      self.name = f"{c}:1;O2"
-      #           H2O mass      + c*CH2 mass    - H2 mass    + 2* O mass
-      self.mass = masses['H2O'] + c*14.01565007 - 2.01565007 + 2*15.99491462
-      self.formula = Counter({'C':c, 'H':(2*c),'O':3})
+      self.d = 1
+      self.oh = 2
+      self.name = f"{self.c}:1;O2"
+      #           H2O mass      + c*CH2 mass         - H2 mass    + 2* O mass
+      self.mass = masses['H2O'] + self.c*14.01565007 - 2.01565007 + 2*15.99491462
+      self.formula = Counter({'C':self.c, 'H':(2*self.c),'O':3})
       self.smiles = 'OCC(N)C(O)/C=C/'
-      self.smiles += (c-5)*'C'
+      self.smiles += (self.c-5)*'C'
+
+    elif self.type == 'Sphingadiene':
+      self.lipidSuffix = '[NS]'
+      self.d = 2
+      self.oh = 2
+      self.name = f"{self.c}:2;O2"
+      #           H2O mass      + c*CH2 mass         - 2*H2 mass    + 2* O mass
+      self.mass = masses['H2O'] + self.c*14.01565007 - 2*2.01565007 + 2*15.99491462
+      self.formula = Counter({'C':self.c, 'H':(2*self.c-2),'O':3})
+      self.smiles = 'OCC(N)C(O)/C=C/'
+      self.smiles += (self.c-7)*'C'+'C=C'
 
     elif self.type == 'Phytosphingosine':
       self.lipidSuffix = '[NP]'
-      self.name = f"{c}:0;O3"
-      #           H2O mass      + c*CH2 mass    + 3* O mass
-      self.mass = masses['H2O'] + c*14.01565007 + 3*15.99491462
-      self.formula = Counter({'C':c, 'H':(2+2*c),'O':4})
+      self.d = 0
+      self.oh = 3
+      self.name = f"{self.c}:0;O3"
+      #           H2O mass      + c*CH2 mass         + 3* O mass
+      self.mass = masses['H2O'] + self.c*14.01565007 + 3*15.99491462
+      self.formula = Counter({'C':self.c, 'H':(2+2*self.c),'O':4})
       self.smiles = 'OCC(N)C(O)C(O)'
-      self.smiles += (c-4)*'C'
+      self.smiles += (self.c-4)*'C'
       # Despite being based around an ammonia group, H2O is still
       # used as the default mass. These groups are attached to an
       # ammonia group in the 'Sphingolipid' class like how fatty 
@@ -321,10 +364,19 @@ class base:
       self.formula = Counter({'H':2,'O':1})
       self.smiles = ''
 
-    if dt > 0: # deuterium labels
-      self.name += f"(D{dt})"
-      self.mass += dt*1.006276746 # Calculated by D - H
-      self.formula += {'H':-dt, 'D':dt}
+    if self.dt > 0: # deuterium labels
+      self.name += f"(D{self.dt})"
+      self.mass += self.dt*1.006276746 # Calculated by D - H
+      self.formula += {'H':-self.dt, 'D':self.dt}
+
+  def __hash__(self):
+    return hash(('name', self.name))
+  def __eq__(self, other):
+    return ((self.name == other.name) and (self.type == other.type))
+  def __lt__(self, other):
+    if self.c  < other.c: return True
+    elif self.c == other.c and self.d < other.d: return True
+    else: return False
 
 def generate_base_tails(n):
   base_dict = {}
@@ -335,6 +387,8 @@ def generate_base_tails(n):
       if c > 6]
     base_dict[type] = base_list
   return base_dict
+
+baseTypes = ['Dihydrodeoxysphinganine', 'Deoxysphinganine', 'Sphinganine', 'Sphingosine', 'Sphingadiene', 'Phytosphingosine']
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
@@ -362,6 +416,8 @@ class Lipid:
     self.adducts = adducts
     self.spectra = {}
     self.smiles = ''
+    self.ambiguousName = False
+    self.ambiguoussmiles = False
 
     try:
       self.lipid_class = type(self).givenName
@@ -422,7 +478,7 @@ class Sphingolipid(Lipid):
       self.tails.extend([tail for tail in headgroup.hgtails])
     self.tails.extend([sn1, headgroup]) # Base and headgroup included to be consistant with fragment generation
 
-    self.name = f"{self.lipid_class}{base.lipidSuffix} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
+    self.name = f"{self.lipid_class}{base.lipidSuffix if base.lipidSuffix not in self.lipid_class else ''} {'_'.join(snx.name for snx in self.tails if snx.name not in ['Headgroup', '0:0'])}"
     self.mass = round(masses['NH3'] + sum([snx.mass-masses['H2O'] for snx in self.tails if snx.type != 'HeadTail']), 6)
     self.smiles= f'{headgroup.smiles}{base.smiles[:5]}{sn1.smiles}{base.smiles[5:]}'
 
@@ -961,7 +1017,8 @@ def MA_s_2FA(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if comb[0].type and comb[1].type in ['Acyl', 'Ether', 'Vinyl']:
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
       yield MA_s_2FAx(lipid, adduct, intensity, MA_s_2FA, comb)
 class MA_s_2FAx(MA):
   '''[ MA - (ROOH) ] (ALL)\n
@@ -997,7 +1054,8 @@ def MA_s_FA_FAk(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if comb[0].type and comb[1].type in ['Acyl', 'Ether', 'Vinyl']:
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
       yield MA_s_FA_FAkx(lipid, adduct, intensity, MA_s_FA_FAk, comb)
 class MA_s_FA_FAkx(MA):
   '''[ MA - (ROOH) ] (ALL)\n
@@ -1035,7 +1093,8 @@ def MA_s_2FAk(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if comb[0].type and comb[1].type in ['Acyl', 'Ether', 'Vinyl']:
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
       yield MA_s_2FAkx(lipid, adduct, intensity, MA_s_2FAk, comb)
 class MA_s_2FAkx(MA):
   '''[ MA - (R=O) ] (ALL)\n
@@ -1071,13 +1130,13 @@ class MA_s_allFA(MA):
   def MZ(self):
     mass = super().MZ()
     for tail in self.lipid.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         mass -= (tail.mass/abs(adducts[self.adduct][2]))
     return mass
   def Formula(self):
     formula = super().Formula()
     for tail in self.lipid.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         formula.subtract(tail.formula)
     return formula
   def Comment(self):
@@ -1085,7 +1144,7 @@ class MA_s_allFA(MA):
     string = len(self.lipid.tails)*'-(ROOH)'
     comment = comment.replace('M', 'M'+string)
     comment += ' ('
-    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail']+baseTypes)
     comment += ')'
     return comment  
 
@@ -1158,13 +1217,13 @@ class MA_s_allFAk(MA):
   def MZ(self):
     mass = super().MZ()
     for tail in self.lipid.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         mass -= (tail.mass-masses['H2O']/abs(adducts[self.adduct][2]))
     return mass
   def Formula(self):
     formula = super().Formula()
     for tail in self.lipid.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         formula.subtract(tail.formula)
         formula.update({'H':2 ,'O':1})
     return formula
@@ -1173,7 +1232,7 @@ class MA_s_allFAk(MA):
     string = len(self.lipid.tails)*'-(R=O)'
     comment = comment.replace('M', 'M'+string)
     comment += ' ('
-    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail']+baseTypes)
     comment += ')'
     return comment  
 
@@ -1922,7 +1981,8 @@ def MH_s_2FA(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if comb[0].type and comb[1].type in ['Acyl', 'Ether', 'Vinyl']:
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
       yield MH_s_2FAx(lipid, adduct, intensity, MH_s_2FA, comb)
 class MH_s_2FAx(MH):
   '''[ M(+/-)H - (ROOH) ] (ALL)\n
@@ -1958,7 +2018,8 @@ def MH_s_FA_FAk(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if comb[0].type and comb[1].type in ['Acyl', 'Ether', 'Vinyl']:
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
       yield MH_s_FA_FAkx(lipid, adduct, intensity, MH_s_FA_FAk, comb)
 class MH_s_FA_FAkx(MH):
   '''[ M(+/-)H - (ROOH) ] (ALL)\n
@@ -1996,7 +2057,8 @@ def MH_s_2FAk(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if comb[0].type and comb[1].type in ['Acyl', 'Ether', 'Vinyl']:
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
       yield MH_s_2FAkx(lipid, adduct, intensity, MH_s_2FAk, comb)
 class MH_s_2FAkx(MH):
   '''[ M(+/-)H - (R=O) ] (ALL)\n
@@ -2032,13 +2094,13 @@ class MH_s_allFA(MH):
   def MZ(self):
     mass = super().MZ()
     for tail in self.lipid.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         mass -= (tail.mass/abs(adducts[self.adduct][2]))
     return mass
   def Formula(self):
     formula = super().Formula()
     for tail in self.lipid.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         formula.subtract(tail.formula)
     return formula
   def Comment(self):
@@ -2046,7 +2108,7 @@ class MH_s_allFA(MH):
     string = len(self.lipid.tails)*'-(ROOH)'
     comment = comment.replace('M', 'M'+string)
     comment += ' ('
-    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail']+baseTypes)
     comment += ')'
     return comment  
 
@@ -2056,13 +2118,13 @@ class MH_s_allFAk(MH):
   def MZ(self):
     mass = super().MZ()
     for tail in self.lipid.tails:
-      if tail.type != 'Headgroup':
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         mass -= (tail.mass-masses['H2O'])
     return mass
   def Formula(self):
     formula = super().Formula()
     for tail in self.lipid.tails:
-      if tail.type != 'Headgroup':
+      if tail.type not in ['Headgroup', 'HeadTail']+baseTypes:
         formula.subtract(tail.formula)
         formula.update({'H':2 ,'O':1})
     return formula
@@ -2071,7 +2133,7 @@ class MH_s_allFAk(MH):
     string = len(self.lipid.tails)*'-(R=O)'
     comment = comment.replace('M', 'M'+string)
     comment += ' ('
-    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ', '.join(tail.name for tail in self.lipid.tails if tail.type not in ['Headgroup', 'HeadTail']+baseTypes)
     comment += ')'
     return comment  
 
@@ -2294,6 +2356,44 @@ class FAHx(Fragment):
       return '[(ROOH)+H]+ ('+self.tail.name+')'
     else:
       return '[RCOO]- ('+self.tail.name+')'
+
+def FAH_PUFA(lipid, adduct, intensity):
+  '''[ FA - H - CO2 ]\n
+  Fragment for a polyunsaturated deprotonated free fatty acid\n
+  For nonspecific sn position\n
+  Method used to generate multiple objects'''
+  for tail in lipid.tails:
+    if tail.type in ['Acyl', 'HeadTail'] and tail.d > 3 and tail.c > 15:
+      yield FAH_PUFAx(lipid, adduct, intensity, FAH_PUFA, tail)
+class FAH_PUFAx(Fragment):
+  '''[ FA (+ / -) H ]\n
+  Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return self.tail.mass + masses['H+'] - 43.989829
+    else:
+      return self.tail.mass - masses['H+'] - 43.989829
+  def Formula(self):
+    formula = Counter(self.tail.formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+      formula.subtract({'C':1, 'O':2})
+    else:
+      formula.subtract({'H':1, 'C':1, 'O':2})
+    return formula
+  def Charge(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return '[(ROOH - CO2)+H]+ ('+self.tail.name+')'
+    else:
+      return '[RCOO - CO2]- ('+self.tail.name+')'
 
 # ~ # 
 
@@ -2674,6 +2774,34 @@ class Cer_R(Fragment):
       return -1  
   def Comment(self):
       return 'Ceramide fragment R'
+  def Validate(self):
+    super().Validate()
+    assert issubclass(type(self.lipid), Sphingolipid)
+
+class Cer_R_s_H2O(Fragment):
+  '''Long-Chain-Base fragment\n
+  [ Base - 3H2O + H+ ]+\n or
+  [ Base - NH3 - 2H2O - H+ ]-'''
+  # Fragment 'R'
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive': # Base is created without the ammonia, so needs to be added here
+      return (self.lipid.tails[0].mass - 4*masses['H2O'] + masses['NH3'] + masses['H+'])
+    else:
+      return (self.lipid.tails[0].mass - 3*masses['H2O'] - masses['H+'])
+  def Formula(self):
+    formula = Counter(self.lipid.tails[0].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'N':1, 'H':-2, 'O':-3})
+    else:
+      formula.subtract({'H':5, 'O':2})
+    return formula
+  def Charge(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return 1
+    else:
+      return -1  
+  def Comment(self):
+      return 'Ceramide fragment R - H2O'
   def Validate(self):
     super().Validate()
     assert issubclass(type(self.lipid), Sphingolipid)
@@ -3507,6 +3635,30 @@ class HGA_FA_s_H2Ox(HGA):
   def Comment(self):
     comment = super().Comment()
     comment = comment.replace(']', '+(RO)]')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+
+def HGA_FA_s_PO4(lipid, adduct, intensity):
+  '''[ Headgroup + (RO) ]\n
+  Fragment for headgroup bonded to ether fatty acid'''
+  for tail in lipid.tails:
+    if tail.type in ['Vinyl', 'Ether']:
+      yield HGA_FA_s_PO4x(lipid, adduct, intensity, HGA_FA_s_PO4, tail)
+class HGA_FA_s_PO4x(HGA):
+  '''Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() + (self.tail.mass/abs(adducts[self.adduct][2])) - (masses['PO4H3'])/abs(adducts[self.adduct][2])
+  def Formula(self):
+    formula = super().Formula()
+    formula.update(self.tail.formula)
+    formula.subtract({'H':1, 'P':1, 'O':3})
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace(']', '-H3PO4+(RO)]')
     comment += ' ('+self.tail.name+')'
     return comment  
 
@@ -4412,6 +4564,22 @@ class O4SH(Fragment):
     super().Validate()
     assert self.Formula() <= self.lipid.formula
 
+class C5H12N(Fragment):
+  '''X+H Fragment common to PC under positive ESI\n
+  MZ: 86.096426'''
+  def MZ(self):
+    return 86.096426
+  def Formula(self):
+    formula = Counter({'C':5, 'H':12, 'N':1})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[C5H12N]+'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
 class O3SH(Fragment):
   '''X-H Fragment common to Sulphoquinovosyl diacylglycerol under negative ESI\n
   MZ: 80.965187457'''
@@ -4457,6 +4625,22 @@ class H2O2P(Fragment):
       return -1
   def Comment(self):
     return '[H2O2P]-'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
+class C2H8NO(Fragment):
+  '''X+H Fragment common to LPE under positive ESI\n
+  MZ: 62.06004'''
+  def MZ(self):
+    return 62.06004
+  def Formula(self):
+    formula = Counter({'C':2, 'H':8, 'N':1, 'O':1})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[C2H8NO]+'
   def Validate(self):
     super().Validate()
     assert self.Formula() <= self.lipid.formula

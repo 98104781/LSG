@@ -342,6 +342,7 @@ class LipidWindow(QDialog):
             frags = lipid.spectra[adduct]
         except: name, mz, frags = '', 0, []
         self.spectra.setSpectra(name, mz, frags)
+        print(frags)
         self.table = Spectra.SpectraTableModel(frags)
         self.tableView.setModel(self.table)
         self.tableView.setItemDelegateForColumn(1, Spectra.SpinBoxDelegate(self.tableView))
@@ -363,8 +364,10 @@ class LipidWindow(QDialog):
 
         self.acyls =  [GL.sn(c=16, d=0, type='Acyl') ,
                        GL.sn(c=18, d=1, type='Acyl') ]
-        self.ethers = [GL.sn(c=16, d=0, type='Ether')]
-        self.vinyls = [GL.sn(c=16, d=0, type='Vinyl')]
+        self.ethers = [GL.sn(c=16, d=0, type='Ether'),
+                       GL.sn(c=18, d=1, type='Ether') ]
+        self.vinyls = [GL.sn(c=16, d=0, type='Vinyl'),
+                       GL.sn(c=18, d=1, type='Vinyl') ]
 
         for x in constituents: # ie, for 'B', 'AA', 'A' in ['B', 'AA', 'A']
             group = dict(Counter(x)) # ie, {'B':1}, {'A':2}, {'A':1}

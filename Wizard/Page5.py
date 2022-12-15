@@ -56,7 +56,9 @@ class Page(QWizardPage):
 
     def classCompleted(self, cls):
         consoleText = self.output_console.toPlainText()
-        consoleText = consoleText.replace('- '+cls.__name__+' ', '- '+cls.__name__+' - Completed')
+        try: name = cls.givenName
+        except: name = cls.__name__
+        consoleText = consoleText.replace('- '+name+' ', '- '+name+' - Completed')
         self.output_console.setPlainText(consoleText)
 
     def save_as(self):
@@ -161,7 +163,7 @@ class Page(QWizardPage):
 
             if self.field('ceramideVariability') is False:
                 self.bases_to_generate = [18, 18, base_types]
-            else: self.bases_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0), base_types]
+            else: self.bases_to_generate = [max(int(self.field('cmin') or 0), 7), max(int(self.field('cmax') or 0), 7), base_types]
             
         self.progress_bar.reset()
 
