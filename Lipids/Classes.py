@@ -2618,6 +2618,286 @@ class SHexCer(GL.Sphingolipid):
 
 # ~ # ~ # ~ # ~ # ~ # ~ #
 
+class GM1a(GL.Sphingolipid):
+
+  tooltip = 'GM1a'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GM1a'
+  gm = GL.gm1a
+
+  adducts = {  # adduct:{spectra}
+  "[M+H]+":{
+    GL.MA       :20,
+    GL.MA_s_H2O :5,
+
+    GL.GMY0     :3,
+    GL.GMY2     :50,
+    GL.GMY4     :30,
+
+    GL.GMZ4     :5,
+    GL.GMY5     :30,
+    GL.GMZ5     :5,
+
+    GL.GMB2     :100,
+    GL.GMB3     :12,
+    GL.GMB4     :1,
+    GL.GMB5     :2,
+
+    GL.MA_s_HG     :5,
+    GL.MA_s_HG_H2O :20,
+    GL.HGA_s_H2O   :25,
+  }}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gm1a[0]
+    super().__init__(GM1a.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
+class GM2(GL.Sphingolipid):
+
+  tooltip = 'GM2'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GM2'
+  gm = GL.gm2
+
+  adducts = {  # adduct:{spectra}
+  "[M+H]+":{
+    GL.MA       :50,
+    GL.MA_s_H2O :50,
+
+    GL.GMY0     :30,
+    GL.GMZ0     :5,
+    GL.GMY1     :5,
+    GL.GMZ1     :1,
+    GL.GMY2     :1,
+    GL.GMZ2     :1,
+    GL.GMY3     :20,
+    GL.GMZ3     :5,
+
+    GL.GMB1     :2,
+    GL.GMB3     :15,
+    GL.GMC3     :1,   
+
+    GL.MA_s_HG     :5,
+    GL.MA_s_HG_H2O :10,
+    GL.HGA_s_H2O   :100,
+  }}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gm2[0]
+    super().__init__(GM2.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
+class GM3(GL.Sphingolipid):
+
+  tooltip = 'GM3'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GM3'
+  gm = GL.gm3
+
+  adducts = {  # adduct:{spectra}
+  "[M-H]-":{
+    GL.MA:100,
+    GL.GMY0:1,
+    GL.GMB0:25},
+
+  "[M+H]+":{
+    GL.MA       :5,
+    GL.MA_s_H2O :75,
+    GL.GMY0     :30,
+    GL.GMZ0     :25,
+    GL.GMY1     :85,
+    GL.GMZ1     :45,
+    GL.GMB0     :10,
+    GL.GMB1     :10,  
+    GL.MA_s_HG     :70,
+    GL.MA_s_HG_H2O :100,
+    GL.MA_s_HG_2H2O:10,
+    GL.HGA_s_H2O   :3}}#,
+
+  #"[M+NH4]+":{
+  #  GL.MA:50,
+  #  GL.MA_s_H2O:75,
+  #  GL.GMY0:1,
+  #  GL.MH_s_HG_H2O:100}}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gm3[0]
+    super().__init__(GM3.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
+class GD1a(GL.Sphingolipid):
+
+  tooltip = 'GD1a'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GD1a'
+  gm = GL.gd1a
+
+  adducts = {  # adduct:{spectra}
+  "[M+H]+":{
+    GL.MA          :40,
+    GL.MA_s_H2O    :10,
+    GL.MA_s_2H2O   :1,
+
+    GL.GMX2        :100,
+    GL.GMX4        :1,
+    GL.GMX5        :10,
+
+    GL.GMY1        :1,
+    GL.GMY3        :2,
+    GL.GMY6        :2,
+
+    GL.GMB0        :2,  
+    GL.GMB1        :2,  
+    GL.GMB3        :10,
+
+    GL.MA_s_HG     :5,
+
+    GL.HGA_s_H2O   :10,
+  }}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gd1a[0]
+    super().__init__(GD1a.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
+class GD1b(GL.Sphingolipid):
+
+  tooltip = 'GD1b'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GD1b'
+  gm = GL.gd1b
+
+  adducts = {  # adduct:{spectra}
+  "[M+H]+":{
+    GL.MA          :100,
+    GL.MA_s_H2O    :50,
+    GL.MA_s_2H2O   :1,
+
+    GL.GMX0        :2,
+    GL.GMX1        :2,
+    GL.GMX3        :5,
+    GL.GMX5        :5,
+
+    GL.GMY2        :5,
+    GL.GMY5        :1,
+    GL.GMY7        :10,
+  
+    GL.GMZ2        :2,
+    GL.GMZ7        :2,
+
+    GL.GMB1        :2,
+    GL.GMB2        :40,
+    GL.GMB3        :2,
+    GL.GMB4        :2,
+    GL.GMB5        :20,  
+
+    GL.MA_s_HG     :5,
+
+    GL.HGA_s_H2O   :10,
+    GL.HGA_s_2H2O  :5,
+  }}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gd1b[0]
+    super().__init__(GD1b.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
+class GD2(GL.Sphingolipid):
+
+  tooltip = 'GD2'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GD2'
+  gm = GL.gd2
+
+  adducts = {  # adduct:{spectra}
+  "[M+H]+":{
+    GL.MA          :100,
+    GL.MA_s_H2O    :50,
+    GL.MA_s_2H2O   :5,
+
+    GL.GMX0        :10,
+    GL.GMX1        :10,
+    GL.GMX2        :1,
+    GL.GMX4        :2,
+
+    GL.GMY0        :10,
+    GL.GMY2        :1,
+    GL.GMY3        :10,
+    GL.GMY5        :5,
+
+    GL.GMZ0        :5,
+    GL.GMZ3        :2,
+    GL.GMZ5        :1,
+
+    GL.GMA1        :1,   
+
+    GL.GMB1        :2,  
+    GL.GMB3        :10,
+
+    GL.MA_s_HG     :2,
+    GL.MA_s_HG_H2O :5,
+
+    GL.HGA_s_H2O   :30,
+  }}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gd2[0]
+    super().__init__(GD2.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
+class GD3(GL.Sphingolipid):
+
+  tooltip = 'GD3'
+  base_types = ['Sphinganine']
+  tailOrganisation = ['B','A']
+  givenName = 'GD3'
+  gm = GL.gd3
+
+  adducts = {  # adduct:{spectra}
+  "[M+H]+":{
+    GL.MA       :40,
+    GL.MA_s_H2O :40,
+
+    GL.GMX1     :50,
+
+    GL.GMY0     :20,
+    GL.GMZ0     :10,
+    GL.GMY1     :75,
+    GL.GMZ1     :20,
+    GL.GMY2     :50,
+    GL.GMZ2     :20,
+
+    GL.GMA0     :10,
+
+    GL.GMB0     :30,
+    GL.GMB1     :60,  
+    GL.GMB2     :100,
+
+    GL.MA_s_HG     :30,
+    GL.MA_s_HG_H2O :20,
+
+    GL.HGA_s_H2O   :30,
+  }}
+
+  def __init__(self, base, sn1):
+    headgroup = GL.gd3[0]
+    super().__init__(GD3.adducts, base, sn1, headgroup)
+
+# ~ # ~ # ~ # ~ # ~ # ~ # 
+
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 class FA(GL.OtherLipid):

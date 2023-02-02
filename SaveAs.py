@@ -37,7 +37,7 @@ class Generator(QObject):
 
     def run(self):
         try:
-            import pydevd;pydevd.settrace(suspend=False)
+            #import pydevd;pydevd.settrace(suspend=False)
             self.save_file = open(self.file_name, 'x', newline='')
             if self.lipidSpecifics:
                 self.lipid_data = self.generate_specific()
@@ -64,7 +64,12 @@ class Generator(QObject):
         oh = sum(snx.oh for snx in lipid.tails if snx.type != 'Headgroup')
         dt = sum(snx.dt for snx in lipid.tails if snx.type != 'Headgroup')
 
-        name = f"{c}:{d}"
+        if 'Ether' in [snx.type for snx in lipid.tails if snx.type != 'Headgroup']:
+            name = f"O-{c}:{d}"
+        elif 'Vinyl' in [snx.type for snx in lipid.tails if snx.type != 'Headgroup']:
+            name = f"P-{c}:{d}"
+        else: name = f"{c}:{d}"
+        
         if me > 0: # Methyl branching of fatty acid
             name += f";{me}-M" 
         if oh > 0: # Hydroxy functionalisation of fatty acid

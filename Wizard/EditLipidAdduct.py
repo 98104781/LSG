@@ -342,7 +342,8 @@ class LipidWindow(QDialog):
             frags = lipid.spectra[adduct]
         except: name, mz, frags = '', 0, []
         self.spectra.setSpectra(name, mz, frags)
-        print(frags)
+        #for frag in frags:
+        #    print(frag, frag.mass)
         self.table = Spectra.SpectraTableModel(frags)
         self.tableView.setModel(self.table)
         self.tableView.setItemDelegateForColumn(1, Spectra.SpinBoxDelegate(self.tableView))
