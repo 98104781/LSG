@@ -1698,8 +1698,10 @@ class GMX0(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.hgy.formula.copy()
+    formula.subtract(self.hgb.formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -1721,8 +1723,10 @@ class GMX1(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.hgy.formula.copy()
+    formula.subtract(self.hgb.formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -1744,8 +1748,10 @@ class GMX2(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.hgy.formula.copy()
+    formula.subtract(self.hgb.formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -1767,8 +1773,10 @@ class GMX3(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.hgy.formula.copy()
+    formula.subtract(self.hgb.formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -1790,8 +1798,10 @@ class GMX4(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.hgy.formula.copy()
+    formula.subtract(self.hgb.formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -1813,8 +1823,10 @@ class GMX5(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.hgy.formula.copy()
+    formula.subtract(self.hgb.formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -1837,7 +1849,7 @@ class GMY0(MA):
     formulaLoss.subtract(self.lipid.gm[0].formula)
     formulaLoss.update(self.lipid.gm[1].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1857,9 +1869,9 @@ class GMY1(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[2].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1879,9 +1891,9 @@ class GMY2(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[3].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1901,9 +1913,9 @@ class GMY3(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[4].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1923,9 +1935,9 @@ class GMY4(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[5].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1945,9 +1957,9 @@ class GMY5(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[6].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1967,9 +1979,9 @@ class GMY6(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[7].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -1989,9 +2001,9 @@ class GMY7(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[8].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2011,9 +2023,9 @@ class GMY8(MA):
     comment = self.adduct
     formulaLoss = self.lipid.formula.copy()
     formulaLoss.subtract(self.lipid.gm[0].formula)
-    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss.update(self.lipid.gm[9].formula)
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2037,7 +2049,7 @@ class GMZ0(MA):
     formulaLoss.update(self.lipid.gm[1].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2061,7 +2073,7 @@ class GMZ1(MA):
     formulaLoss.update(self.lipid.gm[2].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2085,7 +2097,7 @@ class GMZ2(MA):
     formulaLoss.update(self.lipid.gm[3].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2109,7 +2121,7 @@ class GMZ3(MA):
     formulaLoss.update(self.lipid.gm[4].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2133,7 +2145,7 @@ class GMZ4(MA):
     formulaLoss.update(self.lipid.gm[5].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2157,7 +2169,7 @@ class GMZ5(MA):
     formulaLoss.update(self.lipid.gm[6].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2181,7 +2193,7 @@ class GMZ6(MA):
     formulaLoss.update(self.lipid.gm[7].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2205,7 +2217,7 @@ class GMZ7(MA):
     formulaLoss.update(self.lipid.gm[8].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2229,7 +2241,7 @@ class GMZ8(MA):
     formulaLoss.update(self.lipid.gm[9].formula)
     formulaLoss.subtract({'H':2 ,'O':1})
     formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
-    comment = comment.replace('M', 'M-'+formulaLoss)
+    comment = comment.replace('M', formulaLoss)
     return comment
   def Validate(self):
     super().Validate()
@@ -2247,8 +2259,11 @@ class GMA0(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[1].formula)
+    formula.subtract({'H':2 ,'O':1})
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2267,8 +2282,11 @@ class GMA1(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[2].formula)
+    formula.subtract({'H':2 ,'O':1})
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2287,8 +2305,11 @@ class GMA2(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[3].formula)
+    formula.subtract({'H':2 ,'O':1})
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2307,8 +2328,11 @@ class GMA3(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[4].formula)
+    formula.subtract({'H':2 ,'O':1})
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2327,8 +2351,11 @@ class GMA4(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[5].formula)
+    formula.subtract({'H':2 ,'O':1})
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2347,8 +2374,11 @@ class GMA5(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[6].formula)
+    formula.subtract({'H':2 ,'O':1})
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2366,8 +2396,10 @@ class GMB0(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[1].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2385,8 +2417,10 @@ class GMB1(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[2].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2404,8 +2438,10 @@ class GMB2(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[3].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2423,8 +2459,10 @@ class GMB3(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[4].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2442,8 +2480,10 @@ class GMB4(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[5].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -2461,8 +2501,10 @@ class GMB5(Fragment):
     formula.update(adducts[self.adduct][3])
     return formula
   def Comment(self):
-    comment = '[M]+'
-    formula = ''.join(''.join((key, str(val))) for (key, val) in self.Formula().items() if val > 0)
+    comment = self.adduct
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[6].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
     comment = comment.replace('M', formula)
     return comment
   def Validate(self):
@@ -4096,7 +4138,9 @@ class MA_s_HG(MA):
       return formula
   def Comment(self):
     comment = super().Comment()
-    headgroup = ''.join(''.join((key, str(val))) for (key, val) in self.headgroup.formula.items())
+    formula = self.headgroup.formula.copy()
+    formula.subtract({'H':2, 'O':1})
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in formula.items())
     comment = comment.replace('M', 'M-'+headgroup)
     return comment
 
@@ -4108,9 +4152,11 @@ class MA_s_HG_H2O(MA_s_HG):
       formula.subtract({'H':2, 'O':1})
       return formula
   def Comment(self):
-    comment = super().Comment()
-    comment = comment.replace('M', 'M-H2O')
-    return comment  
+    comment = self.adduct
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in self.headgroup.formula.items())
+    comment = comment.replace('M', 'M-'+headgroup)
+    return comment
+
 
 class MA_s_HG_2H2O(MA_s_HG):
   def MZ(self):
@@ -4120,9 +4166,11 @@ class MA_s_HG_2H2O(MA_s_HG):
       formula.subtract({'H':4, 'O':2})
       return formula
   def Comment(self):
-    comment = super().Comment()
-    comment = comment.replace('M', 'M-2H2O')
-    return comment  
+    comment = self.adduct
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in self.headgroup.formula.items())
+    comment = comment.replace('M', 'M-'+headgroup+'-H2O')
+    return comment
+
 
 # ~ #
 
