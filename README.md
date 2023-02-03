@@ -9,4 +9,4 @@ Spectral libraries can be exported with the file extension '.MSP' selected.
 Otherwise, an Excalibur compatible precursor list (for DDA analysis via orbitrap) or Skylike compatible transition list may be exported by selecting '.CSV'.
 
 An overview of the features along with a brief how-to guide is available on the current release page:
-https://github.com/98104781/LSG/releases/tag/v1.0.0
+https://github.com/98104781/LSG/releases/tag/v1.1.0
