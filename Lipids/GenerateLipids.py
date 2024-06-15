@@ -1,5 +1,6 @@
 import re
 import copy
+import numpy as np
 from itertools import combinations
 from collections import Counter
 
@@ -23,9 +24,15 @@ adducts = {
 
   "[M-CH3]-": # In source fragment for PC based lipids   
    [ -15.021829401,'Negative',  -1, {'C':-1, 'H':-3}, ''],
+
   "[M+Hac-H]-":   
    [ 59.013853,    'Negative',  -1, {'C':2, 'H':3, 'O':2}, ''],
 
+  "[M+CO3H]-":   
+   [ 60.993117,    'Negative',  -1, {'C':1, 'H':1, 'O':3}, ''],
+   
+  "[M+CO3]2-":   
+   [ 59.985841,    'Negative',  -2, {'C':1, 'O':3}, ''],
 
 
   "[M+Na-2H]-":    
@@ -40,10 +47,10 @@ adducts = {
    [  1.007276467, 'Positive',  1, {'H':1},               '[H+].'],
 
   "[M+2H]2+":     
-   [  2.014552934, 'Positive',  1, {'H':2},               '[H+].[H+].'],
+   [  2.014552934, 'Positive',  2, {'H':2},               '[H+].[H+].'],
 
   "[M+3H]3+":     
-   [  3.021829401, 'Positive',  1, {'H':3},               '[H+].[H+].[H+].'],
+   [  3.021829401, 'Positive',  3, {'H':3},               '[H+].[H+].[H+].'],
 
 
 
@@ -262,12 +269,14 @@ class sn:
 
 def generate_tails(n, type):
   tail_list = []
-  [tail_list.append(sn(c, d, type=type, oh=oh))
+  [tail_list.append(sn(c, d, type=type, oh=oh, dt=dt))
     for c in range(n[0], n[1] + 1)
     for d in range(n[2], n[3] + 1)
       if d <= (c-1)/2
-      for oh in range(0, n[4]+1)
-      if d+oh <= (c-1)/2]
+      for oh in range(0, n[4] + 1)
+      if d+oh <= (c-1)/2
+    for dt in range(0, n[5] + 1)
+      if dt <= ((2*c-2*d)-1)] # Haven't fully tested deuteration to ensure it's bug proof.
   return tail_list
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -643,6 +652,16 @@ gd1b = GlycNode(glu,
                       ])])])
 gd1b = gd1b.returnFragments()
 
+# GT1a = Glu - Gal(NeuAc) - GalNAc - Gal(NeuAc)
+gt1a = GlycNode(glu, 
+          [GlycNode(gal, 
+              [GlycNode(neuac),
+               GlycNode(galnac, 
+                  [GlycNode(gal,
+                      [GlycNode(neuac,[GlycNode(neuac)])])
+                      ])])])
+gt1a = gt1a.returnFragments()
+
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
@@ -963,6 +982,20 @@ class M_s_CH3(Fragment):
   def Comment(self):
     return "[M-CH3]-"
 
+class M_s_TMA(Fragment):
+  '''[ M - C3H9N ]\n
+  Fragment for molecular ion without adduct'''
+  def MZ(self):
+    return self.lipid.mass - masses['TMA']
+  def Formula(self):
+    formula = Counter(self.lipid.formula)
+    formula.subtract({'C':3, 'H':9 ,'N':1})
+    return formula
+  def Comment(self):
+    return "[M-C3H9N]-"
+  def Validate(self):
+    assert Counter({'C':3, 'H':9 ,'N':1}) <= self.lipid.formula
+
 class MA_s_TMA(MA):
   '''[ MA - C3H9N ]\n
   Fragment for adducted molecular ion, with loss of trimethylamine\n
@@ -1154,8 +1187,8 @@ def MA_s_2FA(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
-    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'HeadTail']):
       yield MA_s_2FAx(lipid, adduct, intensity, MA_s_2FA, comb)
 class MA_s_2FAx(MA):
   '''[ MA - (ROOH) ] (ALL)\n
@@ -1230,8 +1263,8 @@ def MA_s_2FAk(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
-    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'HeadTail'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'HeadTail']):
       yield MA_s_2FAkx(lipid, adduct, intensity, MA_s_2FAk, comb)
 class MA_s_2FAkx(MA):
   '''[ MA - (R=O) ] (ALL)\n
@@ -1683,7 +1716,7 @@ class MA_s_FA_Gal_H2Ox(MA_H2O_s_Gal):
   def Validate(self):
     super().Validate()
 
-class GMX0(Fragment):
+class GMAX0(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -1691,7 +1724,7 @@ class GMX0(Fragment):
     self.hgy = lipid.gm[0] # Total headgroup - end
     super().__init__(lipid, adduct, intensity, fragmentType)
   def MZ(self):
-    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0]/abs(adducts[self.adduct][2]))
+    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = self.hgy.formula.copy()
     formula.subtract(self.hgb.formula)
@@ -1708,7 +1741,7 @@ class GMX0(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 1
 
-class GMX1(Fragment):
+class GMAX1(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -1716,7 +1749,7 @@ class GMX1(Fragment):
     self.hgy = lipid.gm[1] # Total headgroup - end
     super().__init__(lipid, adduct, intensity, fragmentType)
   def MZ(self):
-    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0]/abs(adducts[self.adduct][2]))
+    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = self.hgy.formula.copy()
     formula.subtract(self.hgb.formula)
@@ -1733,7 +1766,7 @@ class GMX1(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 2
 
-class GMX2(Fragment):
+class GMAX2(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -1741,7 +1774,7 @@ class GMX2(Fragment):
     self.hgy = lipid.gm[2] # Total headgroup - end
     super().__init__(lipid, adduct, intensity, fragmentType)
   def MZ(self):
-    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0]/abs(adducts[self.adduct][2]))
+    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = self.hgy.formula.copy()
     formula.subtract(self.hgb.formula)
@@ -1758,7 +1791,7 @@ class GMX2(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 3
 
-class GMX3(Fragment):
+class GMAX3(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -1766,7 +1799,7 @@ class GMX3(Fragment):
     self.hgy = lipid.gm[3] # Total headgroup - end
     super().__init__(lipid, adduct, intensity, fragmentType)
   def MZ(self):
-    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0]/abs(adducts[self.adduct][2]))
+    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = self.hgy.formula.copy()
     formula.subtract(self.hgb.formula)
@@ -1783,7 +1816,7 @@ class GMX3(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 4
 
-class GMX4(Fragment):
+class GMAX4(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -1791,7 +1824,7 @@ class GMX4(Fragment):
     self.hgy = lipid.gm[4] # Total headgroup - end
     super().__init__(lipid, adduct, intensity, fragmentType)
   def MZ(self):
-    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0]/abs(adducts[self.adduct][2]))
+    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = self.hgy.formula.copy()
     formula.subtract(self.hgb.formula)
@@ -1808,7 +1841,7 @@ class GMX4(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 5
 
-class GMX5(Fragment):
+class GMAX5(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -1816,7 +1849,7 @@ class GMX5(Fragment):
     self.hgy = lipid.gm[5] # Total headgroup - end
     super().__init__(lipid, adduct, intensity, fragmentType)
   def MZ(self):
-    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0]/abs(adducts[self.adduct][2]))
+    return (self.hgy.mass-self.hgb.mass+adducts[self.adduct][0])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = self.hgy.formula.copy()
     formula.subtract(self.hgb.formula)
@@ -1833,11 +1866,11 @@ class GMX5(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 6
 
-class GMY0(MA):
+class GMAY0(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[1].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[1].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1854,12 +1887,12 @@ class GMY0(MA):
   def Validate(self):
     super().Validate()
     assert len(self.lipid.gm) > 1
-    
-class GMY1(MA):
+
+class GMAY1(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[2].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[2].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1877,11 +1910,11 @@ class GMY1(MA):
     super().Validate()
     assert len(self.lipid.gm) > 2
 
-class GMY2(MA):
+class GMAY2(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[3].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[3].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1899,11 +1932,11 @@ class GMY2(MA):
     super().Validate()
     assert len(self.lipid.gm) > 3
 
-class GMY3(MA):
+class GMAY3(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[4].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[4].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1921,11 +1954,11 @@ class GMY3(MA):
     super().Validate()
     assert len(self.lipid.gm) > 4
 
-class GMY4(MA):
+class GMAY4(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[5].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[5].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1943,11 +1976,11 @@ class GMY4(MA):
     super().Validate()
     assert len(self.lipid.gm) > 5
 
-class GMY5(MA):
+class GMAY5(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[6].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[6].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1965,11 +1998,11 @@ class GMY5(MA):
     super().Validate()
     assert len(self.lipid.gm) > 6
 
-class GMY6(MA):
+class GMAY6(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[7].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[7].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -1987,11 +2020,11 @@ class GMY6(MA):
     super().Validate()
     assert len(self.lipid.gm) > 7
 
-class GMY7(MA):
+class GMAY7(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[8].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[8].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2009,11 +2042,11 @@ class GMY7(MA):
     super().Validate()
     assert len(self.lipid.gm) > 8
 
-class GMY8(MA):
+class GMAY8(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[9].mass/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[9].mass)/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2031,11 +2064,11 @@ class GMY8(MA):
     super().Validate()
     assert len(self.lipid.gm) > 9
 
-class GMZ0(MA):
+class GMAZ0(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[1].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[1].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2055,11 +2088,11 @@ class GMZ0(MA):
     super().Validate()
     assert len(self.lipid.gm) > 1
 
-class GMZ1(MA):
+class GMAZ1(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[2].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[2].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2079,11 +2112,11 @@ class GMZ1(MA):
     super().Validate()
     assert len(self.lipid.gm) > 2
 
-class GMZ2(MA):
+class GMAZ2(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[3].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[3].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2103,11 +2136,11 @@ class GMZ2(MA):
     super().Validate()
     assert len(self.lipid.gm) > 3
 
-class GMZ3(MA):
+class GMAZ3(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[4].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[4].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2127,11 +2160,11 @@ class GMZ3(MA):
     super().Validate()
     assert len(self.lipid.gm) > 4
 
-class GMZ4(MA):
+class GMAZ4(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[5].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[5].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2151,11 +2184,11 @@ class GMZ4(MA):
     super().Validate()
     assert len(self.lipid.gm) > 5
 
-class GMZ5(MA):
+class GMAZ5(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[6].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[6].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2175,11 +2208,11 @@ class GMZ5(MA):
     super().Validate()
     assert len(self.lipid.gm) > 6
 
-class GMZ6(MA):
+class GMAZ6(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[7].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[7].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2199,11 +2232,11 @@ class GMZ6(MA):
     super().Validate()
     assert len(self.lipid.gm) > 7
 
-class GMZ7(MA):
+class GMAZ7(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[8].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[8].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2223,11 +2256,11 @@ class GMZ7(MA):
     super().Validate()
     assert len(self.lipid.gm) > 8
 
-class GMZ8(MA):
+class GMAZ8(MA):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
-    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[9].mass+masses['H2O']/abs(adducts[self.adduct][2]))
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[9].mass+masses['H2O'])/abs(adducts[self.adduct][2])
   def Formula(self):
     formula = super().Formula()
     formula.subtract(self.lipid.gm[0].formula)
@@ -2247,7 +2280,7 @@ class GMZ8(MA):
     super().Validate()
     assert len(self.lipid.gm) > 9
 
-class GMA0(Fragment):
+class GMAA0(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2270,7 +2303,7 @@ class GMA0(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 1
 
-class GMA1(Fragment):
+class GMAA1(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2293,7 +2326,7 @@ class GMA1(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 2
 
-class GMA2(Fragment):
+class GMAA2(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2316,7 +2349,7 @@ class GMA2(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 3
 
-class GMA3(Fragment):
+class GMAA3(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2339,7 +2372,7 @@ class GMA3(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 4
 
-class GMA4(Fragment):
+class GMAA4(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2362,7 +2395,7 @@ class GMA4(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 5
 
-class GMA5(Fragment):
+class GMAA5(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2385,7 +2418,7 @@ class GMA5(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 6
 
-class GMB0(Fragment):
+class GMAB0(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2406,7 +2439,7 @@ class GMB0(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 1
 
-class GMB1(Fragment):
+class GMAB1(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2427,7 +2460,7 @@ class GMB1(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 2
 
-class GMB2(Fragment):
+class GMAB2(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2448,7 +2481,7 @@ class GMB2(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 3
 
-class GMB3(Fragment):
+class GMAB3(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2469,7 +2502,7 @@ class GMB3(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 4
 
-class GMB4(Fragment):
+class GMAB4(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2490,7 +2523,7 @@ class GMB4(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 5
 
-class GMB5(Fragment):
+class GMAB5(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2511,7 +2544,7 @@ class GMB5(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 6
 
-class GMC0(Fragment):
+class GMAC0(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2531,7 +2564,7 @@ class GMC0(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 1
 
-class GMC1(Fragment):
+class GMAC1(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2551,7 +2584,7 @@ class GMC1(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 2
 
-class GMC2(Fragment):
+class GMAC2(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2571,7 +2604,7 @@ class GMC2(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 3
 
-class GMC3(Fragment):
+class GMAC3(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2591,7 +2624,7 @@ class GMC3(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 4
 
-class GMC4(Fragment):
+class GMAC4(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2611,7 +2644,7 @@ class GMC4(Fragment):
     super().Validate()
     assert len(self.lipid.gm) > 5
 
-class GMC5(Fragment):
+class GMAC5(Fragment):
   '''[ MA - * ]\n
   Fragment for adducted molecular ion, with loss of various headgroup parts'''
   def MZ(self):
@@ -2867,6 +2900,67 @@ class MH_s_TMA(MH):
   def Validate(self):
     super().Validate()
     assert Counter({'C':3, 'H':9 ,'N':1}) <= self.lipid.formula
+
+def MH_s_FA_TMA(lipid, adduct, intensity):
+  '''[ MH - (ROOH) - C3H9N ]\n
+  Fragment for adducted molecular ion with loss of a free fatty acid AND trimethylamine\n
+  Common for Phosphatidylcholines\n
+  Method used to generate multiple objects'''  
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield MH_s_FA_TMAx(lipid, adduct, intensity, MH_s_FA_TMA, tail)
+class MH_s_FA_TMAx(MH_s_TMA):
+  '''[ MH - (ROOH) - C3H9N ]\n
+  Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() - (self.tail.mass/abs(adducts[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.tail.formula)
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+  def Validate(self):
+    super().Validate()
+
+# ~ #
+
+def MH_s_FAk_TMA(lipid, adduct, intensity):
+  '''[ MH - (R=O) - C3H9N ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND trimethylamine\n
+  Common for Phosphatidylcholines\n
+  Method used to generate multiple objects'''  
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield MH_s_FAk_TMAx(lipid, adduct, intensity, MH_s_FAk_TMA, tail)
+class MH_s_FAk_TMAx(MH_s_TMA):
+  '''[ MH - (R=O) - C3H9N ]\n
+  Do not use this class, intended for use in loop''' 
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() - ((self.tail.mass-masses['H2O'])/abs(adducts[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.tail.formula)
+    formula.update({'H':2 ,'O':1})
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+  def Validate(self):
+    super().Validate()
+
+# ~ #
 
 class MH_s_AZD(MH):
   '''[ M(+/-)H - C2H5N ]\n
@@ -3364,6 +3458,412 @@ class MH_s_FAk_PO3x(MH_s_PO3):
   def Validate(self):
     super().Validate()
 
+
+class GMHY0(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[1].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[1].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[1].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 1
+
+class GMHY1(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[2].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[2].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[2].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 2
+
+class GMHY2(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[3].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[3].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[3].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 3
+
+class GMHY3(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[4].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[4].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[4].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 4
+
+class GMHY4(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[5].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[5].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[5].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 5
+
+class GMHY5(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[6].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[6].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[6].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 6
+
+class GMHY6(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[7].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[7].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[7].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 7
+
+class GMHY7(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[8].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[8].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[8].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 8
+
+class GMHY8(MH):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    return super().MZ() - (self.lipid.gm[0].mass-self.lipid.gm[9].mass)
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.lipid.gm[0].formula)
+    formula.update(self.lipid.gm[9].formula)
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formulaLoss = self.lipid.formula.copy()
+    formulaLoss.subtract(self.lipid.gm[0].formula)
+    formulaLoss.update(self.lipid.gm[9].formula)
+    formulaLoss = ''.join(''.join((key, str(val))) for (key, val) in formulaLoss.items())
+    comment = comment.replace('M', formulaLoss)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 9
+
+class GMHB0(Fragment):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return (self.lipid.gm[0].mass-self.lipid.gm[1].mass + masses['H+'])
+    else:
+      return (self.lipid.gm[0].mass-self.lipid.gm[1].mass - masses['H+'])
+  def Formula(self):
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[1].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[1].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
+    comment = comment.replace('M', formula)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 1
+
+class GMHB1(Fragment):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return (self.lipid.gm[0].mass-self.lipid.gm[2].mass + masses['H+'])
+    else:
+      return (self.lipid.gm[0].mass-self.lipid.gm[2].mass - masses['H+'])
+  def Formula(self):
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[2].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[2].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
+    comment = comment.replace('M', formula)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 2
+
+class GMHB2(Fragment):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return (self.lipid.gm[0].mass-self.lipid.gm[3].mass + masses['H+'])
+    else:
+      return (self.lipid.gm[0].mass-self.lipid.gm[3].mass - masses['H+'])
+  def Formula(self):
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[3].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[3].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
+    comment = comment.replace('M', formula)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 3
+
+class GMHB3(Fragment):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return (self.lipid.gm[0].mass-self.lipid.gm[4].mass + masses['H+'])
+    else:
+      return (self.lipid.gm[0].mass-self.lipid.gm[4].mass - masses['H+'])
+  def Formula(self):
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[4].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[4].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
+    comment = comment.replace('M', formula)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 4
+
+class GMHB4(Fragment):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return (self.lipid.gm[0].mass-self.lipid.gm[5].mass + masses['H+'])
+    else:
+      return (self.lipid.gm[0].mass-self.lipid.gm[5].mass - masses['H+'])
+  def Formula(self):
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[5].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[5].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
+    comment = comment.replace('M', formula)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 5
+
+class GMHB5(Fragment):
+  '''[ MH - * ]\n
+  Fragment for adducted molecular ion, with loss of various headgroup parts'''
+  def MZ(self):
+    if adducts[self.adduct][1] == 'Positive':
+      return (self.lipid.gm[0].mass-self.lipid.gm[6].mass + masses['H+'])
+    else:
+      return (self.lipid.gm[0].mass-self.lipid.gm[6].mass - masses['H+'])
+  def Formula(self):
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[6].formula)
+    if adducts[self.adduct][1] == 'Positive':
+      formula.update({'H':1})
+    else:
+      formula.subtract({'H':1})
+    return formula
+  def Comment(self):
+    if adducts[self.adduct][1] == 'Positive':
+      comment = '[M+H]+'
+    else:
+      comment = '[M-H]-'
+    formula = self.lipid.gm[0].formula.copy()
+    formula.subtract(self.lipid.gm[6].formula)
+    formula = ''.join(''.join((key, str(val))) for (key, val) in formula.items() if val > 0)
+    comment = comment.replace('M', formula)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert len(self.lipid.gm) > 6
+
 # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 
 # ~ # ~ # ~ # [M +/- 2H]
@@ -3490,12 +3990,21 @@ class M2H_s_FAkx(M2H):
 
 def FAH(lipid, adduct, intensity):
   '''[ FA - H ]\n
-  Fragment for a deprotonated free fatty acid\n
+  Fragment for a (de)protonated free fatty acid\n
   For nonspecific sn position\n
   Method used to generate multiple objects'''
   for tail in lipid.tails:
     if tail.type in ['Acyl', 'HeadTail']:
       yield FAHx(lipid, adduct, intensity, FAH, tail)
+def AsFAH(lipid, adduct, intensity):
+  '''[ AsFA - H ]\n
+  Fragment for a (de)protonated Arseno free fatty acid\n
+  For nonspecific sn position\n
+  Method used to generate multiple objects'''
+  for tail in lipid.tails:
+    if tail.type in ['Acyl', 'HeadTail']:
+      if 'As' in tail.name:
+        yield FAHx(lipid, adduct, intensity, FAH, tail)
 class FAHx(Fragment):
   '''[ FA (+ / -) H ]\n
   Do not use this class, intended for use in loop'''
@@ -3716,6 +4225,15 @@ def FAkH(lipid, adduct, intensity):
   for tail in lipid.tails:
     if tail.type in ['Acyl']:
       yield FAkHx(lipid, adduct, intensity, FAkH, tail)
+def AsFAkH(lipid, adduct, intensity):
+  '''[ FA - H2O +/- H ]\n
+  Fragment for a (de)protonated  fatty acid ketene\n
+  For nonspecific sn position\n
+  Method used to generate multiple objects'''
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      if 'As' in tail.name:
+        yield FAkHx(lipid, adduct, intensity, FAkH, tail)
 class FAkHx(Fragment):
   '''[ FA - H2O +/- H ]\n
   Do not use this class, intended for use in loop''' 
@@ -4282,6 +4800,35 @@ class MH_PO4_s_HG(MH):
   def Validate(self):
     super().Validate()
     assert Counter({'P':1, 'O':4, 'H':3}) <= self.lipid.formula
+
+# ~ #  Sometimes the headgroup leaves a phosphate and glycerol behind
+
+class MH_PG_s_HG(MH):
+  '''[ M(+/-)H - Headgroup + C3H9O6P ]\n
+  Fragment for headgroup neutral loss, excluding phosphate and glycerol'''
+  def __init__(self, lipid, adduct, intensity, fragmentType=None):
+      for sn in lipid.tails: # ie, sn1, sn2, or sn3
+        if sn.type == 'Headgroup':
+          self.headgroup = sn
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+      return super().MZ() - (self.headgroup.mass - masses['PO4H3'] - masses['Glycerol'] + masses['H2O'])
+  def Formula(self):
+      formula = super().Formula()
+      formula.subtract(self.headgroup.formula)
+      formula.update({'P':1, 'O':6, 'H':9, 'C':3})
+      return formula
+  def Comment(self):
+    comment = super().Comment()
+    chnops = self.headgroup.formula.copy()
+    chnops.subtract({'P':1, 'O':6, 'H':9, 'C':3})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', 'M-'+headgroup)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert Counter({'P':1, 'O':6, 'H':9, 'C':3}) <= self.lipid.formula
 
 class MA_P2O6_s_HG(MA):
   '''[ MA - Headgroup + P2O6 ]\n
@@ -4967,6 +5514,27 @@ class HGA_s_PO4_H2O(HGA_s_PO4):  # Headgroup + Adduct - H2O
   def Validate(self):
     super().Validate()
     assert Counter({'H':5, 'P':1, 'O':5}) <= self.headgroup.formula
+
+class HGA_s_PG(HGA):  # Headgroup + Adduct - H2O
+  def MZ(self):
+    return super().MZ() - (masses['PO4H3'])/abs(adducts[self.adduct][2]) - (masses['Glycerol']-masses['H2O'])/abs(adducts[self.adduct][2])
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract({'C':3, '9':3, 'P':1, 'O':6})
+    return formula
+  def Charge(self):
+    return super().Charge()
+  def Comment(self):
+    comment = self.adduct
+    chnops = Counter(self.headgroup.formula)
+    chnops.subtract({'C':3, '9':3, 'P':1, 'O':6})
+    new_chnops = {k: v for k, v in chnops.items() if v != 0}
+    headgroup = ''.join(''.join((key, str(val))) for (key, val) in new_chnops.items())
+    comment = comment.replace('M', headgroup)
+    return comment
+  def Validate(self):
+    super().Validate()
+    assert Counter({'C':3, '9':3, 'P':1, 'O':6}) <= super().Formula()
 
 class HGH(Fragment):  # Headgroup + Adduct
   def __init__(self, lipid, adduct, intensity, fragmentType=None):
@@ -5679,6 +6247,22 @@ class C6H5O3(Fragment):
     super().Validate()
     assert self.Formula() <= self.lipid.formula
 
+class C2H6O4P(Fragment):
+  '''X+H Fragment common to PC under positive ESI\n
+  MZ: 124.999821'''
+  def MZ(self):
+    return 124.999821
+  def Formula(self):
+    formula = Counter({'C':2, 'H':6, 'O':4, 'P':1})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[C2H6O4P]+'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
 class C2H4O4P(Fragment):
   '''X-H Fragment appears in CerPC in negative ESI\n
   MZ: 122.985268'''
@@ -5739,6 +6323,22 @@ class H2O4P(Fragment):
       return -1
   def Comment(self):
     return '[H2PO4]-'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
+class C5H5O2(Fragment):
+  '''X+H Fragment under positive ESI\n
+  MZ: 97.028406'''
+  def MZ(self):
+      return 97.028406
+  def Formula(self):
+    formula = Counter({'C':5, 'H':5, 'O':2})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[C5H5O2]+'
   def Validate(self):
     super().Validate()
     assert self.Formula() <= self.lipid.formula
@@ -5932,6 +6532,72 @@ class C10H15(Fragment):
       return 1
   def Comment(self):
     return '[C10H15]+'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
+# ~ # ~ # Arsenolipid Fragments:
+
+class AsC7H14O4(Fragment):
+  '''X+H Fragment common to some arsenolipids under positive ESI\n
+  MZ: 122.978563'''
+  def MZ(self):
+      return 122.978563
+  def Formula(self):
+    formula = Counter({'As':1, 'C':7, 'H':14, 'O':4})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[AsC2H8O]+'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
+class AsC2H8O(Fragment):
+  '''X+H Fragment common to some arsenolipids under positive ESI\n
+  MZ: 122.978563'''
+  def MZ(self):
+      return 122.978563
+  def Formula(self):
+    formula = Counter({'As':1, 'C':2, 'H':8, 'O':1})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[AsC2H8O]+'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
+class AsC2H6(Fragment):
+  '''X+H Fragment common to some arsenolipids under positive ESI\n
+  MZ: 104.967999'''
+  def MZ(self):
+      return 104.967999
+  def Formula(self):
+    formula = Counter({'As':1, 'C':2, 'H':6})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[AsC2H6]+'
+  def Validate(self):
+    super().Validate()
+    assert self.Formula() <= self.lipid.formula
+
+class AsC2H4(Fragment):
+  '''X+H Fragment common to some arsenolipids under positive ESI\n
+  MZ: 102.952349'''
+  def MZ(self):
+      return 102.952349
+  def Formula(self):
+    formula = Counter({'As':1, 'C':2, 'H':4})
+    return formula
+  def Charge(self):
+      return 1
+  def Comment(self):
+    return '[AsC2H4]+'
   def Validate(self):
     super().Validate()
     assert self.Formula() <= self.lipid.formula

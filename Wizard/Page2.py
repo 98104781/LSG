@@ -1,5 +1,8 @@
 import os
 import re
+import random
+
+import Wizard.Draw as dM
 import Wizard.EditTail as ET
 import Wizard.ResourcePath as RP
 import Lipids.GenerateLipids as GL
@@ -19,7 +22,13 @@ class Page(QWizardPage):
         self.setTitle("Generate a range of lipids using specific tails")
         self.setSubTitle("Please define a list of tails to use.\nSome common tails are preset.")
         image_Path = RP.resource_path('Images\FAs.png')
+        
+        #image = dM.drawMolecule(smiles='OC(=O)'+random.randint(5,18)*'C', width=395, height=130)
+        #rotatedImage = dM.rotatePixmap(image, 90)
+        #framedImage = dM.framePixmap(rotatedImage)
+
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
+
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
         self.hLayout2 = QHBoxLayout(self)

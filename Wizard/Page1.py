@@ -1,6 +1,9 @@
+import random
+import Wizard.Draw as dM
 import Wizard.ResourcePath as RP
 from PySide6.QtGui import QIntValidator, QPixmap
 from PySide6.QtWidgets import QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, QWizard, QWizardPage
+
 
 class Page(QWizardPage):
     '''
@@ -17,7 +20,12 @@ class Page(QWizardPage):
                          "C min and C max determine chain lengths.   "
                          "D min and D max determine the range of desaturation.")
         image_Path = RP.resource_path('Images\FAs.png')
+
+        #image = dM.drawMolecule(smiles='OC(=O)'+random.randint(1,22)*'C', width=395, height=130)
+        #rotatedImage = dM.rotatePixmap(image, 90)
+        #framedImage = dM.framePixmap(rotatedImage)
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
+
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
 
@@ -82,6 +90,22 @@ class Page(QWizardPage):
         self.registerField('ceramideVariability', self.ceramideVariability)
         self.vLayout.addWidget(self.ceramideVariability)
 
+        # Optional input box for Deuteration max value, which determines maximum number of deuterons
+        # to add to the fatty acid. By default 0.
+        self.deuttickbox = QCheckBox('Include deuterated tails', self)
+        self.registerField('deuttickbox', self.deuttickbox)
+        self.vLayout.addWidget(self.deuttickbox)
+        self.deutmax = QLineEdit()
+        self.deutmax.setPlaceholderText(' Deut. max:'+79*' '+'(1 -> 12)')
+        self.deutmax.setDisabled(True)
+        self.deutmax.setValidator(QIntValidator(1, 12))
+        self.registerField('Umax', self.deutmax)
+        self.deuttickbox.toggled.connect(self.deutmax.setEnabled)
+        self.deuttickbox.toggled.connect(self.deutmax.clear)
+        self.deuttickbox.toggled.connect(self.completeChanged)
+        self.deutmax.textEdited.connect(self.completeChanged)
+        self.vLayout.addWidget(self.deutmax)
+
 
     def isComplete(self):
         '''
@@ -99,10 +123,10 @@ class Page(QWizardPage):
         elif int(self.dmax.text() or 0) > int(self.cmax.text() or 0)-1:
             return False
         elif self.oxytickbox.isChecked() and int(self.omax.text() or 0) not in range(1, 6):
+            return False
+        elif self.deuttickbox.isChecked() and int(self.deutmax.text() or 0) not in range(1, 13):
             return False  
         return super().isComplete()
 
     def nextId(self):
         return 3
-
-    

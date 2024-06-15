@@ -1,5 +1,7 @@
 import Wizard.ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
+import Wizard.Draw as dM
+import random
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QRadioButton, QButtonGroup, QVBoxLayout, QHBoxLayout, QLabel, QWizard, QWizardPage, QPushButton
@@ -18,8 +20,13 @@ class Page(QWizardPage):
         self.setSubTitle(" "
                          " "
                          " ")
-        image_Path = RP.resource_path('Images\LSG.png')
-        self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
+        
+        #image_Path = RP.resource_path('Images\LSG.png')
+        image = dM.drawText(text = 'Lipid Spectrum Generator', width=395, height=130)
+        rotatedImage = dM.rotatePixmap(image, -90)
+        framedImage = dM.framePixmap(rotatedImage)
+        self.setPixmap(QWizard.WatermarkPixmap, framedImage)
+
         self.vLayout =  QVBoxLayout(self)
         self.hLayout =  QHBoxLayout(self)
         self.hLayout2 = QHBoxLayout(self)

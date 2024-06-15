@@ -1,7 +1,13 @@
-from PySide6.QtWidgets import  QStyledItemDelegate, QSpinBox
-from PySide6.QtCore import QAbstractTableModel, QMargins, Qt
-from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
+from PySide6.QtWidgets import  QStyledItemDelegate, QSpinBox, QLabel, QMenu, QApplication
+from PySide6.QtCore import QAbstractTableModel, QMargins, Qt, QByteArray, QPointF
+from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap, QAction
 from PySide6.QtCharts import QChart, QChartView, QScatterSeries, QValueAxis
+
+from rdkit import Chem
+from rdkit.Chem.Draw import rdMolDraw2D
+import base64
+
+import Wizard.Draw as dM
 
 class SpectraScatter(QChartView):
     '''
@@ -31,19 +37,80 @@ class SpectraScatter(QChartView):
         self.spectra.attachAxis(self.yaxis)
         self.chart().legend().hide()
 
-    def setSpectra(self, precursorName, precursorMass, spectra):
+        self.tooltip = QLabel(self)
+        self.tooltip.setAutoFillBackground(True)
+        self.tooltip.setFrameShape(QLabel.Shape.StyledPanel)
+        self.tooltip.setFrameShadow(QLabel.Shadow.Raised)
+        self.tooltip.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tooltip.hide()
+
+        self.label = QLabel(self)
+        self.label.setVisible(False)
+        self.label.mousePressEvent = self.mousePressEvent
+        self.label.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.label.customContextMenuRequested.connect(self.showContextMenu)
+
+    def mouseMoveEvent(self, event):
+        mouseLocation = self.chart().mapToValue(event.pos())
+        minDist = float('inf')
+        chosenPeak = QPointF()
+
+        for peak in self.spectra.points():
+            dist = QPointF(peak.x() - mouseLocation.x(), 0).manhattanLength()
+            if dist < minDist:
+                minDist = dist
+                chosenPeak = peak
+
+        if minDist < 5 and chosenPeak.y() > 0:
+            self.tooltip.setText(f"{chosenPeak.x()}")
+            tooltipPos = self.chart().mapToPosition(chosenPeak)
+            #tooltipPos.setY(0.8 * tooltipPos.y())
+            tooltipPos.setX(tooltipPos.x() - self.tooltip.width() / 2)
+            tooltipPos.setY(tooltipPos.y() - self.tooltip.height())
+            self.tooltip.move(tooltipPos.toPoint())
+            self.tooltip.show()
+        else:
+            self.tooltip.hide()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.label.setVisible(not self.label.isVisible())
+
+    def showContextMenu(self, pos):
+        contextMenu = QMenu()
+        copyAction = QAction("Copy Image", self)
+        copyAction.triggered.connect(self.copyImage)
+        contextMenu.addAction(copyAction)
+        contextMenu.exec_(self.mapToGlobal(pos))
+
+    def copyImage(self):
+        if self.pixmap:
+            clipboard = QApplication.clipboard()
+            image = self.pixmap.toImage()
+            clipboard.setImage(image)
+
+    def resizeEvent(self, event):
+        self.label.resize(self.size().width(), self.size().height())
+        pix = dM.drawMolecule(self.smiles, self.size().width()-2, self.size().height()-2)
+        self.pixmap = dM.framePixmap(pix)
+        self.label.setPixmap(self.pixmap)
+        super().resizeEvent(event)
+
+    def setSpectra(self, precursorName, precursorMass, spectra, smiles = 'OCC(O)CO'):
         '''
         Updates displayed spectra with new spectra.
         '''
         self.precursorName = precursorName 
         self.chart().setTitle(self.precursorName)
-        binMax = int(precursorMass+100)
+        try:
+            binMax = int(spectra[0].mass+100)
+        except: binMax = int(precursorMass+100)
 
         self.spectra.clear()
 
         linePath = QPainterPath()
         linePath.moveTo(5000, 5001) #  Makes a big square
-        linePath.lineTo(5001, 10000) #  draws a line from
+        linePath.lineTo(5000, 10000) #  draws a line from
         linePath.closeSubpath() # middle to bottom. 'peak'
         image = QImage(10000, 10000, QImage.Format_ARGB32)
         painter = QPainter(image)
@@ -63,6 +130,10 @@ class SpectraScatter(QChartView):
 
         self.yaxis.setRange(0, 100)
         self.xaxis.setRange(0, binMax)
+
+        self.smiles = smiles
+        self.resizeEvent(None) # <- redraws molecule
+        #self.pixmap = dM.drawMolecule(self.smiles, self.size().width(), self.size().height())
 
 class SpectraTableModel(QAbstractTableModel):
     '''
@@ -125,6 +196,7 @@ class SpectraTableModel(QAbstractTableModel):
 
     def removeRow(self, position):
         pass
+
 
 class SpinBoxDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):

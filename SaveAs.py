@@ -38,20 +38,17 @@ class Generator(QObject):
     def run(self):
         try:
             #import pydevd;pydevd.settrace(suspend=False)
-            self.save_file = open(self.file_name, 'x', newline='')
-            if self.lipidSpecifics:
-                self.lipid_data = self.generate_specific()
-            else: self.lipid_data = self.generate_range()
-            if self.filter == "MSP (*.msp)": self.as_msp()
-            elif self.filter == "Orbitrap Inclusion (*.csv)": self.as_orb()
-            elif self.filter =="Skyline Transition (*.csv)": self.as_sky()
-            else: self.fileError.emit()
-            self.save_file.close()
+            with open(self.file_name, 'x', newline='') as self.save_file:
+                if self.lipidSpecifics: self.lipid_data = self.generate_specific()
+                else: self.lipid_data = self.generate_range()
+                if self.filter == "MSP (*.msp)": self.as_msp()
+                elif self.filter == "Orbitrap Inclusion (*.csv)": self.as_orb()
+                elif self.filter == "Skyline Transition (*.csv)": self.as_sky()
+                else: self.fileError.emit()
         except: 
             (type, value, traceback) = sys.exc_info()
             sys.excepthook(type, value, traceback)
             self.fileError.emit()
-            self.save_file.close()
 
     # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ # ~ #
 

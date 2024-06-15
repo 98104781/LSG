@@ -153,7 +153,7 @@ class Page(QWizardPage):
             # List with limits for generated tails
             self.tails_to_generate = [int(self.field('cmin') or 0), int(self.field('cmax') or 0),
                                       int(self.field('dmin') or 0), int(self.field('dmax') or 0),
-                                      int(self.field('omax') or 0)]
+                                      int(self.field('omax') or 0), int(self.field('Umax') or 0)]
             
             base_types = [] # List with types of sphingoid bases to generate
             for cls in self.classes_to_generate: # Sphingolipids can have one of many base type, which the lipid

@@ -6,9 +6,9 @@ import Wizard.EditTail as ET
 import Wizard.EditFragment as EF
 from itertools import combinations_with_replacement as cwr, product
 
-from PySide6.QtCore import Signal, QModelIndex, QAbstractTableModel
-from PySide6.QtGui import Qt, QCursor, QDoubleValidator, QIntValidator
-from PySide6.QtWidgets import  QDialog, QPushButton, QLineEdit, QComboBox, QTableView, QVBoxLayout, QHBoxLayout, QHeaderView, QMenu
+from PySide6.QtCore import Signal, QModelIndex, QAbstractTableModel, QMimeData
+from PySide6.QtGui import Qt, QCursor, QDoubleValidator, QIntValidator, QAction
+from PySide6.QtWidgets import  QDialog, QPushButton, QLineEdit, QComboBox, QTableView, QVBoxLayout, QHBoxLayout, QHeaderView, QMenu, QWidget, QSplitter, QApplication
 
 class NewWindow(QDialog):
     '''
@@ -121,6 +121,9 @@ class LipidWindow(QDialog):
     def __init__(self, parent, lipidClasses=[], classEdit=True, selection=None):
         super().__init__()
     
+        self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+
         self.parent = parent
         self.lipidClasses = lipidClasses
         self.classEdit = classEdit
@@ -128,27 +131,57 @@ class LipidWindow(QDialog):
         self.defaultAdducts = [a for a in GL.adducts]
 
         self.setWindowTitle('LSG3')
-        self.setFixedWidth(600)
+        self.setMinimumWidth(600)
         self.setMinimumHeight(510)
-        self.vLayout = QVBoxLayout(self)
+        self.resize(600, 510)
+
+        self.windowLayout = QVBoxLayout(self)
+        self.windowLayout.setContentsMargins(0,0,0,0)
+
+        self.splitter = QSplitter(Qt.Vertical)
+        self.windowLayout.addWidget(self.splitter)
+        self.splitter.setHandleWidth(3)
+        self.splitter.setStyleSheet("""QSplitter::handle {
+                                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                        stop:0 #ccc, stop:1 #ccc);
+                                    border: 1px solid #777;
+                                    width: 15px;
+                                    margin-top: 1px;
+                                    margin-bottom: 1px;
+                                    margin-left: 14px;
+                                    margin-right: 14px;
+                                    border-radius: 4px;
+                                    }""")
+
+
+        self.topWidget = QWidget(self.splitter)
+        self.splitter.setCollapsible(0, False)
+        #self.splitter.setStretchFactor(0, 1)
+        self.vLayout = QVBoxLayout(self.topWidget)
 
         self.lipidBox = QComboBox()
         self.lipidBox.setToolTip('Lipid Class')
         self.lipidBox.currentIndexChanged.connect(self.updateSelectedClass)
-        self.hLayout = QHBoxLayout(self)
+        self.hLayout = QHBoxLayout(self.topWidget)
         self.hLayout.addWidget(self.lipidBox)
 
         self.toolTipBox = QLineEdit()
-        self.toolTipBox.setToolTip('Lipid Class ToolTip')
+        self.toolTipBox.setToolTip('Rename Lipid Class')
         self.toolTipBox.textChanged.connect(self.updateToolTip)
         self.hLayout.addWidget(self.toolTipBox)
+        self.vLayout.addLayout(self.hLayout)
+
+        self.smilesBox = QLineEdit()
+        self.smilesBox.setToolTip('Lipid SMILES')
+        self.smilesBox.textChanged.connect(self.updateToolTip)
+        self.hLayout.addWidget(self.smilesBox)
         self.vLayout.addLayout(self.hLayout)
 
         self.adductBox = QComboBox()
         self.adductBox.setToolTip('Current Adduct')
         self.adductBox.currentIndexChanged.connect(self.displayAdductDetails)
         self.adductBox.currentTextChanged.connect(self.buildLipid)
-        self.hLayout2 = QHBoxLayout(self)
+        self.hLayout2 = QHBoxLayout(self.topWidget)
         self.hLayout2.addWidget(self.adductBox)
 
         self.addAdduct = QPushButton('Add Adduct')
@@ -159,7 +192,7 @@ class LipidWindow(QDialog):
         self.removeAdduct.clicked.connect(self.delAdduct)
         self.removeAdduct.setAutoDefault(False)
 
-        self.hLayout3 = QHBoxLayout(self)
+        self.hLayout3 = QHBoxLayout(self.topWidget)
         self.hLayout3.addWidget(self.addAdduct)
         self.hLayout3.addWidget(self.removeAdduct)
         self.hLayout2.addLayout(self.hLayout3)
@@ -184,7 +217,7 @@ class LipidWindow(QDialog):
                                       'eg: N:1,H:4')
         self.adductFormula.textEdited.connect(self.updateAdductDetails)
 
-        self.hLayout4 = QHBoxLayout(self)
+        self.hLayout4 = QHBoxLayout(self.topWidget)
         self.hLayout4.addWidget(self.adductName)
         self.hLayout4.addWidget(self.adductMass)
         self.hLayout4.addWidget(self.adductCharge)
@@ -192,35 +225,42 @@ class LipidWindow(QDialog):
         self.vLayout.addLayout(self.hLayout4)
 
         self.spectra = Spectra.SpectraScatter()
-        self.spectra.setFixedSize(580, 200)
+        #self.spectra.setFixedSize(580, 200)
+        self.spectra.setMinimumWidth(580)
+        self.spectra.setMinimumHeight(200)
+        #self.spectra.resize(580, 200)
         self.vLayout.addWidget(self.spectra)
 
         self.tailButton = {} # Buttons for tails stored in this dict
-        self.hLayout5 = QHBoxLayout(self)
+        self.hLayout5 = QHBoxLayout(self.topWidget)
         self.vLayout.addLayout(self.hLayout5)
 
+        self.bottomWidget = QWidget(self.splitter)
+        self.splitter.setCollapsible(1, False)
+        self.splitter.setStretchFactor(1, 1)
+        self.vLayout2 = QVBoxLayout(self.bottomWidget)
+
         self.tableView = QTableView()
-        self.vLayout.addWidget(self.tableView)
+        self.vLayout2.addWidget(self.tableView)
         self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableView.customContextMenuRequested.connect(self.editAdducts)
 
         self.addFragmentButton = QPushButton('Add Fragment')
         self.addFragmentButton.clicked.connect(self.editAdducts)
-        self.hLayout6 = QHBoxLayout(self)
+        self.hLayout6 = QHBoxLayout(self.bottomWidget)
         self.hLayout6.addWidget(self.addFragmentButton)
 
         for cls in self.lipidClasses:
             try: self.lipidBox.addItem(cls.givenName, cls)
             except: self.lipidBox.addItem(cls.__name__, cls)
         if self.classEdit: # If the page is set up to modify the lipid class
-            self.lipid = self.buildExampleLipid()
-            self.updateSpectra(self.lipid)
+            self.buildDefault()
         else: # If the page is set up to create / modify an individual lipid
             self.acceptButton = QPushButton('Accept')
             self.acceptButton.clicked.connect(self.acceptCreatedLipid)
             self.hLayout6.addWidget(self.acceptButton)
 
-        self.vLayout.addLayout(self.hLayout6)
+        self.vLayout2.addLayout(self.hLayout6)
 
     def updateSelectedClass(self):
 
@@ -244,7 +284,9 @@ class LipidWindow(QDialog):
                 self.tailButton[i].setText(self.lipid.tails[i].name)
             self.updateSpectra(self.lipid)
 
-
+    def buildDefault(self):
+        self.lipid = self.buildExampleLipid()
+        self.updateSpectra(self.lipid)
 
     def acceptCreatedLipid(self):
         self.done(1)
@@ -263,12 +305,22 @@ class LipidWindow(QDialog):
             if tailType not in [',']:
                 self.tailButton[i] = QPushButton()
                 self.tailButton[i].tailType = tailType
+                self.tailButton[i].setContextMenuPolicy(Qt.CustomContextMenu)
+                self.tailButton[i].customContextMenuRequested.connect(self.tailButtonContextMenu)
                 if tailType == 'B': 
                     self.tailButton[i].clicked.connect(self.specifyBase)
                 else: 
                     self.tailButton[i].clicked.connect(self.specifyTail)
                 self.hLayout5.addWidget(self.tailButton[i])
                 i += 1
+
+    def tailButtonContextMenu(self, pos):
+        contextMenu = QMenu()
+        defaultAction = QAction("Default", self)
+        defaultAction.triggered.connect(self.buildDefault)
+        contextMenu.addAction(defaultAction)
+        contextMenu.exec_(self.sender().mapToGlobal(pos))
+
 
     def getTail(self, tail):
         # Signal captured from window
@@ -340,10 +392,12 @@ class LipidWindow(QDialog):
             name = lipid.name+' '+adduct+' '+formula
             mz = GL.MA(lipid, adduct, 0).mass
             frags = lipid.spectra[adduct]
-        except: name, mz, frags = '', 0, []
-        self.spectra.setSpectra(name, mz, frags)
-        #for frag in frags:
-        #    print(frag, frag.mass)
+            smiles = lipid.smiles
+            self.smilesBox.setText(self.lipid.smiles)
+        except: name, mz, frags, smiles = '', 0, [], ''
+        self.spectra.setSpectra(name, mz, frags, smiles)
+        for frag in frags:
+            print(frag, frag.mass)
         self.table = Spectra.SpectraTableModel(frags)
         self.tableView.setModel(self.table)
         self.tableView.setItemDelegateForColumn(1, Spectra.SpinBoxDelegate(self.tableView))
@@ -406,6 +460,8 @@ class LipidWindow(QDialog):
         menu.addAction('Add Predefined Fragment')
         menu.addSeparator()
         menu.addAction('Add Customised Fragment') # Incomplete
+        menu.addSeparator()
+        menu.addAction('Copy Table') # Incomplete
         selection = menu.exec(QCursor.pos())
         try:
 
@@ -418,6 +474,28 @@ class LipidWindow(QDialog):
                 fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
                 if fragment.exec() > 0:
                     self.updateSpectra(self.lipid)
+            elif selection.text() == 'Copy Entire Table':
+
+                rows = self.table.rowCount(self.tableView)
+                columns = self.table.columnCount(self.tableView)
+                data = self.lipid.name + '\t' + self.adductName.text() + '\n' + '\t'.join(self.table.headers) + '\n'
+
+                for row in range(rows):
+                    intensity = self.table.data(self.table.index(row, 1))
+                    if intensity == '0':
+                        continue
+                    for col in range(columns):
+                        index = self.table.index(row, col)
+                        data += str(self.table.data(index)) + '\t'
+                    data = data.strip() + '\n'
+
+                data = data.strip()
+
+                clipboard = QApplication.clipboard()
+                mime_data = QMimeData()
+                mime_data.setText(data)
+                clipboard.setMimeData(mime_data)
+
         except: pass # Invalid selection
 
 
