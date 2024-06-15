@@ -461,7 +461,7 @@ class LipidWindow(QDialog):
         menu.addSeparator()
         menu.addAction('Add Customised Fragment') # Incomplete
         menu.addSeparator()
-        menu.addAction('Copy Table') # Incomplete
+        menu.addAction('Copy Entire Table') # Incomplete
         selection = menu.exec(QCursor.pos())
         try:
 
