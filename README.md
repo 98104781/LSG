@@ -10,4 +10,4 @@ Otherwise, an Excalibur compatible precursor list (for DDA analysis via orbitrap
 
 An overview of the features along with a brief how-to guide is available on the current release page:
 
-https://github.com/98104781/LSG/releases/tag/v1.1.0
+https://github.com/98104781/LSG/releases/tag/v1.3.0
