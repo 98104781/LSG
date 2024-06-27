@@ -22,7 +22,7 @@ class Page(QWizardPage):
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
         self.vLayout = QVBoxLayout(self)
         self.hLayout = QHBoxLayout(self)
-        self.setCommitPage(True)
+        #self.setCommitPage(True)
         self.tableView = QTableView()
         self.tableView.doubleClicked.connect(self.editSelectedLipid)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)

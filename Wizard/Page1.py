@@ -15,10 +15,6 @@ class Page(QWizardPage):
 
         self.parent = parent
 
-        self.setTitle("Generate a range of lipids using a range of tails")
-        self.setSubTitle("Please define the limits of the range to use.   Be aware, large ranges can produce large libraries!\n"
-                         "C min and C max determine chain lengths.   "
-                         "D min and D max determine the range of desaturation.")
         image_Path = RP.resource_path('Images\FAs.png')
 
         #image = dM.drawMolecule(smiles='OC(=O)'+random.randint(1,22)*'C', width=395, height=130)
@@ -106,6 +102,20 @@ class Page(QWizardPage):
         self.deutmax.textEdited.connect(self.completeChanged)
         self.vLayout.addWidget(self.deutmax)
 
+    def initializePage(self) -> None:
+
+        if (not self.field('massCheck')):
+            self.setTitle("Generate a range of lipids using a range of tails")
+            self.setSubTitle("Please define the limits of the range to use.   Be aware, large ranges can produce large libraries!\n"
+                    "C min and C max determine chain lengths.   "
+                    "D min and D max determine the range of desaturation.")
+        else:
+            self.setTitle("Provide fatty acid limits for candidates")
+            self.setSubTitle("Please define the limits of the range to use.   Candidates will be confined to this range.\n"
+                    "C min and C max determine chain lengths.   "
+                    "D min and D max determine the range of desaturation.")
+  
+        return super().initializePage()
 
     def isComplete(self):
         '''
@@ -129,4 +139,6 @@ class Page(QWizardPage):
         return super().isComplete()
 
     def nextId(self):
+        if self.field('massCheck'):
+            return 6
         return 3

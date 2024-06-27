@@ -37,7 +37,7 @@ class Generator(QObject):
 
     def run(self):
         try:
-            #import pydevd;pydevd.settrace(suspend=False)
+            #import pydevd;pydevd.settrace(suspend=True)
             with open(self.file_name, 'x', newline='') as self.save_file:
                 if self.lipidSpecifics: self.lipid_data = self.generate_specific()
                 else: self.lipid_data = self.generate_range()
@@ -110,6 +110,7 @@ class Generator(QObject):
                 elif tail.type in GL.baseTypes:
                     if tail.type not in self.bases.keys(): self.bases[tail.type] = []
                     self.bases[tail.type].append(tail)
+            if len(self.bases) < 1: self.bases = defaultBases
 
         else:
 
@@ -121,7 +122,7 @@ class Generator(QObject):
 
         for cls in self.classes_to_generate:    
             cls.ambiguousSpectra = []             
-            for adduct in cls.adducts: # Remove all ions in spectra with an intensity of 0
+            for adduct in cls.adducts_to_generate: # Remove all ions in spectra with an intensity of 0
                 cls.adducts[adduct] = {k: v for k, v in cls.adducts[adduct].items() if v != 0}
                 cls.ambiguousSpectra.append(adduct if not self.checklipidAmbiguity(cls, adduct) else None)
 
@@ -184,7 +185,7 @@ class Generator(QObject):
                 try: lipid.name = lipid.specificname
                 except:pass
 
-            for adduct in lipid.adducts:
+            for adduct in lipid.adducts_to_generate:
 
                 lipid.ambiguousName = False
                 lipid.ambiguoussmiles = False
@@ -244,7 +245,7 @@ class Generator(QObject):
                 try: lipid.name = lipid.specificname
                 except:pass
 
-            for adduct in lipid.adducts:
+            for adduct in lipid.adducts_to_generate:
                 prec = GL.MA(lipid, adduct, 0)
                 if prec.mass not in unique_mass: # This can take some lot of time
                     unique_mass.append(prec.mass) # Removes all the duplicate precursor masses
@@ -280,7 +281,7 @@ class Generator(QObject):
                 try: lipid.name = lipid.specificname
                 except:pass
 
-            for adduct in lipid.adducts:
+            for adduct in lipid.adducts_to_generate:
 
                 lipid.ambiguousName = False
                 lipid.ambiguoussmiles = False

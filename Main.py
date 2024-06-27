@@ -13,6 +13,7 @@ import Wizard.Page2 as Page2
 import Wizard.Page3 as Page3
 import Wizard.Page4 as Page4
 import Wizard.Page5 as Page5
+import Wizard.Page6 as Page6
 
 class CreateWindow(QWizard):
     '''
@@ -76,6 +77,7 @@ class CreateWindow(QWizard):
         self.setPage(3, Page3.Page(self)) # Define lipid classes and spectra (if range is chosen).
         self.setPage(4, Page4.Page(self)) # Define which specific lipids to generate (if specific is chosen).
         self.setPage(5, Page5.Page(self)) # Generate the specified lipids.
+        self.setPage(6, Page6.Page(self)) # Guesstimate mass candidates.
 
     def update_ram_usage(self):
         ram_usage = psutil.Process().memory_info().rss / (1024 ** 2)  # RAM usage in MB

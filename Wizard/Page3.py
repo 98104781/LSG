@@ -1,9 +1,9 @@
 import Wizard.ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
 
-from PySide6.QtGui import QPixmap, QCursor
+from PySide6.QtGui import QPixmap, QCursor, QColor
 from PySide6.QtCore import Property, Qt, Signal
-from PySide6.QtWidgets import QPushButton, QCheckBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage, QMenu
+from PySide6.QtWidgets import QPushButton, QCheckBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWizard, QWizardPage, QMenu, QApplication
 
 class Page(QWizardPage):
     '''
@@ -22,7 +22,7 @@ class Page(QWizardPage):
                          "Spectra will be generated for the selected classes using the tails previously defined.")
         image_Path = RP.resource_path('Images\GPLs.png')
         self.setPixmap(QWizard.WatermarkPixmap, QPixmap(image_Path))
-        self.setCommitPage(True)
+        #self.setCommitPage(True)
         self.vLayout = QVBoxLayout(self)
 
         self.classQbox = {} # GPL QCheckBoxes        
@@ -35,28 +35,62 @@ class Page(QWizardPage):
                                              '\nand location-unspecific combinations generated e.g. 16:0_18:0_18:1. However, ensure'
                                              '\nfatty-acyl location-specific fragments are excluded in the spectra selected below!')
         self.specificOrganisation.setChecked(True)
+        self.specificOrganisation.setVisible(False)
         self.registerField('specificOrganisation', self.specificOrganisation)
 
         self.treeView = QTreeWidget()
         self.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.treeView.customContextMenuRequested.connect(self.editLipidContextMenu)
         self.treeView.doubleClicked.connect(self.editLipid)
+        self.treeView.doubleClicked.connect(self.itemChanged)
         self.treeView.setHeaderHidden(True)
         self.registerField("tree", self, "tree_property")
+        self.treeView.itemSelectionChanged.connect(self.updateCheckedState)
+        self.treeView.itemChanged.connect(self.itemChanged)
         
-        self.modifybutton = QPushButton("Modify Lipid")
-        self.modifybutton.clicked.connect(self.editLipid)
-
         self.vLayout.addWidget(self.specificOrganisation)
+
         self.vLayout.addWidget(self.treeView)
+
+        self.modifybutton = QPushButton("Modify Lipid Templates")
+        self.modifybutton.clicked.connect(self.editLipid)
         self.vLayout.addWidget(self.modifybutton)
+
+    def itemChanged(self, item):
+        try:
+            if item.checkState(0) == Qt.Unchecked:
+                item.setBackground(0, Qt.white)
+            else: 
+                item.setBackground(0, QColor('#c7ecee'))
+            self.completeChanged.emit()
+        except: pass # Sometimes QtCore.QModelIndex passed
+
+    def updateCheckedState(self):
+        if QApplication.mouseButtons() == Qt.LeftButton:
+            items = self.treeView.selectedItems()
+            for item in items:
+                if item.checkState(0) == Qt.Unchecked:
+                    statusUpdate = Qt.Checked
+                else: statusUpdate = Qt.Unchecked
+                item.setCheckState(0, statusUpdate) 
+                self.itemChanged(item) 
+                #if statusUpdate == Qt.Checked:
+                #    item.setBackground(0, QColor(180, 230, 180))
+                #else: item.setBackground(0, Qt.white)
+            self.completeChanged.emit()
 
     def editLipidContextMenu(self):
         menu = QMenu()
-        menu.addAction("Edit Lipid")
+        menu.addAction("Edit Lipid Template")
+        menu.addSeparator()
+        menu.addAction("Clear Selection")
         selection = menu.exec(QCursor.pos())
-        if selection:
-            self.editLipid()
+        if selection != None:
+            if selection.text() == "Edit Lipid Template":
+                self.editLipid()
+            elif selection.text() == "Clear Selection":
+                self.aBoxStatus={}
+                self.initializePage()
 
     def editLipid(self):
 
@@ -109,8 +143,20 @@ class Page(QWizardPage):
                 except:child.setCheckState(0, Qt.Unchecked) # Tickstate
                 child.setFlags(child.flags() | Qt.ItemIsUserCheckable) 
 
+        if (not self.field('massCheck')):
+
+            self.specificOrganisation.setVisible(True)
+            self.specificOrganisation.setChecked(True)
+        else:  
+            self.specificOrganisation.setVisible(False)
+            self.specificOrganisation.setChecked(True)
+
         return super().initializePage()
-            
+
+    def isComplete(self):
+        return (self.field('tree') != {})
+        return super().isComplete()
+
     def treeData(self):
         '''
         Custom storage for tree data.

@@ -3341,9 +3341,8 @@ class AsFA(GL.OtherLipid):
     }}
 
   def __init__(self, sn1):
-    formula = sn1.formula
-    formula.update({'C':2, 'H':7, 'O':2, 'As':1}) # Mass and formula +H2O due to -H2O in Otherlipid class
-    body = GL.Other(name='AsFA ', mass=137.966201, chnops=formula, smiles='O'+sn1.smiles+'[As](=O)(C)C')
+  # Mass and formula +H2O due to -H2O in Otherlipid class
+    body = GL.Other(name='AsFA ', mass=137.966201, chnops={'C':2, 'H':7, 'O':2, 'As':1}, smiles='O'+sn1.smiles+'[As](=O)(C)C')
     super().__init__(AsFA.adducts, body, sn1)
 
 # ~ # ~ # ~ # ~ # ~ # ~ #

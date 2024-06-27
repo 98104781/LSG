@@ -153,29 +153,25 @@ class LipidWindow(QDialog):
                                     border-radius: 4px;
                                     }""")
 
-
         self.topWidget = QWidget(self.splitter)
         self.splitter.setCollapsible(0, False)
-        #self.splitter.setStretchFactor(0, 1)
         self.vLayout = QVBoxLayout(self.topWidget)
+        self.hLayout = QHBoxLayout(self.topWidget)
+        self.vLayout.addLayout(self.hLayout)
 
         self.lipidBox = QComboBox()
         self.lipidBox.setToolTip('Lipid Class')
         self.lipidBox.currentIndexChanged.connect(self.updateSelectedClass)
-        self.hLayout = QHBoxLayout(self.topWidget)
         self.hLayout.addWidget(self.lipidBox)
 
         self.toolTipBox = QLineEdit()
         self.toolTipBox.setToolTip('Rename Lipid Class')
         self.toolTipBox.textChanged.connect(self.updateToolTip)
         self.hLayout.addWidget(self.toolTipBox)
-        self.vLayout.addLayout(self.hLayout)
 
         self.smilesBox = QLineEdit()
         self.smilesBox.setToolTip('Lipid SMILES')
-        self.smilesBox.textChanged.connect(self.updateToolTip)
         self.hLayout.addWidget(self.smilesBox)
-        self.vLayout.addLayout(self.hLayout)
 
         self.adductBox = QComboBox()
         self.adductBox.setToolTip('Current Adduct')
@@ -202,10 +198,8 @@ class LipidWindow(QDialog):
         self.adductName.setToolTip('Adduct Name')
         self.adductName.textEdited.connect(self.updateAdductDetails)
 
-        self.adductMass = QLineEdit()
+        self.adductMass = QLineEdit() # Shouldn't be editable directly
         self.adductMass.setToolTip('Adduct Mass')
-        self.adductMass.setValidator(QDoubleValidator())
-        self.adductMass.textEdited.connect(self.updateAdductDetails)
 
         self.adductCharge = QLineEdit()
         self.adductCharge.setToolTip('Adduct Charge')
@@ -224,7 +218,7 @@ class LipidWindow(QDialog):
         self.hLayout4.addWidget(self.adductFormula)
         self.vLayout.addLayout(self.hLayout4)
 
-        self.spectra = Spectra.SpectraScatter()
+        self.spectra = Spectra.SpectraScatter(self)
         #self.spectra.setFixedSize(580, 200)
         self.spectra.setMinimumWidth(580)
         self.spectra.setMinimumHeight(200)
@@ -407,6 +401,7 @@ class LipidWindow(QDialog):
 
 
 
+
     def buildExampleLipid(self):
         '''
         Returns an example lipid for use.
@@ -459,9 +454,11 @@ class LipidWindow(QDialog):
         menu = QMenu()
         menu.addAction('Add Predefined Fragment')
         menu.addSeparator()
-        menu.addAction('Add Customised Fragment') # Incomplete
+        menu.addAction('Add Customised Fragment')
         menu.addSeparator()
-        menu.addAction('Copy Entire Table') # Incomplete
+        menu.addAction('Copy Value')
+        menu.addSeparator()
+        menu.addAction('Copy Entire Table')
         selection = menu.exec(QCursor.pos())
         try:
 
@@ -470,12 +467,20 @@ class LipidWindow(QDialog):
                 if fragment.exec() > 0:
                     self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
                     self.updateSpectra(self.lipid)
+
             elif selection.text() == 'Add Customised Fragment':
                 fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
                 if fragment.exec() > 0:
                     self.updateSpectra(self.lipid)
-            elif selection.text() == 'Copy Entire Table':
 
+            elif selection.text() == 'Copy Value':
+                selection = self.tableView.selectedIndexes()[0]
+                if selection.isValid():
+                    cell_value = self.table.data(selection, Qt.DisplayRole)
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(str(cell_value))
+
+            elif selection.text() == 'Copy Entire Table':
                 rows = self.table.rowCount(self.tableView)
                 columns = self.table.columnCount(self.tableView)
                 data = self.lipid.name + '\t' + self.adductName.text() + '\n' + '\t'.join(self.table.headers) + '\n'
@@ -564,7 +569,7 @@ class LipidWindow(QDialog):
             self.adductFormula.setDisabled(True)
         else:
             self.adductName.setDisabled(False)
-            self.adductMass.setDisabled(False)
+            self.adductMass.setDisabled(True)
             self.adductCharge.setDisabled(False)
             self.adductFormula.setDisabled(False)
     
@@ -580,7 +585,20 @@ class LipidWindow(QDialog):
                 self.adductBox.setCurrentText(newAdduct)
                 self.adductName.setFocus()
 
-            GL.adducts[selectedAdduct][0] = float(self.adductMass.text())
+            temp = {}
+            formula = self.adductFormula.text()
+            formula = formula.split(',')
+            formula = [element.strip() for element in formula]
+            mass = 0
+            for f in formula:
+                key, val = f.split(':')
+                mass += GL.elements[key][0][0]*int(val)
+                temp[str(key)] = int(val)
+            GL.adducts[selectedAdduct][3] = temp
+            mass -= int(self.adductCharge.text())*GL.masses['e']
+
+            self.adductMass.setText(str(round(mass, 6)))
+            GL.adducts[selectedAdduct][0] = mass
             GL.adducts[selectedAdduct][2] = int(self.adductCharge.text())
             if GL.adducts[selectedAdduct][2] > 0:
                 GL.adducts[selectedAdduct][1] = 'Positive'
@@ -590,13 +608,5 @@ class LipidWindow(QDialog):
                 GL.adducts[selectedAdduct][1] = 'Positive'
                 GL.adducts[selectedAdduct][2] = 1
 
-            temp = {}
-            formula = self.adductFormula.text()
-            formula = formula.split(',')
-            for f in formula:
-                key, val = f.split(':')
-                temp[str(key)] = int(val)
-            GL.adducts[selectedAdduct][3] = temp
-            
         except: pass
 

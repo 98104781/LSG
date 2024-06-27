@@ -25,16 +25,53 @@ class Page(QWizardPage):
         self.vLayout = QVBoxLayout(self)
 
         self.generatebutton = QPushButton("Generate")
+        self.generatebutton.setStyleSheet("""QPushButton {
+                                                    background-color: #c7ecee;
+                                                    border: 1px solid #000000;
+                                                    border-radius: 2px;
+                                                    padding: 2px 4px;
+                                                }
+                                                
+                                                QPushButton:hover {
+                                                    background-color: #dcdcdc;
+                                                }
+                                                
+                                                QPushButton:pressed {
+                                                    background-color: #b6b6b6;
+                                                } """)
+        
         self.generatebutton.clicked.connect(self.save_as)
 
         self.vLayout.addWidget(self.generatebutton)
 
         self.output_console = QPlainTextEdit()
+        self.output_console.setStyleSheet("""QPlainTextEdit {
+                                                background-color: #000000;
+                                                color: #f0f0f0;
+                                                font-family: Courier, monospace;
+                                                font-size: 14px;
+                                                font-weight: bold;
+                                                border: 1px solid #000000;}
+                                                                    
+                                            QPlainTextEdit:focus {
+                                                border: 1px solid #00afff;} """)
+        
         self.output_console.setReadOnly(True)
         self.vLayout.addWidget(self.output_console)
 
         self.progress_bar = QProgressBar()
+        self.progress_bar.setStyleSheet(""" QProgressBar {
+                                                border: 1px solid grey;
+                                                border-radius: 1px;
+                                                background-color: #ffffff;
+                                                text-align: center;}
+                                                                
+                                            QProgressBar::chunk {
+                                                background-color: #c7ecee;
+                                                width: 10px;}""")       
+            
         self.vLayout.addWidget(self.progress_bar)
+        self.setFinalPage(True)
 
     def unsupported_fileType(self):
         self.generatorThread.exit()
@@ -99,6 +136,7 @@ class Page(QWizardPage):
                 self.generatebutton.setEnabled(False)
                 self.completeChanged.emit()
                 self.t0 = time.time()
+                self.hasGenerated = True
             except: self.output_console.appendPlainText('Save location unavailable')
         else: pass
 
@@ -107,6 +145,7 @@ class Page(QWizardPage):
         When the page is opened, update console information.
         '''
         self.output_console.clear() # Clear console, update with tails and lipids chosen
+        self.hasGenerated = False
 
         try:
             if self.generatorThread.isRunning():
@@ -125,16 +164,6 @@ class Page(QWizardPage):
                 self.output_console.appendPlainText(lipid[0].name+' '+lipid[1])
        
         else: # If generate lipid range is selected:
-            # Print to console the range of tails to be generated
-            if self.field('tailSpecific'):
-                self.output_console.appendPlainText('The following tails will be used:')
-                self.output_console.appendPlainText(', '.join(tail.name for tail in self.field('tailList'))+'\n')
-            else:
-                self.output_console.appendPlainText('Tails will be generated from '
-                                        +self.field('cmin')+':'+self.field('dmin')+
-                                ' -> '+self.field('cmax')+':'+self.field('dmax'))
-                if self.field('hydroxytickbox'): # Include any hydroxy tails in console too!
-                    self.output_console.appendPlainText('Oxidised tails included.\n')
 
             self.selected_class_adducts = self.field('tree')
             self.output_console.appendPlainText('The following classes will be generated:')
@@ -145,9 +174,9 @@ class Page(QWizardPage):
                 self.adducts_to_generate = {}
                 for adduct in item2: # Update the selected adducts
                     self.adducts_to_generate.update({adduct.text(0):adduct.fragmentList})
-                item.lipidClass.adducts = self.adducts_to_generate
+                    item.lipidClass.adducts[adduct.text(0)] = adduct.fragmentList
+                item.lipidClass.adducts_to_generate = self.adducts_to_generate
             self.output_console.appendPlainText(caString)
-
 
             # Prepare information to generate lipids:
             # List with limits for generated tails
@@ -164,14 +193,31 @@ class Page(QWizardPage):
             if self.field('ceramideVariability') is False:
                 self.bases_to_generate = [18, 18, base_types]
             else: self.bases_to_generate = [max(int(self.field('cmin') or 0), 7), max(int(self.field('cmax') or 0), 7), base_types]
-            
+
+            # Print to console the range of tails to be generated
+            if self.field('tailSpecific'):
+                self.output_console.appendPlainText('The following tails will be used:')
+                self.output_console.appendPlainText(', '.join(tail.name for tail in self.field('tailList'))+'\n')
+            else:
+                self.output_console.appendPlainText('Tails will be generated from '
+                                        +self.field('cmin')+':'+self.field('dmin')+
+                                ' -> '+self.field('cmax')+':'+self.field('dmax'))
+                if self.field('hydroxytickbox'): # Include any hydroxy tails in console too!
+                    self.output_console.appendPlainText('Oxidised tails included.\n')
+
+   
         self.progress_bar.reset()
 
         return super().initializePage()
-    
+
+    def nextId(self):
+        return -1
+
     def isComplete(self):
-        try: # Disable finish button if running.
-            if self.generatorThread.isRunning():
-                return False
-        except: pass # Thread not yet created.
+        if self.hasGenerated:
+            try: # Disable finish button if running.
+                if self.generatorThread.isRunning():
+                    return False
+            except: pass # Thread not yet created.
+        else: return False
         return super().isComplete()
