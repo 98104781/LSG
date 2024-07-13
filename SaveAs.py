@@ -37,7 +37,7 @@ class Generator(QObject):
 
     def run(self):
         try:
-            #import pydevd;pydevd.settrace(suspend=True)
+            import pydevd;pydevd.settrace(suspend=False)
             with open(self.file_name, 'x', newline='') as self.save_file:
                 if self.lipidSpecifics: self.lipid_data = self.generate_specific()
                 else: self.lipid_data = self.generate_range()
@@ -162,8 +162,8 @@ class Generator(QObject):
         for lipid, selected_adduct in lipidList:
             adducts = lipid.adducts
             lipid.ambiguousSpectra = []
-            lipid.adducts = {k: v for k, v in adducts.items() if k is selected_adduct}  # Remove all ions in spectra with an intensity of 0
-            lipid.adducts[selected_adduct] = {k: v for k, v in adducts[selected_adduct].items() if v != 0}
+            lipid.adducts_to_generate = {k: v for k, v in adducts.items() if k is selected_adduct}  # Remove all ions in spectra with an intensity of 0
+            lipid.adducts_to_generate[selected_adduct] = {k: v for k, v in adducts[selected_adduct].items() if v != 0}
             lipid.ambiguousSpectra.append(selected_adduct if not self.checklipidAmbiguity(lipid, selected_adduct) else None)
         return [x[0] for x in lipidList]
 

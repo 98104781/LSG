@@ -459,51 +459,110 @@ class LipidWindow(QDialog):
         menu.addAction('Copy Value')
         menu.addSeparator()
         menu.addAction('Copy Entire Table')
+        menu.addAction('... as .msp')
         selection = menu.exec(QCursor.pos())
-        try:
+        #try:
 
-            if selection.text() == 'Add Predefined Fragment':
-                fragment = EF.PredefinedFragment(self.lipid, self.adductBox.currentText())
-                if fragment.exec() > 0:
-                    self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
-                    self.updateSpectra(self.lipid)
+        if selection.text() == 'Add Predefined Fragment':
+            fragment = EF.PredefinedFragment(self.lipid, self.adductBox.currentText())
+            if fragment.exec() > 0:
+                self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
+                self.updateSpectra(self.lipid)
 
-            elif selection.text() == 'Add Customised Fragment':
-                fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
-                if fragment.exec() > 0:
-                    self.updateSpectra(self.lipid)
+        elif selection.text() == 'Add Customised Fragment':
+            fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
+            if fragment.exec() > 0:
+                self.updateSpectra(self.lipid)
 
-            elif selection.text() == 'Copy Value':
-                selection = self.tableView.selectedIndexes()[0]
-                if selection.isValid():
-                    cell_value = self.table.data(selection, Qt.DisplayRole)
-                    clipboard = QApplication.clipboard()
-                    clipboard.setText(str(cell_value))
-
-            elif selection.text() == 'Copy Entire Table':
-                rows = self.table.rowCount(self.tableView)
-                columns = self.table.columnCount(self.tableView)
-                data = self.lipid.name + '\t' + self.adductName.text() + '\n' + '\t'.join(self.table.headers) + '\n'
-
-                for row in range(rows):
-                    intensity = self.table.data(self.table.index(row, 1))
-                    if intensity == '0':
-                        continue
-                    for col in range(columns):
-                        index = self.table.index(row, col)
-                        data += str(self.table.data(index)) + '\t'
-                    data = data.strip() + '\n'
-
-                data = data.strip()
-
+        elif selection.text() == 'Copy Value':
+            selection = self.tableView.selectedIndexes()[0]
+            if selection.isValid():
+                cell_value = self.table.data(selection, Qt.DisplayRole)
                 clipboard = QApplication.clipboard()
-                mime_data = QMimeData()
-                mime_data.setText(data)
-                clipboard.setMimeData(mime_data)
+                clipboard.setText(str(cell_value))
 
-        except: pass # Invalid selection
+        elif selection.text() == 'Copy Entire Table':
+            rows = self.table.rowCount(self.tableView)
+            columns = self.table.columnCount(self.tableView)
+            data = self.lipid.name + '\t' + self.adductName.text() + '\n' + '\t'.join(self.table.headers) + '\n'
+
+            for row in range(rows):
+                intensity = self.table.data(self.table.index(row, 1))
+                if intensity == '0':
+                    continue
+                for col in range(columns):
+                    index = self.table.index(row, col)
+                    data += str(self.table.data(index)) + '\t'
+                data = data.strip() + '\n'
+
+            data = data.strip()
+
+            clipboard = QApplication.clipboard()
+            mime_data = QMimeData()
+            mime_data.setText(data)
+            clipboard.setMimeData(mime_data)
+
+        elif selection.text() == '... as .msp':
+
+            adduct = self.adductBox.currentText()
+
+            spectrum = [peak for peak in self.lipid.spectra[adduct] if peak.intensity !=0]
+
+            if self.checklipidAmbiguity(spectrum):
+                self.lipid.ambiguousName = f"{self.lipid.lipid_class} {self.addTailNames(self.lipid)}"
+                self.lipid.ambiguoussmiles = ' '
+            else: 
+                self.lipid.ambiguousName = False
+                self.lipid.ambiguoussmiles = False
+
+            data = (f"NAME: {self.lipid.ambiguousName if self.lipid.ambiguousName else self.lipid.name} {adduct}\n"
+                    f"IONMODE: {GL.adducts[adduct][1]}\n"
+                    f"MW: {self.lipid.mass}\n"
+                    f"PRECURSORMZ: {GL.MA(self.lipid, adduct, 0).mass}\n"
+                    f"COMPOUNDCLASS: {self.lipid.lipid_class}\n"
+                    f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in self.lipid.formula.items())}\n"
+                    f"SMILES: {self.lipid.ambiguoussmiles if self.lipid.ambiguoussmiles else self.lipid.smiles}\n"
+                    f"COMMENT: LSG in-silico\n" 
+                    f"RETENTIONTIME: 0.00\n" # Pointless
+                    f"PRECURSORTYPE: {adduct}\n"
+                    f"Num Peaks: {len(spectrum)}\n")
+            for peak in spectrum:
+                data += f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n'
+
+            clipboard = QApplication.clipboard()
+            mime_data = QMimeData()
+            mime_data.setText(data)
+            clipboard.setMimeData(mime_data)
+
+        #except: pass # Invalid selection
 
 
+    def addTailNames(self, lipid):
+        c =  sum(snx.c  for snx in lipid.tails if snx.type != 'Headgroup')
+        d =  sum(snx.d  for snx in lipid.tails if snx.type != 'Headgroup')
+        me = sum(snx.me for snx in lipid.tails if snx.type != 'Headgroup')
+        oh = sum(snx.oh for snx in lipid.tails if snx.type != 'Headgroup')
+        dt = sum(snx.dt for snx in lipid.tails if snx.type != 'Headgroup')
+
+        if 'Ether' in [snx.type for snx in lipid.tails if snx.type != 'Headgroup']:
+            name = f"O-{c}:{d}"
+        elif 'Vinyl' in [snx.type for snx in lipid.tails if snx.type != 'Headgroup']:
+            name = f"P-{c}:{d}"
+        else: name = f"{c}:{d}"
+        
+        if me > 0: # Methyl branching of fatty acid
+            name += f";{me}-M" 
+        if oh > 0: # Hydroxy functionalisation of fatty acid
+            name += f";O{oh}"
+        if dt > 0: # deuterium labelled fatty acids
+            name += f"(D{dt})" # Deuterium doesn't update smiles currently.
+
+        return name
+
+    def checklipidAmbiguity(self, spectra):
+        if not next((k.__class__.__name__ for k in spectra if 'FA' in k.__class__.__name__ or 'Cer' in k.__class__.__name__), False):
+            return True
+        else: return False
 
     def updateToolTip(self, text):
         try: self.lipidBox.currentData().tooltip = text
