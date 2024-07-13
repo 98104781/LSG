@@ -37,7 +37,7 @@ class Generator(QObject):
 
     def run(self):
         try:
-            import pydevd;pydevd.settrace(suspend=False)
+            #import pydevd;pydevd.settrace(suspend=False)
             with open(self.file_name, 'x', newline='') as self.save_file:
                 if self.lipidSpecifics: self.lipid_data = self.generate_specific()
                 else: self.lipid_data = self.generate_range()
