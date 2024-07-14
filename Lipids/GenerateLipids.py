@@ -86,6 +86,9 @@ masses = {
   "H+":           
     1.007276467,
 
+  "H":           
+    1.007825032,
+
   "OH-": # Calculated by H2O - H+           
    17.003288217, 
 
@@ -1072,6 +1075,20 @@ class M_s_TMA(Fragment):
     return "[M-C3H9N]-"
   def Validate(self):
     assert Counter({'C':3, 'H':9 ,'N':1}) <= self.lipid.formula
+
+class M_s_TMAb(Fragment):
+  '''[ M - C3H8N ]\n
+  Fragment for molecular ion without adduct'''
+  def MZ(self):
+    return self.lipid.mass - masses['TMA'] + masses['H']
+  def Formula(self):
+    formula = Counter(self.lipid.formula)
+    formula.subtract({'C':3, 'H':8 ,'N':1})
+    return formula
+  def Comment(self):
+    return "[M-C3H8N]-"
+  def Validate(self):
+    assert Counter({'C':3, 'H':8 ,'N':1}) <= self.lipid.formula
 
 class MA_s_TMA(MA):
   '''[ MA - C3H9N ]\n
@@ -3018,6 +3035,122 @@ def MH_s_FAk_TMA(lipid, adduct, intensity):
       yield MH_s_FAk_TMAx(lipid, adduct, intensity, MH_s_FAk_TMA, tail)
 class MH_s_FAk_TMAx(MH_s_TMA):
   '''[ MH - (R=O) - C3H9N ]\n
+  Do not use this class, intended for use in loop''' 
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() - ((self.tail.mass-masses['H2O'])/abs(adducts[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.tail.formula)
+    formula.update({'H':2 ,'O':1})
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+  def Validate(self):
+    super().Validate()
+
+def M_s_FA_TMA(lipid, adduct, intensity):
+  '''[ M - (ROOH) - C3H9N ]\n
+  Fragment for adducted molecular ion with loss of a free fatty acid AND trimethylamine\n
+  Common for Phosphatidylcholines\n
+  Method used to generate multiple objects'''  
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield M_s_FA_TMAx(lipid, adduct, intensity, M_s_FA_TMA, tail)
+class M_s_FA_TMAx(M_s_TMA):
+  '''[ MH - (ROOH) - C3H9N ]\n
+  Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() - (self.tail.mass/abs(adducts[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.tail.formula)
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+  def Validate(self):
+    super().Validate()
+
+def M_s_FAk_TMA(lipid, adduct, intensity):
+  '''[ M - (R=O) - C3H9N ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND trimethylamine\n
+  Common for Phosphatidylcholines\n
+  Method used to generate multiple objects'''  
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield M_s_FAk_TMAx(lipid, adduct, intensity, M_s_FAk_TMA, tail)
+class M_s_FAk_TMAx(M_s_TMA):
+  '''[ MH - (R=O) - C3H9N ]\n
+  Do not use this class, intended for use in loop''' 
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() - ((self.tail.mass-masses['H2O'])/abs(adducts[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.tail.formula)
+    formula.update({'H':2 ,'O':1})
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(R=O)')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+  def Validate(self):
+    super().Validate()
+
+def M_s_FA_TMAb(lipid, adduct, intensity):
+  '''[ M - (ROOH) - C3H8N ]\n
+  Fragment for adducted molecular ion with loss of a free fatty acid AND trimethylamine\n
+  Common for Phosphatidylcholines\n
+  Method used to generate multiple objects'''  
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield M_s_FA_TMAbx(lipid, adduct, intensity, M_s_FA_TMAb, tail)
+class M_s_FA_TMAbx(M_s_TMAb):
+  '''[ MH - (ROOH) - C3H8N ]\n
+  Do not use this class, intended for use in loop'''
+  def __init__(self, lipid, adduct, intensity, fragmentType, tail):
+      self.tail = tail
+      super().__init__(lipid, adduct, intensity, fragmentType)
+  def MZ(self):
+    return super().MZ() - (self.tail.mass/abs(adducts[self.adduct][2]))
+  def Formula(self):
+    formula = super().Formula()
+    formula.subtract(self.tail.formula)
+    return formula
+  def Comment(self):
+    comment = super().Comment()
+    comment = comment.replace('M', 'M-(ROOH)')
+    comment += ' ('+self.tail.name+')'
+    return comment  
+  def Validate(self):
+    super().Validate()
+
+# ~ #
+
+def M_s_FAk_TMAb(lipid, adduct, intensity):
+  '''[ MH - (R=O) - C3H8N ]\n
+  Fragment for adducted molecular ion with loss of a fatty acid ketene AND trimethylamine\n
+  Common for Phosphatidylcholines\n
+  Method used to generate multiple objects'''  
+  for tail in lipid.tails:
+    if tail.type in ['Acyl']:
+      yield M_s_FAk_TMAbx(lipid, adduct, intensity, M_s_FAk_TMAb, tail)
+class M_s_FAk_TMAbx(M_s_TMAb):
+  '''[ MH - (R=O) - C3H8N ]\n
   Do not use this class, intended for use in loop''' 
   def __init__(self, lipid, adduct, intensity, fragmentType, tail):
       self.tail = tail

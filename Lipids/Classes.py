@@ -792,6 +792,20 @@ class PC(GL.Glycerolipid):
     GL.C3H6O5P      :10,
     GL.C2O2H3       :50},
 
+  "[M+CO3H]-":{ # https://doi.org/10.1038/s41467-021-23161-5, https://doi.org/10.1039/C9SC03521D
+    GL.MA            :0,
+    GL.MH          :100,
+    GL.MA_s_TMA_H2O :20,
+    GL.M_s_TMA      :20,
+    GL.MH_s_TMA    :100,
+    GL.C3H5O4P_FA    :0,
+    GL.C3H7O5P_FA    :0,
+    GL.M_s_FAk_TMAb  :0,
+    GL.M_s_FA_TMAb :100,
+    GL.MH_PO4_s_HG  :50,
+    GL.FAH          :70,
+    GL.C3H6O5P       :1},
+
   "[M+H]+":{ # Matches literature but not lipidblast
     GL.MA          :10, # Lipidblast seems to provide a completely
     GL.MA_s_H2O     :0, # different spectra which is not consistant
