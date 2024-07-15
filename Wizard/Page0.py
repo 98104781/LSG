@@ -1,4 +1,4 @@
-import Wizard.ResourcePath as RP
+import ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
 import Wizard.Draw as dM
 import random

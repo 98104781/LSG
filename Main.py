@@ -1,8 +1,12 @@
 import sys
 import psutil
 import inspect
+import dill
+import fnmatch
+import os
+import ResourcePath as RP
 import Lipids.Classes as Classes
-from Lipids.GenerateLipids import Glycerolipid, OtherLipid, Sphingolipid
+import Lipids.GenerateLipids as GL
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QWizard
@@ -57,11 +61,11 @@ class CreateWindow(QWizard):
         self.timer.start(1000)  # Update every second
 
         # Glycerolipids
-        self.classes_to_generate =      [cls for cls in Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
+        self.classes_to_generate =      [cls for cls in GL.Glycerolipid.__subclasses__() if inspect.getmodule(cls) == Classes]
         # Sphingolipids
-        self.classes_to_generate.extend([cls for cls in Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
+        self.classes_to_generate.extend([cls for cls in GL.Sphingolipid.__subclasses__() if inspect.getmodule(cls) == Classes])
         # ETC Lipids, Cholesterol ester
-        self.classes_to_generate.extend([cls for cls in OtherLipid.__subclasses__()   if inspect.getmodule(cls) == Classes])
+        self.classes_to_generate.extend([cls for cls in GL.OtherLipid.__subclasses__()   if inspect.getmodule(cls) == Classes])
 
         #print('Classes: ', len(self.classes_to_generate)) # Used to check number of classes available in console
 
@@ -69,6 +73,23 @@ class CreateWindow(QWizard):
         #for cls in self.classes_to_generate: # Used to check number of adducts available in console
         #    x += len(cls.adducts)
         #print('Adducts: ', x)
+
+        templateLocation = RP.exe_path('Templates')
+
+        if os.path.exists(templateLocation):
+            for file in os.listdir(templateLocation):
+                if fnmatch.fnmatch(file, '*.pkl'):
+                    modifiedLipidTemplate = open(f'{templateLocation}\{file}', 'rb')
+                    try:
+                        data = dill.load(modifiedLipidTemplate)
+                        for idx, cls in enumerate(self.classes_to_generate):
+                            if cls == data['lipidClass']:
+                                self.classes_to_generate[idx].adducts = data['spectra']
+                                combinedAdducts = {**data['adducts'], **GL.adducts}
+                                GL.adducts = combinedAdducts
+                                break
+                    except: pass
+                    finally: modifiedLipidTemplate.close()
 
         # Add Wizard Pages
         self.setPage(0, Page0.Page(self)) # Define range for lipid tails   or   choose to generate specific lipids.

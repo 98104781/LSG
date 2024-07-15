@@ -1,4 +1,4 @@
-import Wizard.ResourcePath as RP
+import ResourcePath as RP
 import Wizard.EditLipidAdduct as LAEW
 
 from PySide6.QtGui import QPixmap, QCursor, QColor

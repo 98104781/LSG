@@ -1,7 +1,7 @@
 import os
 import time
 import SaveAs
-import Wizard.ResourcePath as RP
+import ResourcePath as RP
 import Lipids.GenerateLipids as GL
 
 from PySide6.QtGui import QPixmap

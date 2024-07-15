@@ -1,9 +1,12 @@
 import copy
+import os
+import dill
 from collections import Counter
 import Wizard.Spectra as Spectra
 import Lipids.GenerateLipids as GL
 import Wizard.EditTail as ET
 import Wizard.EditFragment as EF
+import ResourcePath as RP
 from itertools import combinations_with_replacement as cwr, product
 
 from PySide6.QtCore import Signal, QModelIndex, QAbstractTableModel, QMimeData
@@ -244,6 +247,10 @@ class LipidWindow(QDialog):
         self.hLayout6 = QHBoxLayout(self.bottomWidget)
         self.hLayout6.addWidget(self.addFragmentButton)
 
+        self.saveTemplateButton = QPushButton('Save Template')
+        self.saveTemplateButton.clicked.connect(self.saveTemplates)
+        self.hLayout6.addWidget(self.saveTemplateButton)
+
         for cls in self.lipidClasses:
             try: self.lipidBox.addItem(cls.givenName, cls)
             except: self.lipidBox.addItem(cls.__name__, cls)
@@ -392,6 +399,7 @@ class LipidWindow(QDialog):
         self.spectra.setSpectra(name, mz, frags, smiles)
         for frag in frags:
             print(frag, frag.mass)
+        print('\n')
         self.table = Spectra.SpectraTableModel(frags)
         self.tableView.setModel(self.table)
         self.tableView.setItemDelegateForColumn(1, Spectra.SpinBoxDelegate(self.tableView))
@@ -461,80 +469,103 @@ class LipidWindow(QDialog):
         menu.addAction('Copy Entire Table')
         menu.addAction('... as .msp')
         selection = menu.exec(QCursor.pos())
-        #try:
+        try:
 
-        if selection.text() == 'Add Predefined Fragment':
-            fragment = EF.PredefinedFragment(self.lipid, self.adductBox.currentText())
-            if fragment.exec() > 0:
-                self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
-                self.updateSpectra(self.lipid)
+            if selection.text() == 'Add Predefined Fragment':
+                fragment = EF.PredefinedFragment(self.lipid, self.adductBox.currentText())
+                if fragment.exec() > 0:
+                    self.lipid.adducts[self.adductBox.currentText()][fragment.selection] = 0
+                    self.updateSpectra(self.lipid)
 
-        elif selection.text() == 'Add Customised Fragment':
-            fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
-            if fragment.exec() > 0:
-                self.updateSpectra(self.lipid)
+            elif selection.text() == 'Add Customised Fragment':
+                fragment = EF.CustomisedFragment(self.lipid, self.adductBox.currentText())
+                if fragment.exec() > 0:
+                    self.updateSpectra(self.lipid)
 
-        elif selection.text() == 'Copy Value':
-            selection = self.tableView.selectedIndexes()[0]
-            if selection.isValid():
-                cell_value = self.table.data(selection, Qt.DisplayRole)
+            elif selection.text() == 'Copy Value':
+                selection = self.tableView.selectedIndexes()[0]
+                if selection.isValid():
+                    cell_value = self.table.data(selection, Qt.DisplayRole)
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(str(cell_value))
+
+            elif selection.text() == 'Copy Entire Table':
+                rows = self.table.rowCount(self.tableView)
+                columns = self.table.columnCount(self.tableView)
+                data = self.lipid.name + '\t' + self.adductName.text() + '\n' + '\t'.join(self.table.headers) + '\n'
+
+                for row in range(rows):
+                    intensity = self.table.data(self.table.index(row, 1))
+                    if intensity == '0':
+                        continue
+                    for col in range(columns):
+                        index = self.table.index(row, col)
+                        data += str(self.table.data(index)) + '\t'
+                    data = data.strip() + '\n'
+
+                data = data.strip()
+
                 clipboard = QApplication.clipboard()
-                clipboard.setText(str(cell_value))
+                mime_data = QMimeData()
+                mime_data.setText(data)
+                clipboard.setMimeData(mime_data)
 
-        elif selection.text() == 'Copy Entire Table':
-            rows = self.table.rowCount(self.tableView)
-            columns = self.table.columnCount(self.tableView)
-            data = self.lipid.name + '\t' + self.adductName.text() + '\n' + '\t'.join(self.table.headers) + '\n'
+            elif selection.text() == '... as .msp':
 
-            for row in range(rows):
-                intensity = self.table.data(self.table.index(row, 1))
-                if intensity == '0':
-                    continue
-                for col in range(columns):
-                    index = self.table.index(row, col)
-                    data += str(self.table.data(index)) + '\t'
-                data = data.strip() + '\n'
+                adduct = self.adductBox.currentText()
 
-            data = data.strip()
+                spectrum = [peak for peak in self.lipid.spectra[adduct] if peak.intensity !=0]
 
-            clipboard = QApplication.clipboard()
-            mime_data = QMimeData()
-            mime_data.setText(data)
-            clipboard.setMimeData(mime_data)
+                if self.checklipidAmbiguity(spectrum):
+                    self.lipid.ambiguousName = f"{self.lipid.lipid_class} {self.addTailNames(self.lipid)}"
+                    self.lipid.ambiguoussmiles = ' '
+                else: 
+                    self.lipid.ambiguousName = False
+                    self.lipid.ambiguoussmiles = False
 
-        elif selection.text() == '... as .msp':
+                data = (f"NAME: {self.lipid.ambiguousName if self.lipid.ambiguousName else self.lipid.name} {adduct}\n"
+                        f"IONMODE: {GL.adducts[adduct][1]}\n"
+                        f"MW: {self.lipid.mass}\n"
+                        f"PRECURSORMZ: {GL.MA(self.lipid, adduct, 0).mass}\n"
+                        f"COMPOUNDCLASS: {self.lipid.lipid_class}\n"
+                        f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in self.lipid.formula.items())}\n"
+                        f"SMILES: {self.lipid.ambiguoussmiles if self.lipid.ambiguoussmiles else self.lipid.smiles}\n"
+                        f"COMMENT: LSG in-silico\n" 
+                        f"RETENTIONTIME: 0.00\n" # Pointless
+                        f"PRECURSORTYPE: {adduct}\n"
+                        f"Num Peaks: {len(spectrum)}\n")
+                for peak in spectrum:
+                    data += f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n'
 
-            adduct = self.adductBox.currentText()
+                clipboard = QApplication.clipboard()
+                mime_data = QMimeData()
+                mime_data.setText(data)
+                clipboard.setMimeData(mime_data)
 
-            spectrum = [peak for peak in self.lipid.spectra[adduct] if peak.intensity !=0]
+        except: pass # Invalid selection
 
-            if self.checklipidAmbiguity(spectrum):
-                self.lipid.ambiguousName = f"{self.lipid.lipid_class} {self.addTailNames(self.lipid)}"
-                self.lipid.ambiguoussmiles = ' '
-            else: 
-                self.lipid.ambiguousName = False
-                self.lipid.ambiguoussmiles = False
+    def saveTemplates(self):
 
-            data = (f"NAME: {self.lipid.ambiguousName if self.lipid.ambiguousName else self.lipid.name} {adduct}\n"
-                    f"IONMODE: {GL.adducts[adduct][1]}\n"
-                    f"MW: {self.lipid.mass}\n"
-                    f"PRECURSORMZ: {GL.MA(self.lipid, adduct, 0).mass}\n"
-                    f"COMPOUNDCLASS: {self.lipid.lipid_class}\n"
-                    f"FORMULA: {''.join(''.join((key, str(val))) for (key, val) in self.lipid.formula.items())}\n"
-                    f"SMILES: {self.lipid.ambiguoussmiles if self.lipid.ambiguoussmiles else self.lipid.smiles}\n"
-                    f"COMMENT: LSG in-silico\n" 
-                    f"RETENTIONTIME: 0.00\n" # Pointless
-                    f"PRECURSORTYPE: {adduct}\n"
-                    f"Num Peaks: {len(spectrum)}\n")
-            for peak in spectrum:
-                data += f'{peak.mass} {peak.intensity} "{peak.Comment()}" \n'
-
-            clipboard = QApplication.clipboard()
-            mime_data = QMimeData()
-            mime_data.setText(data)
-            clipboard.setMimeData(mime_data)
-
-        #except: pass # Invalid selection
+        saveLocation = RP.exe_path('Templates')
+        print(saveLocation)
+        if not os.path.exists(saveLocation):
+            os.makedirs(saveLocation)
+        templateName = self.lipid.lipid_class
+        try:
+            file = open(f'{saveLocation}\{templateName}.pkl', 'wb')
+            data = {'lipidClass':self.lipid.__class__, 
+                    'adducts':{adduct:GL.adducts[adduct] for adduct in self.lipid.adducts}, 
+                    'spectra':self.lipid.adducts}
+            print(data)
+            dill.dump(data, file)
+            print('data dumped')
+        except Exception as e:
+            print(e)
+            file.close()
+            if os.path.exists(f'{saveLocation}\{templateName}.pkl'):
+                os.remove(f'{saveLocation}\{templateName}.pkl')
+        finally:
+            file.close()
 
 
     def addTailNames(self, lipid):

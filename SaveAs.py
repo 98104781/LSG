@@ -77,9 +77,11 @@ class Generator(QObject):
         return name
 
     def checklipidAmbiguity(self, lipid, adduct):
-        if not next((k.__name__ for k in lipid.adducts[adduct].keys() if 'FA' in k.__name__ or 'Cer' in k.__name__), False):
-            return False
-        else: return True
+        try:
+            if not next((k.__name__ for k in lipid.adducts[adduct].keys() if 'FA' in k.__name__ or 'Cer' in k.__name__), False):
+                return False
+            else: return True
+        except: return True
 
     ambiguousLipids = []
     def redifineAmbiguousLipid(self, lipid, adduct):

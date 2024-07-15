@@ -1,6 +1,6 @@
 import random
 import Wizard.Draw as dM
-import Wizard.ResourcePath as RP
+import ResourcePath as RP
 from PySide6.QtGui import QIntValidator, QPixmap
 from PySide6.QtWidgets import QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, QWizard, QWizardPage
 

@@ -4,7 +4,7 @@ import random
 
 import Wizard.Draw as dM
 import Wizard.EditTail as ET
-import Wizard.ResourcePath as RP
+import ResourcePath as RP
 import Lipids.GenerateLipids as GL
 
 from PySide6.QtGui import QPixmap

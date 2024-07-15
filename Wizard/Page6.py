@@ -2,7 +2,7 @@
 from scipy.stats import multinomial
 
 from collections import Counter
-import Wizard.ResourcePath as RP
+import ResourcePath as RP
 import Lipids.GenerateLipids as GL
 from Lipids.GenerateLipids import elements
 import Wizard.EditLipidAdduct as LAEW
