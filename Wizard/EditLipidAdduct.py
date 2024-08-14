@@ -398,7 +398,7 @@ class LipidWindow(QDialog):
         except: name, mz, frags, smiles = '', 0, [], ''
         self.spectra.setSpectra(name, mz, frags, smiles)
         for frag in frags:
-            print(frag, frag.mass)
+            print(frag, frag.mass, frag.intensity)
         print('\n')
         self.table = Spectra.SpectraTableModel(frags)
         self.tableView.setModel(self.table)
@@ -682,7 +682,8 @@ class LipidWindow(QDialog):
             mass = 0
             for f in formula:
                 key, val = f.split(':')
-                mass += GL.elements[key][0][0]*int(val)
+                baseMass = max(range(len(GL.elements[key])), key=lambda i: GL.elements[key][i][1]) if GL.elements[key] else None
+                mass += GL.elements[key][baseMass][0]*int(val)
                 temp[str(key)] = int(val)
             GL.adducts[selectedAdduct][3] = temp
             mass -= int(self.adductCharge.text())*GL.masses['e']

@@ -19,6 +19,8 @@ class Page(QWizardPage):
     def __init__(self, parent=None):
         super(Page, self).__init__(parent)
 
+        self.parent = parent
+
         self.setTitle("Generate a range of lipids using specific tails")
         self.setSubTitle("Please define a list of tails to use.\nSome common tails are preset.")
         image_Path = RP.resource_path('Images\FAs.png')

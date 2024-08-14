@@ -17,6 +17,8 @@ class Page(QWizardPage):
     def __init__(self, parent=None):
         super(Page, self).__init__(parent)
 
+        self.parent = parent
+
         self.setTitle("Select filetype to generate")
         self.setSubTitle("Press 'Generate' to create and export file \n"
                          ".msp spectral libraries, .csv QE+ inclusion list and .csv skyline transition lists supported")

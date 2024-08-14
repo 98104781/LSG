@@ -28,7 +28,8 @@ class CreateWindow(QWizard):
 
         self.setWizardStyle(QWizard.ModernStyle)
         self.setWindowTitle('Lipid Spectrum Generator')
-        self.setFixedSize(600, 510)
+        self.setMinimumSize(600, 510)
+        self.setBaseSize(600, 510)
         self.setOption(QWizard.HaveCustomButton1, True)
         self.setButtonText(QWizard.CustomButton1, "RAM Usage: 0 MB")
         self.custom_button1 = self.button(QWizard.CustomButton1)

@@ -52,6 +52,15 @@ class SpectraScatter(QChartView):
         self.chart().addSeries(self.spectra)
         self.spectra.attachAxis(self.xaxis)
         self.spectra.attachAxis(self.yaxis)
+
+        self.centroid = QScatterSeries()
+        self.centroid.setMarkerSize(10000) # Big marker to look like peak
+        self.centroid.setMarkerShape(self.centroid.MarkerShapeRectangle)
+        self.chart().setMargins(QMargins(-5, 0, -5, -15))
+        self.chart().addSeries(self.centroid)
+        self.centroid.attachAxis(self.xaxis)
+        self.centroid.attachAxis(self.yaxis)
+
         self.chart().legend().hide()
 
         self.curve = QLineSeries()
@@ -208,6 +217,24 @@ class SpectraScatter(QChartView):
         self.resizeEvent(None) # <- redraws molecule
         #self.pixmap = dM.drawMolecule(self.smiles, self.size().width(), self.size().height())
 
+    def groupClusters(self, values, threshold=0.0005):
+
+        averages = []
+        cluster = [values[0]]
+        
+        for value in values[1:]:
+            if abs(value - cluster[-1]) < threshold:
+                cluster.append(value)
+
+            else:
+                averages.append(round(np.average(cluster), 6))
+                cluster = [value]
+        
+        if cluster:
+            averages.append(round(np.average(cluster), 6))
+        
+        return averages
+
     def drawBellCurves(self, spectra, res=5000):
 
         self.curve.clear()
@@ -224,12 +251,61 @@ class SpectraScatter(QChartView):
         for peak in spectra:
             yVals += np.round(peak[1] * np.exp(-(xVals - peak[0])**2 / (2 * sigma**2)), 3)
 
+
+        def yV(x): # don't think to hard, because I clearly didn't
+            y = 0
+            for peak in spectra:
+                y += peak[1] * np.exp(-(x - peak[0])**2 / (2 * sigma**2))
+            return np.round(y, 3)
+
+        def dyVals(x):
+            dy = 0
+            s = sigma*9.7**6
+            for peak in spectra:
+                p = int(peak[0]*10**6)
+                dy += ((- peak[1] *(x - p) / (s**2)) * np.exp(-(x - p)**2 / (2 * s**2)) * 10**6)
+            return dy
+
+        def ddyVals(x):
+            ddy = 0
+            s = sigma*9.7**6
+            for peak in spectra:
+                p = int(peak[0]*10**6)
+                ddy += ( peak[1] * ((x**2 - 2*p*x - s**2 + p**2) / (s**4)) * np.exp(-(x - p)**2 / (2 * s**2)) * 10**6) 
+            return np.floor(ddy)
+
+        initials = [peak[0]*10**6 for peak in spectra]
+        solutions = fsolve(dyVals, initials)
+        solutions = np.sort(list(set([round(s*10**-6, 6) for s in solutions if ddyVals(s) < 0])))
+        solutions = self.groupClusters(solutions)
+
         self.curve.append(self.binMin, 0.001)
         for x, y in zip(xVals, yVals):
             if y > 0: self.curve.append(x, y)
         self.curve.append(self.binMax, 0.001)
         self.curveDisplayed = True
 
+        self.centroid.clear()
+
+        linePath = QPainterPath()
+        linePath.moveTo(5000, 5001) #  Makes a big square
+        linePath.lineTo(5000, 10000) #  draws a line from
+        linePath.closeSubpath() # middle to bottom. 'peak'
+        image = QImage(10000, 10000, QImage.Format_ARGB32)
+        painter = QPainter(image)
+        pen = QPen(QColor(0, 0, 0), 3, Qt.SolidLine)
+        painter.setPen(pen)
+        painter.setBrush(painter.pen().color())
+        painter.drawPath(linePath)
+        painter.end()
+
+        self.centroid.setBrush(image)
+        self.centroid.setPen(QColor(Qt.transparent))
+
+        for sol in solutions:
+            x = sol
+            y = yV(x)
+            self.centroid.append(x, y)
 
 
 

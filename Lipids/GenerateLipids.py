@@ -1318,8 +1318,8 @@ def MA_s_FA_FAk(lipid, adduct, intensity):
   Method used to generate multiple objects'''
   tailCombinations = combinations(lipid.tails, r=2)
   for comb in tailCombinations:
-    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail'] 
-    and comb[1].type in ['Acyl', 'Ether', 'Vinyl', 'Headgroup', 'HeadTail']):
+    if (comb[0].type in ['Acyl', 'Ether', 'Vinyl'] 
+    and comb[1].type in ['Acyl', 'Ether', 'Vinyl']):
       yield MA_s_FA_FAkx(lipid, adduct, intensity, MA_s_FA_FAk, comb)
 class MA_s_FA_FAkx(MA):
   '''[ MA - (ROOH) ] (ALL)\n
@@ -1330,14 +1330,14 @@ class MA_s_FA_FAkx(MA):
   def MZ(self):
     mass = super().MZ()
     for tail in self.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      #if tail.type not in ['Headgroup', 'HeadTail']:
         mass -= (tail.mass/abs(adducts[self.adduct][2]))
     mass += masses['H2O']
     return mass
   def Formula(self):
     formula = super().Formula()
     for tail in self.tails:
-      if tail.type not in ['Headgroup', 'HeadTail']:
+      #if tail.type not in ['Headgroup', 'HeadTail']:
         formula.subtract(tail.formula)
     formula.update({'H':2 ,'O':1})
     return formula
@@ -1346,7 +1346,7 @@ class MA_s_FA_FAkx(MA):
     string = '-(R=O)-(ROOH)'
     comment = comment.replace('M', 'M'+string)
     comment += ' ('
-    comment += ', '.join(tail.name for tail in self.tails if tail.type not in ['Headgroup', 'HeadTail'])
+    comment += ', '.join(tail.name for tail in self.tails)
     comment += ')'
     return comment  
 

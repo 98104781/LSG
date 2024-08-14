@@ -727,7 +727,7 @@ class NewWindow(QDialog):
         self.spectra.setSpectra(f"{rowData[0]} {rowData[1]} {rowData[2]}{rowData[4]}", rowData[-2], self.isotopeSpectra, isotopeSpectra=True)
         self.spectra.drawBellCurves(self.isotopeSpectra, self.resSlider.sliderPosition())
 
-        tdata = sorted(self.isotopeSpectra, key=lambda x: x[0])
+        tdata = self.spectra.centroid.points()
 
         self.tableData = QStandardItemModel(len(tdata), 2, parent=None)
         self.spectraTable.setModel(self.tableData)
@@ -737,8 +737,8 @@ class NewWindow(QDialog):
         self.tableData.setHorizontalHeaderLabels(headers)
         for row in range(len(tdata)):
             for col in [0, 1]:
-                if col == 1: item = QStandardItem(str(round(tdata[row][col], 2)))
-                else: item = QStandardItem(str(tdata[row][col]))
+                if col == 1: item = QStandardItem(str(tdata[row].y()))
+                else: item = QStandardItem(str(tdata[row].x()))
                 item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
                 item.setData(tdata[row])
                 self.tableData.setItem(row, col, item)
@@ -747,6 +747,16 @@ class NewWindow(QDialog):
             self.valueLabel.setText(str(self.resSlider.sliderPosition()))
             if self.spectra.curveDisplayed:
                 self.spectra.drawBellCurves(self.isotopeSpectra, self.resSlider.sliderPosition())
+
+                tdata = self.spectra.centroid.points()
+                for row in range(len(tdata)):
+                    for col in [0, 1]:
+                        if col == 1: item = QStandardItem(str(round(tdata[row].y(), 2)))
+                        else: item = QStandardItem(str(tdata[row].x()))
+                        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                        item.setData(tdata[row])
+                        self.tableData.setItem(row, col, item)
+
 
     def sumContributions(self, elementContributions):
         

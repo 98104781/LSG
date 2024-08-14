@@ -2469,6 +2469,16 @@ class CerPC(GL.Sphingolipid):
     GL.C5H15NO4P    :100,
     GL.C5H12N       :5},
 
+  "[M+Li]+":{
+    GL.MA           :100,
+    GL.MA_s_H2O       :0,
+    GL.MA_s_TMA      :60,
+    GL.MA_s_HG_H2O  :100,
+    GL.MH_s_HG_H2O    :3,
+    GL.MH_s_HG_2H2O   :5,
+    GL.FA_C2H3N       :3,
+    GL.Cer_R          :1},
+
     "[M+Hac-H]-":{ # http://prime.psc.riken.jp/compms/static/images/figure/lipid/SM_[M+CH3COO]-.png
     GL.MA           :10,
     GL.M_s_CH3     :100,
